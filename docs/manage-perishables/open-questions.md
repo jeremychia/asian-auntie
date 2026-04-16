@@ -46,22 +46,47 @@
 - Or **as needed** (only when you remember to)?
 - Or **batch weekly** (Sunday prep)?
 - **Impact**: Affects notification strategy and feature priority
+- **Strategic**: How often will you actually interact with this app? Daily, weekly, ad-hoc?
 
 ### 7. Will you actually use photos?
 - Honest question: Will you take photos consistently, or skip them?
 - **Impact**: Should we invest in photo storage/display or keep it minimal?
+- **Strategic**: What would photos actually be useful for? Visual memory, verification, condition tracking?
 
 ### 8. How many items are we actually tracking?
 - Dozens (5-30 items)? Hundreds (100+)?
 - **Impact**: Affects UI complexity (need search/filter immediately or later?)
+- **Strategic**: What's the scale you're building for? Just yourself, or toward a household?
 
 ### 9. Scale: Just you, or future household?
 - MVP is single-user, but are you building toward sharing?
 - **Impact**: Should architecture support multi-user from the start, or refactor later?
+- **Integration**: Should this integrate with Trade Perishables to auto-list expiring items?
 
 ### 10. Offline-first priority?
 - Should the app work without internet?
 - **Impact**: Database choice (local SQLite vs. cloud-based)
+- **Integration**: If you integrate with Trade Perishables, does that require online sync?
+
+### 11. Product philosophy & ecosystem
+- **Questions**:
+  - Is this a standalone app, or part of a larger "Asian Auntie" ecosystem?
+  - Should it integrate with Recommend Recipe (suggest recipes for expiring items)?
+  - Should it integrate with Trade Perishables (auto-list excess items)?
+- **Impact**: Affects architecture and long-term viability
+
+---
+
+## Core Questions to Lock In
+
+These shape the MVP scope:
+
+- [ ] **Integration**: Is this standalone, or part of a larger "Asian Auntie" ecosystem?
+- [ ] **Notification timing**: 3 days before expiry — too early, too late, or just right?
+- [ ] **Photo strategy**: Invest heavily in photos, or keep them optional/minimal?
+- [ ] **Ecosystem**: Should this auto-suggest recipes from Recommend Recipe for expiring items?
+- [ ] **Ecosystem**: Should this auto-list items to Trade Perishables when expiry is near?
+- [ ] **Scale**: Build for single-user only, or architect for future household sharing?
 
 ---
 
@@ -70,16 +95,19 @@
 - [ ] Do the urgency badges (Red/Yellow/Gray) feel right, or would you prefer different visual cues?
 - [ ] Should the dashboard show a count of expiring items, or is that noise?
 - [ ] Does "Mark as Used" feel natural, or should it be "Remove" or "Consume"?
+- [ ] Expiry date input: Free text (MM/DD/YYYY) or calendar picker? Or both?
+- [ ] Item names: Free text or autocomplete/dropdown for consistency?
 
 ---
 
 ## Next Steps
 
-1. **Answer unknowns 5-7** — these shape immediate design decisions
+1. **Answer core questions above** — these lock in scope and product direction
 2. **Decide on photo flow** — impacts complexity and UI/UX
 3. **Lock in notification timing** — affects reliability for users
-4. **Wireframe the mobile UI** — before building
-5. **Set up project tracking** — Figma, Linear, or wherever you want to track this
+4. **Define integration points** — how does this connect to Recommend Recipe and Trade Perishables?
+5. **Wireframe the mobile UI** — before building
+6. **Set up project tracking** — Figma, Linear, or wherever you want to track this
 
 ---
 

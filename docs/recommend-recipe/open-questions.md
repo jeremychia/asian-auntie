@@ -29,6 +29,7 @@
   - Manual curation (hand-enter recipes) — slow but reliable
   - Web scraping — fast but fragile if site structure changes
   - Work with Rasamalaysia directly — ideal but requires partnership
+- **Strategic**: Should you reach out to Rasamalaysia for partnership or licensing?
 - **TBD**: What's the most sustainable approach?
 
 ### 5. Ingredient list scope: How detailed?
@@ -37,6 +38,7 @@
   - "Chicken" vs. "Chicken breast" vs. "Boneless chicken breast"
   - "Oil" vs. "Vegetable oil" vs. "Olive oil"
 - **Impact**: Affects matching accuracy and ingredient input complexity
+- **Strategic**: Should "chicken breast" match "chicken", or are they separate inputs?
 - **TBD**: What's the right balance between specificity and usability?
 
 ---
@@ -67,6 +69,34 @@
 - **UX concern**: Long lists are overwhelming
 - **TBD**: Pagination, infinite scroll, or show-all?
 
+### 11. Integration with other features
+- **Question**: Should this integrate with Manage Perishables and Trade Perishables?
+- **Scenarios**:
+  - Recommend recipes for items expiring soon in your inventory?
+  - Suggest ingredients from Trade Perishables marketplace?
+  - Auto-populate ingredient list from inventory?
+- **Impact**: Adds utility but increases complexity
+
+### 12. Community & monetization
+- **Question**: Is this a solo tool (MVP), or are you building toward social features?
+- **Scenarios**:
+  - Reviews & community ratings of recipes?
+  - User-submitted recipes and variations?
+  - Social sharing of cooked dishes?
+- **Strategic**: How do you monetize or sustain this long-term? Ads, premium features, community models?
+
+---
+
+## Core Questions to Lock In
+
+These shape the MVP:
+
+- [ ] **Recipe source strategy**: Rasamalaysia only, or multi-source from day one?
+- [ ] **Ingredient matching**: Strict (chicken breast ≠ chicken) or fuzzy (chicken breast ≈ chicken)?
+- [ ] **Real-time or search**: Update recommendations as you type, or add a Search button?
+- [ ] **Sustainability**: How do you sustain recipe curation long-term?
+- [ ] **Integration**: Should this tie into Manage Perishables and Trade Perishables?
+
 ---
 
 ## Design Feedback Needed
@@ -75,16 +105,19 @@
 - [ ] Should we show match % as a percentage, a bar, or just "High/Medium/Low"?
 - [ ] Would you use "Go to Source" immediately, or is the recipe detail enough?
 - [ ] Is like/dislike enough for feedback, or do you want 1-5 star ratings in MVP?
+- [ ] How important is recipe authenticity vs. recipe availability? Does one source feel limiting?
 
 ---
 
 ## Next Steps
 
-1. **Decide on recipe scraping approach** — manual vs. automated
-2. **Clarify ingredient matching rules** — exact vs. fuzzy
-3. **Define Rasamalaysia data** — count recipes and ingredient types
-4. **Mockup the UI** — ingredient input + recipe results layout
-5. **Set up recipe database schema** — how to store recipes and ingredients
+1. **Answer core questions above** — these lock in scope and viability
+2. **Decide on recipe scraping approach** — manual vs. automated
+3. **Clarify ingredient matching rules** — exact vs. fuzzy
+4. **Define Rasamalaysia data** — count recipes and ingredient types available
+5. **Competitive analysis** — what gaps exist vs. existing recipe apps?
+6. **Mockup the UI** — ingredient input + recipe results layout
+7. **Set up recipe database schema** — how to store recipes and ingredients
 
 ---
 
