@@ -31,7 +31,7 @@ MANAGE-002:
   mitigations:
     - Date picker is slower but prevents garbage data
     - Consider "estimated" flag for items without printed dates
-    - Show confidence: "Best guess: 1 week" vs. "Exact: March 15"
+    - Show confidence - 'Best guess of 1 week' vs. 'Exact March 15'
   blockers: |
     Which reduces errors and friction best?
     Can system validate that dates are realistic (not 100 years)?
@@ -91,6 +91,108 @@ MANAGE-005:
   blockers: |
     Build for household sharing now, or refactor later?
     Does offline-first actually add value, or just complexity?
+
+MANAGE-006:
+  title: Consumption tracking for gradual-use items
+  status: pending
+  decision: |
+    Auto-detect item type during ADD_ITEM.
+    Default consumption tracking ON for consumables (sauces, oils, spices, condiments).
+    Allow user to opt-in/opt-out for any item during add, or toggle on item detail.
+    When tracking enabled, show progress bar on item detail.
+    MARK_AS_USED flow branches: slider/buttons for consumables vs. instant delete for single-use.
+  rationale: |
+    Question: "How do we track items that are used gradually vs. all-at-once?"
+    Some items (sauces, oils) get consumed over weeks/months in small amounts.
+    Others (milk, produce) are typically used in one sitting.
+    Unintended consequence (if ignored): Users might throw away half-full bottles
+    thinking expiry means they must discard. Or forget they have partially-used items.
+    Unintended consequence (if too aggressive): Over-tracking consumption becomes friction—
+    app feels like a chore instead of a helper.
+  mitigations:
+    - Auto-detect reduces friction (user doesn't think about it)
+    - But allow opt-out (user can disable for specific items)
+    - Simple UX: slider + quick buttons, not detailed input
+    - Keep progress bar visible but non-intrusive
+    - Don't require update on every use—just when composition changes
+  blockers: |
+    What item types should trigger auto-detect? (sauce, oil, spice, condiment, vinegar, paste)
+    Should quick buttons map to fixed percentages (10%, 50%, 100%) or user-configurable?
+    How to handle expired items with partial consumption? (warning? archive? still show?)
+
+MANAGE-007:
+  title: Dashboard visual design — minimalist modern approach
+  status: pending
+  decision: |
+    Items displayed as large photo cards with urgency communicated via background color overlay.
+    Card layout: Full-bleed food photo (70% of card height) with semi-transparent urgency overlay.
+    Item name + expiry date shown in semi-transparent bar at bottom of card.
+    No separate badges, labels, or icons — urgency is inherent in the visual design.
+    Subtle rounded corners (8-12px), whitespace-heavy layout, card-based with soft shadows.
+  rationale: |
+    Question: "How do we design for instant recognition while maintaining minimalism?"
+    Users recognize items primarily through photos, not text. Urgency should be visual, not labeled.
+    Overlaying color on the photo itself (vs. separate badge) reduces visual clutter.
+    This approach makes the dashboard feel modern, clean, and less "noisy" than icon-badge combos.
+    Unintended consequence (if not done right): Photos might obscure text or make expiry date hard to read.
+  mitigations:
+    - Use semi-transparent scrim (dark gradient) behind text for legibility
+    - Ensure text contrast meets WCAG AA standards
+    - Test with actual food photos to verify readability
+    - Provide text-only fallback if photo fails to load
+  blockers: |
+    Will semi-transparent overlays make photos look awkward or clinical?
+    Is the bottom text bar intuitive enough, or should it float top-right?
+
+MANAGE-008:
+  title: Dashboard urgency color system
+  status: pending
+  decision: |
+    Three-tier color system applied as background overlay on item cards:
+    🔴 Red: Expires today (high urgency)
+    🟠 Orange: Expires in 1-3 days (medium urgency)
+    🩶 Gray: Expires in 4+ days (low urgency)
+    Colors applied as semi-transparent overlay on bottom third of photo, or as accent bar.
+  rationale: |
+    Question: "Can color alone communicate urgency, or do we need badges?"
+    Color is faster to process than text + icons. Users learn the system after 1-2 uses.
+    Reduces cognitive load compared to multi-element badges (icon + text + color).
+    Aligns with modern mobile design (iOS Health, Fitness apps use similar approach).
+  mitigations:
+    - Test color blindness accessibility (red/green insensitive users)
+    - Consider secondary signal (stripe pattern or icon) for accessibility
+    - Verify colors contrast sufficiently against food photos (varies widely)
+  blockers: |
+    Does color alone feel insufficient (users want explicit labels)?
+    Which layout (bottom bar vs. corner accent) feels more intuitive?
+
+MANAGE-009:
+  title: Dashboard sort/filter functionality
+  status: pending
+  decision: |
+    Tap "Sort by" button (top-right) to open menu with options:
+    - Expiry date (default, descending: most urgent first)
+    - Item type (group sauces, produce, dairy, etc.)
+    - Consumption progress (highest % used first)
+    - Recently added (newest items first)
+    - Alphabetical (A-Z)
+    UI: Simple modal menu or segmented control chips (horizontal scrollable).
+    Sort direction can be toggled (ascending/descending).
+  rationale: |
+    Question: "How do users find items in a growing inventory?"
+    Default (expiry date) handles 80% of use cases. But power users benefit from flexibility.
+    By item type: Useful for meal planning ("what dairy do I have?")
+    By consumption: Helps prioritize finishing open bottles before they expire.
+    Recently added: Helps remember what you just bought.
+    Modal menu keeps UI clean (no persistent sort UI clutter).
+  mitigations:
+    - Start with modal menu (simpler implementation)
+    - Monitor which sort modes users actually use
+    - Consider "Remember last sort preference" to reduce clicks
+    - Don't overwhelm with too many sort options initially
+  blockers: |
+    Should sort preference persist across app sessions?
+    Should there be a "reverse sort" toggle, or just tap-to-toggle direction?
 
 MANAGE-INTEGRATION:
   title: Ecosystem integration with other features

@@ -10,38 +10,54 @@ flows:
       - User takes photo (or skips)
       - User types item name (e.g., "Tamarind paste")
       - User enters expiry date (date picker or manual entry)
+      - System auto-detects item type (consumable vs. single-use)
+      - If consumable: offer "Track consumption?" toggle (default: on)
+      - User confirms toggle or leaves default
       - User taps "Save"
       - Item appears in inventory list sorted by expiry date
     decision_points:
       - If user skips photo: save without image, use generic icon
       - If user enters past expiry date: warn "This expired on X, are you sure?"
       - If user enters today's date: flag as "Use today" alert
+      - If item is detected as consumable (sauce, oil, spice, condiment): show "Track consumption?" prompt
+      - If user opts in to consumption tracking: enable progress tracking on item detail
     edge_cases:
       - User takes photo then changes mind: show "Discard photo?" warning
       - User navigates away mid-entry: save draft or discard?
       - Duplicate item names: allow (user might have multiple jars)
       - User enters expiry in different format (e.g., "2 weeks"): parse or ask to clarify?
+      - User enables tracking then changes mind: allow toggle on item detail page
     data_collected:
       - Item name (required)
       - Expiry date (required, ISO format)
       - Photo (optional, JPEG)
+      - Item type (auto-detected: sauce, oil, spice, condiment, produce, dairy, other)
+      - Track consumption flag (boolean, default: true for consumables, false for single-use)
       - Timestamp added
     open_questions:
       - Photo format: date picker vs. text entry?
       - Should we suggest item names via autocomplete?
       - Should we estimate expiry for items without printed dates?
+      - What item types should default to consumption tracking?
+      - Should consumption tracking be per-category or user-configurable?
 
   VIEW_DASHBOARD:
     name: View Dashboard
     goal: See inventory and what's expiring soon
     happy_path:
       - User opens app
-      - System loads inventory sorted by expiry date
-      - Items shown with urgency badges
-      - "🔴 Red: Expires today"
-      - "🟡 Yellow: Expires in 1-3 days"
-      - "⚫ Gray: Expires later (4+ days)"
-      - User taps item to see detail
+      - System loads inventory sorted by expiry date (most urgent first)
+      - Items displayed as large photo cards with food images prominent
+      - Each card has urgency color overlay on bottom third (semi-transparent scrim)
+      - "🔴 Red overlay: Expires today"
+      - "🟠 Orange overlay: Expires in 1-3 days"
+      - "🩶 Gray overlay: Expires in 4+ days"
+      - Item name + expiry date shown in semi-transparent bar at card bottom
+      - No separate badges or labels — urgency communicated purely through color + photo
+      - User can tap "Sort by" button (top-right) to change sort order
+      - Sort menu options: Expiry date, Item type, Consumption progress, Recently added, Alphabetical
+      - User selects sort mode, list re-orders instantly, menu closes
+      - User taps any item card to see detail
     decision_points:
       - If 0 items: show empty state ("No items yet. Add one to get started.")
       - If 5+ items: show count badge at top
@@ -60,24 +76,86 @@ flows:
 
   MARK_AS_USED:
     name: Mark Item as Used
-    goal: Remove item from inventory
-    happy_path:
-      - User views item detail
+    goal: Remove item from inventory or track partial consumption
+    happy_path_single_use:
+      - User views item detail (e.g., milk, fresh produce)
       - User taps "Mark as Used"
       - System shows confirmation: "Remove tamarind paste from inventory?"
       - User confirms
       - System removes item and returns to dashboard
+    happy_path_consumable:
+      - User views item detail (e.g., soy sauce, sesame oil)
+      - Item shows consumption progress bar (current: 0%)
+      - User taps "Mark as Used" or "Update consumption"
+      - System shows consumption input: slider (0-100%) or quick buttons ("Just a bit", "About half", "Most of it", "Empty now")
+      - User selects consumption level
+      - System updates progress bar
+      - If user reaches 100%: show confirmation "Remove empty jar from inventory?" then delete
+      - If user selects <100%: item stays in inventory with updated consumption state, return to dashboard
     decision_points:
-      - If item expires today: show "Great, you used it in time!"
-      - If item not yet expired: just remove quietly
+      - If item has consumption tracking enabled: show progress bar and slider
+      - If item is single-use (no tracking): show simple "Mark as Used" button
+      - If item reaches 100% consumption: prompt for final removal
+      - If item expires today and partially used: show "This expires today, but you still have some left"
     edge_cases:
+      - User decreases consumption (e.g., changes from 50% to 25%): allow edit, no penalty
       - User marks multiple items quickly: should work smoothly (no lag)
       - User accidentally marks as used: undo option for next 5 seconds?
       - User marks as used offline: sync when online?
+      - Item expires while partially used: show warning, but don't auto-delete (user decides)
     data_collected:
       - Item ID
       - Action timestamp
-      - User intent (used vs. deleted)
+      - Consumption percentage (0-100)
+      - User intent (used vs. deleted vs. partially_consumed)
     open_questions:
-      - Should we distinguish "used" vs. "deleted"? (useful for analytics in v2)
-      - Should there be undo button, or just confirmation?
+      - Should quick buttons ("Just a bit", "Half") map to exact percentages (10%, 50%) or ranges?
+      - Should consumption edits create a history, or just show current state?
+      - How should expired items with partial consumption be handled? (still show in dashboard? archive?)
+
+  REMOVE_ITEM:
+    name: Remove Item from Pantry
+    goal: Remove any item from inventory (expired, unwanted, or other reason) and exit pantry
+    happy_path:
+      - User views item detail page
+      - User taps "Remove from Pantry" button (or swipe/delete action)
+      - System shows confirmation modal: "Remove [item name] from pantry?"
+      - Below confirmation: "What's the reason?" with quick reason buttons:
+        - "Don't want it"
+        - "Expired"
+        - "Used it all"
+        - "Other"
+      - User selects reason
+      - If "Other": text field appears for custom reason entry
+      - User confirms removal
+      - System removes item from inventory, logs removal event, returns to dashboard
+      - Toast notification: "Removed [item name]" with undo option (5 sec window)
+    decision_points:
+      - If item is expired: pre-select "Expired" reason, allow override
+      - If item is past expiry by >7 days: show gentle nudge ("This expired a while ago")
+      - If item has consumption tracking: show remaining percentage in removal summary
+      - If no reason selected: default to "unspecified" in removal log
+      - If reason is logged: track for future insights/patterns
+    edge_cases:
+      - User undoes removal within 5 seconds: restore item to inventory, reverse removal log entry
+      - User removes multiple items quickly: each creates separate removal log entry
+      - Item was removed offline: sync removal log when online
+      - User removes item but later finds it: undo creates ghost item (data integrity consideration)
+      - Item type not auto-detected: still log removal with "unknown" type
+    data_collected:
+      - Item ID
+      - Item name
+      - Item type (sauce, oil, spice, condiment, produce, dairy, other)
+      - Removal timestamp
+      - Removal reason (dont_want, expired, used_all, other, unspecified)
+      - Removal reason text (if "other")
+      - Consumption percentage at removal (if applicable)
+      - Item expiry date (if applicable)
+      - Days overdue (if expired; days between expiry_date and removal_date)
+      - User ID
+    open_questions:
+      - Should removal insights track patterns (e.g., "You tend to remove unexpired items from X category")?
+      - Should app suggest better storage/reminders based on removal patterns?
+      - Should users be able to view/export removal history?
+      - Future: Should removed items be tradeable via `trade-perishables` integration (e.g., unopened items)?
+      - Future: Should app ask "Want to list this for trade?" when removing unopened items?
