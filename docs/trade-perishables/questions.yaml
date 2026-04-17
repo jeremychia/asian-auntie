@@ -1,0 +1,250 @@
+# Trade Perishables: Open Questions
+
+# CORE VALUE PROPOSITION & INCENTIVES
+Q01:
+  title: Why would users trade/give away instead of throwing away?
+  status: unknown
+  impact: If convenient disposal exists, app has no value
+  first_principles: What motivates food sharing? Guilt? Community? Economics?
+
+Q02:
+  title: Why would users use this instead of existing platforms (Nextdoor, Facebook Groups)?
+  status: unknown
+  impact: Network effects favor incumbents; users already have contacts there
+  competitive_risk: Building on empty marketplace vs. established alternatives
+
+Q03:
+  title: Do neighbors actually want to interact with each other this way?
+  status: unknown
+  impact: Some neighborhoods are transient, anonymous, don't trust strangers
+  cultural_question: Is "neighborhood food sharing" even a real desire in target area?
+
+Q04:
+  title: What if people give away food out of guilt, not generosity?
+  status: unknown
+  impact: Feature enables procrastination ("I'll list it tomorrow") instead of action
+  unintended_consequence: App becomes guilt extension, not solution
+
+Q05:
+  title: Is this actually about food waste, or is it about community building?
+  status: unknown
+  impact: Different problems need different solutions
+  first_principles: Getting the core motivation wrong makes feature wrong
+
+# NETWORK EFFECTS & COLD START
+Q06:
+  title: How many listings are needed before app feels alive?
+  status: unknown
+  impact: Sparse marketplace (5 listings) feels dead and broken
+  cold_start_risk: Chicken-egg problem: users won't join empty marketplace
+
+Q07:
+  title: What if you can't reach critical mass in target neighborhood?
+  status: unknown
+  impact: App launches but feels useless, users churn
+  viability_question: Is neighborhood density sufficient for network effects?
+
+Q08:
+  title: What if early adopters are misaligned with later users?
+  status: unknown
+  impact: First users might be "food bank" types, later users might be "deal seekers"
+  culture_risk: Early community sets tone; tone might attract wrong people
+
+Q09:
+  title: What happens when marketplace shrinks (seasonal, summer vacations)?
+  status: unknown
+  impact: Network effects disappear, app becomes useless
+  seasonality_risk: Is adoption stable year-round?
+
+# TRUST & SAFETY
+Q10:
+  title: What if someone gets food poisoning from traded food?
+  status: unknown
+  impact: Liability, legal exposure, reputation destruction
+  legal_risk: P2P food sharing has serious health/legal implications
+
+Q11:
+  title: What if identity verification doesn't work?
+  status: unknown
+  impact: Scammers, bad actors, people from outside neighborhood
+  trust_risk: Anonymity + no verification = easy fraud
+
+Q12:
+  title: What if anonymity is default and attracts bad actors?
+  status: unknown
+  impact: People post fake items, take photos, list things they don't have
+  trust_risk: Anonymity removes accountability
+
+Q13:
+  title: What if someone trades contaminated food deliberately?
+  status: unknown
+  impact: User gets sick, blames app
+  safety_risk: No way to prevent malicious behavior
+
+Q14:
+  title: What if photos are of old/rotten food (not current)?
+  status: unknown
+  impact: Users show up expecting fresh food, find garbage
+  fraud_risk: Photo ≠ reality, with no enforcement
+
+Q15:
+  title: Can your TOS actually protect you legally?
+  status: unknown
+  impact: "User assumes all risk" might not hold up in court
+  legal_risk: You might be liable even with disclaimers
+
+# LOGISTICS & FRICTION
+Q16:
+  title: What if pickup logistics are too complicated (no good meeting spots)?
+  status: unknown
+  impact: Users prefer donation (food bank) or trash instead
+  friction_risk: Small logistics problems kill adoption
+
+Q17:
+  title: What if people don't want to share their phone number?
+  status: unknown
+  impact: Friction increases abandonment
+  privacy_concern: Asking for contact info is a barrier
+
+Q18:
+  title: What if pickup coordination is awkward (timing, scheduling)?
+  status: unknown
+  impact: Items go bad before pickup, frustration grows
+  ux_risk: Unstructured coordination fails at scale
+
+Q19:
+  title: What if items spoil before pickup (hot weather, no refrigeration)?
+  status: unknown
+  impact: People receive bad food, lose trust
+  reliability_risk: Environment (temperature) affects outcome
+
+Q20:
+  title: What if users can't easily communicate when things change?
+  status: unknown
+  impact: "I'll pick up at 3pm" without reminder = no-show
+  coordination_risk: Async communication + no notifications = chaos
+
+# INCENTIVE MISALIGNMENT
+Q21:
+  title: Does "giving away" incentivize people to be generous, or lazy?
+  status: unknown
+  impact: Some people list trash because it's easier than throwing away
+  unintended_consequence: App becomes junk disposal service, not community tool
+
+Q22:
+  title: What if trading teaches people to negotiate, or just creates conflict?
+  status: unknown
+  impact: Haggling over food feels petty
+  social_dynamic_risk: Feature could breed resentment
+
+Q23:
+  title: What if reviews/reputation don't matter because users are one-time?
+  status: unknown
+  impact: No incentive to be trustworthy if you never see person again
+  game_theory: One-shot games lack accountability mechanisms
+
+Q24:
+  title: What if monetization temptation destroys trust?
+  status: unknown
+  impact: "Listing fee" or "premium features" breaks community feeling
+  corruption_risk: Money changes behavior, especially in peer networks
+
+# ECOSYSTEM & INTEGRATION RISKS
+Q25:
+  title: What if Manage Perishables auto-lists items without user consent?
+  status: unknown
+  impact: Users get surprised marketplace notifications
+  integration_risk: Unwanted integrations feel invasive
+
+Q26:
+  title: What if someone lists items from someone else's inventory?
+  status: unknown
+  impact: Household members don't coordinate, double-list items
+  multi_user_risk: Without access control, app creates chaos
+
+Q27:
+  title: What if marketplace becomes a dumping ground for things no one wants?
+  status: unknown
+  impact: Stale listings, low-quality items, feels like trash
+  quality_risk: Network effects can amplify bad behavior
+
+Q28:
+  title: What if successful trades lead to dependency (people expect free food)?
+  status: unknown
+  impact: Changes neighborhood culture
+  cultural_risk: Feature could inadvertently create expectations/obligations
+
+# UNINTENDED CONSEQUENCES
+Q29:
+  title: Does this reduce food waste, or just move it around?
+  status: unknown
+  impact: If item gets listed, picked up, thrown away anyway = no actual waste reduction
+  impact_question: Are you solving the problem or enabling postponement?
+
+Q30:
+  title: What if marketplace creates "transaction cost" that prevents action?
+  status: unknown
+  impact: Easier to throw away than list + wait for pickup
+  friction_paradox: Adding a step might make people less likely to share
+
+Q31:
+  title: Does building community features create social obligation?
+  status: unknown
+  impact: "I should pick up this cilantro" becomes stressful
+  psychological_risk: Community features could create guilt
+
+Q32:
+  title: What if app becomes a source of conflict (who takes what)?
+  status: unknown
+  impact: Neighbor relationships sour over contested items
+  social_risk: Scarcity breeds conflict
+
+Q33:
+  title: What if neighborhood gentrification changes who uses app?
+  status: unknown
+  impact: New residents might have different expectations/behaviors
+  stability_risk: Communities change; cultural fit might not persist
+
+# BUSINESS & VIABILITY
+Q34:
+  title: How do you sustain this without monetization?
+  status: unknown
+  impact: Server costs, moderation, support = ongoing expense
+  sustainability: Is this a passion project or a viable business?
+
+Q35:
+  title: What if your target neighborhood doesn't exist (too dispersed, too transient)?
+  status: unknown
+  impact: No critical mass = app fails
+  market_risk: Geographic targeting is all-or-nothing
+
+Q36:
+  title: What if food waste reduction doesn't matter to most people?
+  status: unknown
+  impact: Motivation is aesthetic, not actual behavior change
+  behavioral_question: Is this solving a real problem or a invented one?
+
+# FIRST PRINCIPLES
+Q37:
+  title: Why are Asian aunties specifically good at food sharing/trading?
+  status: unknown
+  impact: If targeting is just aesthetic, feature won't resonate with actual users
+  targeting_risk: Build for actual problem, not imagined archetype
+
+Q38:
+  title: What if the real problem is "I don't know my neighbors," not "I want to share food"?
+  status: unknown
+  impact: Food is the surface problem; isolation is the deep one
+  root_cause: Are you treating symptom or disease?
+
+Q39:
+  title: What if people would share more if it didn't require creating an account?
+  status: unknown
+  impact: Friction of app installation prevents adoption
+  friction_risk: Technology might be the wrong solution
+
+core_blockers:
+  - Is neighborhood food sharing actually desired, or just an idealistic assumption?
+  - What's your legal liability if food causes harm?
+  - Can you reach critical mass in target area? (Viability question)
+  - How do you handle trust without requiring everyone to verify?

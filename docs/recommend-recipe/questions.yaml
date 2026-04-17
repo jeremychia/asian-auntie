@@ -1,0 +1,181 @@
+# Recommend Recipe: Open Questions
+
+# CORE VALUE PROPOSITION
+Q01:
+  title: Why would users use this instead of Google/ChatGPT?
+  status: unknown
+  impact: If users can ask ChatGPT "what can I make with chicken?", why install an app?
+  first_principles: What unique value does Rasamalaysia + ingredient matching add?
+
+Q02:
+  title: Will users actually have the ingredients they input?
+  status: unknown
+  impact: If recipes suggest items users don't have, app becomes frustrating
+  assumption: "User inputs ingredients they own" might be false
+
+Q03:
+  title: What if users input aspirational ingredients instead of actual?
+  status: unknown
+  impact: Recommendations are useless ("I wish I had star fruit")
+  behavioral_question: Do users tell the truth about what they have?
+
+Q04:
+  title: Is "recipe recommendations" the actual problem, or is it "I don't know what to cook"?
+  status: unknown
+  impact: Different problems need different solutions
+  inversion: Maybe users don't want recipes, they want meal planning or permission to skip cooking
+
+# DATA SOURCING & SUSTAINABILITY
+Q05:
+  title: What if Rasamalaysia changes their site structure and breaks parsing?
+  status: unknown
+  impact: All recipes disappear, app becomes useless
+  fragility_risk: Single source dependency is a single point of failure
+
+Q06:
+  title: What's your legal relationship with Rasamalaysia? Scraping without permission?
+  status: unknown
+  impact: Cease & desist could kill the app overnight
+  legal_risk: Operating in gray zone until forced to deal with it
+
+Q07:
+  title: How will you maintain recipe data long-term?
+  status: unknown
+  impact: Recipes need updating (links break, ingredients change)
+  sustainability_question: Is this a passion project or maintainable product?
+
+Q08:
+  title: What if recipes are written for Malaysian audiences with assumptions you don't have?
+  status: unknown
+  impact: "Add 3 inches of ginger root" (assumes fresh ginger is cheap/available)
+  localization_risk: Recipes might not work for different markets/resources
+
+Q09:
+  title: How do you handle recipe copyright/attribution?
+  status: unknown
+  impact: If recipes are scraped, are you violating copyright?
+  ethical_question: Is this fair use or theft?
+
+# MATCHING & RECOMMENDATION QUALITY
+Q10:
+  title: What if "exact matching" misses recipes users could make with substitutions?
+  status: unknown
+  impact: User has "oil" but recipe asks for "coconut oil" — no match
+  quality_risk: Too strict matching limits usefulness
+
+Q11:
+  title: What if "fuzzy matching" creates nonsense recommendations?
+  status: unknown
+  impact: "Chicken breast" matches "chicken skin" matches "bone broth" (all chicken-adjacent)
+  quality_risk: Too loose matching creates garbage results
+
+Q12:
+  title: How do you handle ingredient hierarchies? (Coconut milk ⊂ milk ⊂ liquid?)
+  status: unknown
+  impact: Should "milk" recipes suggest to users with "coconut milk"?
+  complexity: Semantic matching is hard and fragile
+
+Q13:
+  title: What if users add "spice" and get 5000 results?
+  status: unknown
+  impact: Results become useless, users give up
+  ux_question: How do you handle extremely broad matches?
+
+Q14:
+  title: What if results feel random or don't improve with more ingredients?
+  status: unknown
+  impact: Users can't tell if the algorithm is working
+  transparency_risk: Opaque matching erodes trust
+
+# ECOSYSTEM & INCENTIVES
+Q15:
+  title: What if users just want to browse recipes, not search by ingredients?
+  status: unknown
+  impact: Feature might not match how people actually use recipe apps
+  assumption: Ingredient-first might not be the right interaction model
+
+Q16:
+  title: What if Manage Perishables integration creates bad recommendations?
+  status: unknown
+  impact: Auto-suggestions from expiring items might be unappetizing
+  integration_risk: Features conflict (app suggests cilantro you're sick of)
+
+Q17:
+  title: What if no one rates/reviews recipes?
+  status: unknown
+  impact: You can't improve matches over time
+  data_risk: Feedback loop needed to improve algorithm
+
+Q18:
+  title: What if community features drive monetization pressure?
+  status: unknown
+  impact: "Premium recipes" or "ads" break the nonprofit feel
+  business_model_risk: How do you sustain this without compromising the mission?
+
+# UNINTENDED CONSEQUENCES
+Q19:
+  title: Does this encourage using whatever you have, or buying missing ingredients?
+  status: unknown
+  impact: "We suggest recipes for your ingredients" might reduce actual shopping
+  paradox: App could accidentally reduce user engagement with cooking
+
+Q20:
+  title: What if recommendations create analysis paralysis (too many options)?
+  status: unknown
+  impact: Users can't decide and cook nothing
+  behavioral_risk: More options ≠ better outcomes
+
+Q21:
+  title: What if users rely on app recommendations and lose cooking intuition?
+  status: unknown
+  impact: Long-term, app dependency could weaken cooking skills
+  philosophical_risk: Are you helping or disabling?
+
+Q22:
+  title: What if the app becomes a "crutch" for users who should be exploring?
+  status: unknown
+  impact: Beginners need to learn to improvise, not just follow recipes
+  pedagogical_question: Does this help or hinder cooking education?
+
+# BUSINESS & GROWTH
+Q23:
+  title: How do you differentiate from existing recipe apps (Yummly, AllRecipes, Serious Eats)?
+  status: unknown
+  impact: If there's no differentiation, users just use established apps
+  competitive_risk: Network effects favor incumbents
+
+Q24:
+  title: What if you can only acquire Malaysian diaspora users?
+  status: unknown
+  impact: Market size is capped unless you expand
+  market_risk: Niche might be too small to sustain
+
+Q25:
+  title: What if recipe sourcing becomes your main business cost?
+  status: unknown
+  impact: Not sustainable as a side project
+  sustainability_question: What's the unit economics long-term?
+
+# FIRST PRINCIPLES
+Q26:
+  title: Is "finding recipes" the real problem Asian aunties face?
+  status: unknown
+  impact: If targeting is based on aesthetic, feature won't resonate
+  targeting_risk: Are you building for actual users or for an image?
+
+Q27:
+  title: What if the problem is "wanting to eat the food of my culture" not "finding recipes"?
+  status: unknown
+  impact: Different problem = different solution (maybe app is wrong format)
+  first_principles: Is this about recipes or about cultural identity and belonging?
+
+Q28:
+  title: What if users want guidance, not just recipes?
+  status: unknown
+  impact: Recipes without context (timing, substitutions, tips) are incomplete
+  completeness_risk: Feature might feel hollow
+
+core_blockers:
+  - What is Rasamalaysia's legal/technical stability? (Can you build on sand?)
+  - How will you handle ingredient matching without a semantic database?
+  - What makes this better than "ChatGPT + Rasamalaysia" for users?

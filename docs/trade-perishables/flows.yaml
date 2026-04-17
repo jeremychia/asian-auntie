@@ -1,0 +1,84 @@
+# Trade Perishables: User Flows
+
+flows:
+  CREATE_GIVEAWAY_LISTING:
+    name: Create Give Away Listing
+    goal: List an excess item I'm giving away
+    happy_path:
+      - User taps "List New Item"
+      - System shows type selector [Give Away | Trade | Group Buy]
+      - User selects "Give Away"
+      - Form appears [Photo | Name | Expiry Date | Notes | Location]
+      - User fills out (photo & expiry optional, name required)
+      - User taps "Post"
+      - Listing appears in marketplace, visible to neighbors
+    decision_points:
+      - If photo is missing: warn "Photos get more interest, but optional"
+      - If expiry date is in past: warn "This already expired, are you sure?"
+      - If location is not set: use profile location or ask user to set
+    edge_cases:
+      - Photo upload fails: allow retry or skip
+      - User posts outside geofence: warn "This location is outside your neighborhood"
+      - User is not verified resident: show warning ("Unverified members may get less engagement")
+    data_collected:
+      - Item name (required)
+      - Expiry date (optional)
+      - Photo (optional)
+      - Location (required, uses profile or user input)
+      - Listing type (Give Away)
+      - Created timestamp
+    open_questions:
+      - Should listings auto-expire after 7 days, or require manual deletion?
+      - Should user be able to edit after posting, or only delete?
+      - Should we notify user when someone views their listing?
+
+  BROWSE_LISTINGS:
+    name: Browse Listings
+    goal: Find items available nearby
+    happy_path:
+      - User opens app
+      - System shows list of recent listings (sorted by newest)
+      - Each listing shows [Photo | Name | Type icon | Distance | "Posted by" name]
+      - User can filter [All / Give Away / Trade / Group Buy]
+      - User can search by item name
+      - User taps listing to see detail
+    decision_points:
+      - If 0 listings nearby: show "No items yet. Be the first to post!"
+      - If item expires today: show 🔴 red badge
+      - If item expires in 1-2 days: show 🟡 yellow badge
+    edge_cases:
+      - User is outside geofence: show "No listings in your area" + nearby areas?
+      - Listings load slowly: show skeleton loaders or "Loading..."
+      - User scrolls to bottom: show "No more listings" or paginate?
+    data_collected:
+      - Filters applied (type, search term)
+      - Listings viewed
+      - Time spent browsing
+    open_questions:
+      - Map view (future) or list view only in MVP?
+      - Should we show "1 hour ago" vs. exact timestamp?
+      - Should search be fuzzy ("tamarint" matches "tamarind") or exact?
+
+  CONTACT_LISTING_OWNER:
+    name: Contact Listing Owner
+    goal: Ask about an item I want
+    happy_path:
+      - User views listing detail
+      - User taps "Contact"
+      - System reveals owner's contact info (email/phone)
+      - User copies or taps to open email/messaging app
+      - User sends message (outside app)
+      - Coordination happens externally
+      - User picks up item
+    decision_points:
+    edge_cases:
+      - Owner has only email, user prefers phone: show email only
+      - User's own listing: hide "Contact" button
+      - Contact info is invalid: show error when user tries to contact
+    data_collected:
+      - Listing ID contacted
+      - Contact method used (email/phone)
+      - Timestamp
+    open_questions:
+      - Should we add in-app messaging in v1 or defer to v2?
+      - Should system track successful trades / completion rate?

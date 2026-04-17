@@ -1,0 +1,59 @@
+# Recommend Recipe: User Flows
+
+flows:
+  SEARCH_BY_INGREDIENTS:
+    name: Search by Ingredients
+    goal: Find recipes I can cook with what I have
+    happy_path:
+      - User lands on app
+      - Sees ingredient input field + "Add ingredient" button
+      - User types "chicken"
+      - System shows autocomplete suggestions
+      - User presses Enter or selects from suggestions
+      - "Chicken" appears in "My Ingredients" list
+      - System immediately shows recipes matching ingredients (real-time)
+      - Recipes ranked by match % (highest first)
+      - User scrolls, finds recipe, taps to view detail
+    decision_points:
+      - If ingredient matches multiple forms (e.g., "chicken", "chicken breast"): show all as options
+      - If no recipes match: show "No recipes found" with suggestion to add more ingredients
+      - If user adds generic ingredient (e.g., "oil"): show very broad matches (200+ recipes)
+    edge_cases:
+      - Autocomplete shows 50 suggestions: show top 10, allow scrolling
+      - User typos ingredient name: fuzzy match or ask "did you mean X?"
+      - User adds ingredient then removes it: results update in real-time
+      - User has 0 ingredients: show all recipes or empty state?
+    data_collected:
+      - Ingredient list
+      - Recipes viewed (for future learning)
+      - Search session (ingredients → results → clicked recipe)
+    open_questions:
+      - Real-time results or "Search" button?
+      - Should ingredient order matter (for "popular combinations")?
+      - Should we suggest "common ingredient pairs" (e.g., "garlic + soy sauce")?
+
+  VIEW_RECIPE_DETAIL:
+    name: View Recipe Detail
+    goal: See full recipe and decide if I can cook it
+    happy_path:
+      - User taps recipe from search results
+      - System shows recipe title, source link, ingredients, instructions, cook time & difficulty
+      - User's ingredients are highlighted
+      - User reads through
+      - User taps "Go to Source" to see original recipe
+    decision_points:
+      - If user has 80%+ ingredients: highlight "You have most of this!"
+      - If user missing key ingredient: show "You'll need to buy: X"
+      - If cook time >30 min: show warning "Takes longer than 30 minutes"
+    edge_cases:
+      - Recipe has 50 ingredients: still show all or summarize?
+      - Original source link broken: fallback to cached version?
+      - Recipe translation issues: show original language option?
+    data_collected:
+      - Recipe ID viewed
+      - Time spent on detail page
+      - Whether user clicked "Go to Source"
+      - Like/dislike rating
+    open_questions:
+      - Should we show similar recipes on this page?
+      - Should we allow saving/bookmarking recipes for later?

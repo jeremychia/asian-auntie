@@ -1,0 +1,113 @@
+# Manage Perishables: Decisions
+# Status: pending (to be locked), locked, shipped
+
+MANAGE-001:
+  title: Photo requirement
+  status: pending
+  decision: Optional (user can skip)
+  rationale: |
+    Question: "Why would users actually use this vs. their memory?"
+    Reduces friction for quick adds. However, optional photos create two problems:
+    (1) Inconsistent data quality — some items have photos, others don't, making search harder
+    (2) Unintended consequence: Users might skip photos for shame items (junk food, expired food)
+    This creates a biased inventory that doesn't reflect reality.
+  mitigations:
+    - Consider gentle nudge ("Photos help you remember") vs. barrier
+    - Don't penalize users without photos (no "shame" score)
+  blockers: |
+    How important is visual context for recognition?
+    Will photo bias create blind spots in inventory?
+
+MANAGE-002:
+  title: Expiry date input
+  status: pending
+  decision: TBD - date picker vs. free text
+  rationale: |
+    Question: "When users add items, will dates be accurate or guesses?"
+    Date picker guarantees valid dates but slower; free text faster but requires parsing.
+    Critical risk: Inaccurate expiry dates undermine entire system.
+    Unintended consequence: Users might underestimate (throw away good food)
+    or overestimate (eat spoiled food). App becomes unreliable.
+  mitigations:
+    - Date picker is slower but prevents garbage data
+    - Consider "estimated" flag for items without printed dates
+    - Show confidence: "Best guess: 1 week" vs. "Exact: March 15"
+  blockers: |
+    Which reduces errors and friction best?
+    Can system validate that dates are realistic (not 100 years)?
+
+MANAGE-003:
+  title: Notification window
+  status: pending
+  decision: 3 days before expiry (candidate)
+  rationale: |
+    Question: "What happens when users ignore warnings or feel nagged?"
+    3 days gives time to use item. But wrong window kills the feature entirely.
+    Unintended consequence: Too aggressive → notification fatigue → users disable all alerts
+    Once disabled, hard to re-engage. Worse: Users might feel guilty ("nagged"),
+    creating negative emotion around the app.
+    Too lenient → not enough time to cook → users ignore alerts.
+  mitigations:
+    - Start with 3 days, measure disable rate closely
+    - Add "snooze" instead of binary notification
+    - Let users customize window (5 days, 3 days, 1 day)
+    - Frame notifications as helpful, not accusatory
+  blockers: |
+    Is 3 days right for your cooking patterns?
+    What's the threshold where notification fatigue kills engagement?
+
+MANAGE-004:
+  title: Item names
+  status: pending
+  decision: TBD - free text vs. autocomplete
+  rationale: |
+    Question: "What if expiry dates are completely wrong from day one?"
+    Free text = user can type anything, less consistent; Autocomplete = faster, more searchable.
+    But autocomplete requires curated list (maintenance burden).
+    Unintended consequence: If names aren't consistent ("tamarind paste", "tamarind", "TPaste"),
+    search/filtering becomes useless. Notifications might miss items because of name variance.
+  mitigations:
+    - Start with free text, monitor most-used items
+    - Add autocomplete for top 20 items only (low maintenance)
+    - Don't require matching — "tamarind" should find "tamarind paste"
+  blockers: |
+    Would autocomplete help or slow you down?
+    Can inconsistent naming break the feature?
+
+MANAGE-005:
+  title: MVP scope
+  status: pending
+  decision: Single-user, offline-first
+  rationale: |
+    Question: "What if users share a household but log independently?"
+    Single-user simplest path to launch. But unintended consequence:
+    If household members use app, they might duplicate items or conflict on "used" actions.
+    Example: You mark milk as used, partner marks same milk again → confusing.
+    Offline-first adds complexity (data conflicts: add item offline, edit same item online).
+  mitigations:
+    - Start single-user, test household behavior first
+    - If household becomes priority later, redesign for ownership/sharing
+    - Offline sync must have conflict resolution (last-write-wins, or flag for user)
+  blockers: |
+    Build for household sharing now, or refactor later?
+    Does offline-first actually add value, or just complexity?
+
+MANAGE-INTEGRATION:
+  title: Ecosystem integration with other features
+  status: pending
+  decision: TBD - what integrations exist?
+  rationale: |
+    Question: "Does this enable more buying, or better cooking?"
+    Auto-suggesting recipes for expiring items (via Recommend Recipe) could help use food.
+    But unintended consequence: If suggestions are bad, users ignore them.
+    If suggestions create noise (app keeps pestering "make cilantro salad"),
+    users disable notifications entirely.
+    Auto-listing to Trade Perishables could work IF Trade has network effects.
+    If Trade is empty, "auto-list" feature feels useless and creates noise.
+  mitigations:
+    - Don't auto-suggest recipes without user opt-in
+    - Only auto-list if Trade reaches critical mass
+    - Let users control integrations per-feature
+  blockers: |
+    Will Trade Perishables have critical mass?
+    Do recipe suggestions help or annoy?

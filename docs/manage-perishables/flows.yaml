@@ -1,0 +1,83 @@
+# Manage Perishables: User Flows
+
+flows:
+  ADD_ITEM:
+    name: Add Item
+    goal: Add an item to inventory
+    happy_path:
+      - User taps "+" button
+      - System shows form with Photo, Name, Expiry Date fields
+      - User takes photo (or skips)
+      - User types item name (e.g., "Tamarind paste")
+      - User enters expiry date (date picker or manual entry)
+      - User taps "Save"
+      - Item appears in inventory list sorted by expiry date
+    decision_points:
+      - If user skips photo: save without image, use generic icon
+      - If user enters past expiry date: warn "This expired on X, are you sure?"
+      - If user enters today's date: flag as "Use today" alert
+    edge_cases:
+      - User takes photo then changes mind: show "Discard photo?" warning
+      - User navigates away mid-entry: save draft or discard?
+      - Duplicate item names: allow (user might have multiple jars)
+      - User enters expiry in different format (e.g., "2 weeks"): parse or ask to clarify?
+    data_collected:
+      - Item name (required)
+      - Expiry date (required, ISO format)
+      - Photo (optional, JPEG)
+      - Timestamp added
+    open_questions:
+      - Photo format: date picker vs. text entry?
+      - Should we suggest item names via autocomplete?
+      - Should we estimate expiry for items without printed dates?
+
+  VIEW_DASHBOARD:
+    name: View Dashboard
+    goal: See inventory and what's expiring soon
+    happy_path:
+      - User opens app
+      - System loads inventory sorted by expiry date
+      - Items shown with urgency badges
+      - "🔴 Red: Expires today"
+      - "🟡 Yellow: Expires in 1-3 days"
+      - "⚫ Gray: Expires later (4+ days)"
+      - User taps item to see detail
+    decision_points:
+      - If 0 items: show empty state ("No items yet. Add one to get started.")
+      - If 5+ items: show count badge at top
+      - If item expires today: show "Use today!" notification
+    edge_cases:
+      - User has 100 items: search/filter needed?
+      - User adds item while viewing dashboard: live update or refresh button?
+      - System can't reach camera: show error, allow manual entry instead
+    data_collected:
+      - Display order (by expiry date ascending)
+      - Count of items by urgency level
+      - Last refresh timestamp
+    open_questions:
+      - Should dashboard show summary (e.g., "5 items, 2 expiring soon")?
+      - Should we auto-refresh, or require manual refresh?
+
+  MARK_AS_USED:
+    name: Mark Item as Used
+    goal: Remove item from inventory
+    happy_path:
+      - User views item detail
+      - User taps "Mark as Used"
+      - System shows confirmation: "Remove tamarind paste from inventory?"
+      - User confirms
+      - System removes item and returns to dashboard
+    decision_points:
+      - If item expires today: show "Great, you used it in time!"
+      - If item not yet expired: just remove quietly
+    edge_cases:
+      - User marks multiple items quickly: should work smoothly (no lag)
+      - User accidentally marks as used: undo option for next 5 seconds?
+      - User marks as used offline: sync when online?
+    data_collected:
+      - Item ID
+      - Action timestamp
+      - User intent (used vs. deleted)
+    open_questions:
+      - Should we distinguish "used" vs. "deleted"? (useful for analytics in v2)
+      - Should there be undo button, or just confirmation?

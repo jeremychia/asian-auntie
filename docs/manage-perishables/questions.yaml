@@ -1,0 +1,163 @@
+# Manage Perishables: Open Questions
+
+# USER BEHAVIOR & INCENTIVES
+Q01:
+  title: Why would users actually use this vs. their memory?
+  status: unknown
+  impact: If users don't open app daily, notifications become useless
+  first_principles: What problem does this solve that a mental model doesn't?
+
+Q02:
+  title: What happens when users forget to log items?
+  status: unknown
+  impact: Incomplete inventory = unreliable notifications = users stop trusting app
+  inversion: The app works best when... inverts to The app fails when users don't log things
+
+Q03:
+  title: Do users actually eat before expiry, or do they waste anyway?
+  status: unknown
+  impact: If users ignore warnings, why keep building notifications?
+  first_principles: Does this solve a willpower problem or an information problem?
+
+Q04:
+  title: When users add items, will dates be accurate or guesses?
+  status: unknown
+  impact: Inaccurate expiry dates = notifications at wrong times = bad UX
+  risk: Users either overestimate (ignore alerts) or underestimate (throw away good food)
+
+# DATA ACCURACY & TRUST
+Q05:
+  title: What if expiry dates are completely wrong from day one?
+  status: unknown
+  impact: System becomes unreliable, users stop trusting
+  unintended_consequence: Users might distrust app so much they throw away food without checking
+
+Q06:
+  title: How do you validate that an expiry date is realistic?
+  status: unknown
+  impact: System has no way to catch "expires in 100 years" or "expired 2 years ago"
+  risk: App could suggest eating spoiled food if user enters wrong date
+
+Q07:
+  title: What if photo metadata (EXIF) reveals location, identity?
+  status: unknown
+  impact: Privacy leak in a food-sharing app
+  unintended_consequence: Users feel unsafe, don't use app
+
+Q08:
+  title: Can users delete items without trace (hide waste behavior)?
+  status: unknown
+  impact: If you later want waste analytics, you have no data
+  inversion: "The more data we collect..." inverts to "Privacy concerns prevent data collection"
+
+# NOTIFICATION FATIGUE & BEHAVIORAL CHANGE
+Q09:
+  title: What if 3-day notification is too aggressive (notification fatigue)?
+  status: unknown
+  impact: Users disable notifications → they ignore everything → app becomes useless
+  risk: Getting the window wrong could destroy the entire feature
+
+Q10:
+  title: Will users disable notifications if they feel nagged?
+  status: unknown
+  impact: Once disabled, hard to re-enable trust
+  behavioral: Notification timing affects long-term engagement
+
+Q11:
+  title: What if notifications make users feel guilty instead of helpful?
+  status: unknown
+  impact: Negative emotion could drive users away
+  unintended_consequence: App becomes a source of shame, not a helper
+
+# ECOSYSTEM & INTEGRATION RISKS
+Q12:
+  title: What if no one uses Trade Perishables?
+  status: unknown
+  impact: "Auto-list to marketplace" feature has zero value
+  dependency: This feature's utility depends on Trade's adoption
+
+Q13:
+  title: What if Recommend Recipe doesn't surface the right recipes?
+  status: unknown
+  impact: "Auto-suggest recipes for expiring items" becomes noise
+  integration_risk: Bad recommendations lower trust in the entire ecosystem
+
+Q14:
+  title: Should this work offline, or sync later?
+  status: unknown
+  impact: If offline, data conflicts possible (add item offline, edit same item online)
+  architecture_risk: Offline-first multiplies complexity
+
+# EDGE CASES & FAILURE MODES
+Q15:
+  title: What happens if user has 1000 items?
+  status: unknown
+  impact: Notifications become overwhelming
+  scaling_question: At what scale does the feature break?
+
+Q16:
+  title: What if user deletes/clears all items?
+  status: unknown
+  impact: Empty state — does app feel dead? Do they come back?
+  retention_risk: Users might feel like they "finished" the app
+
+Q17:
+  title: What if expiry date picker defaults to today by mistake?
+  status: unknown
+  impact: Users rush through, set wrong dates, trust breaks
+  ui_risk: Small UX defaults affect data quality
+
+Q18:
+  title: Can users accidentally mark items as "used" en masse?
+  status: unknown
+  impact: Undo mechanism (if too slow) destroys app trust
+  reliability_risk: One click error should be recoverable
+
+# FIRST PRINCIPLES: WHAT IS THIS REALLY SOLVING?
+Q19:
+  title: Is this about food waste, organization, or memory?
+  status: unknown
+  impact: Different problems need different solutions
+  fundamental: Getting the core problem wrong makes feature irrelevant
+
+Q20:
+  title: Why Asian aunties specifically?
+  status: unknown
+  impact: Are aunties more prone to waste? Cook differently? Have different habits?
+  targeting_risk: If targeting is aesthetic, product won't resonate
+
+Q21:
+  title: What if the real problem is shopping behavior, not tracking?
+  status: unknown
+  impact: All this tracking won't help if users buy too much in first place
+  first_principles: Are you solving the symptom or the disease?
+
+# UNINTENDED CONSEQUENCES
+Q22:
+  title: Does this enable more buying (more items → more tracking → feels intentional)?
+  status: unknown
+  impact: Feature could accidentally increase waste
+  paradox: Tracking system might make users feel like waste is "managed"
+
+Q23:
+  title: What if sharing this data (for insights) creates shame or judgment?
+  status: unknown
+  impact: "You wasted 40% of cilantro" could feel accusatory
+  psychological_risk: Analytics feature designed to help could drive users away
+
+Q24:
+  title: Does reminding users of waste create learned helplessness?
+  status: unknown
+  impact: If users see they always waste items, they might give up trying
+  behavioral_risk: Negative feedback loop instead of motivation
+
+Q25:
+  title: What if users share a household but log independently?
+  status: unknown
+  impact: Duplicate items, conflicting "used" actions
+  collaboration_risk: Multi-user scenarios break without explicit design
+
+core_blockers:
+  - Before building: What is the core problem this solves? (waste? organization? memory?)
+  - Can you validate that expiry dates will be accurate enough to trust?
+  - What happens if users don't log items consistently? Is the feature still valuable?

@@ -1,0 +1,148 @@
+# Trade Perishables: Decisions
+# Status: pending (to be locked), locked, shipped
+
+TRADE-001:
+  title: MVP scope
+  status: pending
+  decision: Give Away only (vs. Trade + Group Buy)
+  rationale: |
+    Question: "Why would users trade/give away instead of throwing away?"
+    Give Away is simplest to launch, highest likelihood of actual use.
+    Trade requires matching (inventory coordination), Group Buy requires payments.
+    Unintended consequence: "Give Away" might become trash disposal service.
+    Users list things they don't want (easier than throwing away) instead of sharing generously.
+    This kills the app's soul — becomes "free junk depot" instead of community tool.
+    Also: Network effects favor incumbents (Nextdoor, Facebook Groups).
+    Why not just use existing platforms?
+  mitigations:
+    - Launch Give Away first, measure actual behavior
+    - Monitor what gets listed (junk vs. actual food)
+    - Consider curation (require description, photos) to discourage trash
+    - Build community values into onboarding ("this is about sharing, not dumping")
+  blockers: |
+    Will users share generously, or just dump trash?
+    Can you reach critical mass vs. Nextdoor/Facebook Groups?
+
+TRADE-002:
+  title: Contact method
+  status: pending
+  decision: External (email/phone only)
+  rationale: |
+    Question: "What if pickup logistics are too complicated?"
+    No in-app messaging = simpler MVP, but adds friction.
+    Unintended consequence: If coordination is awkward, users prefer
+    donation (food bank) or trash instead. Items go bad before pickup.
+    Also: Asking for phone number is a privacy barrier — some users won't share.
+    This reduces network effects.
+  mitigations:
+    - Start with email/phone, measure friction closely
+    - If people stop using app due to coordination, add in-app messaging
+    - Consider "template messages" to make coordination easier
+    - Never require real-time sync (accept async coordination)
+  blockers: |
+    Is friction acceptable?
+    Do users feel safe sharing phone numbers?
+
+TRADE-003:
+  title: Identity verification
+  status: pending
+  decision: Optional anonymity
+  rationale: |
+    Question: "What if anonymity attracts bad actors or reduces trust?"
+    Optional anonymity is flexible (respects privacy) but riskier.
+    Bad actors can list fake items, photos of old food, contaminated items.
+    Unintended consequence: Food poisoning risk. Someone eats spoiled food,
+    gets sick, blames app. Legal liability.
+    Also: Trust erodes quickly. One bad experience = app is dead.
+    But requiring identity verification adds friction that kills adoption.
+  mitigations:
+    - Start with optional anonymity, monitor fraud closely
+    - Have reporting/blocking mechanism for bad actors
+    - Require photos + description to reduce fraud
+    - Clear TOS: users assume risk (legal protection, if possible)
+    - If fraud becomes problem, move to required identity verification
+  blockers: |
+    Does anonymity reduce trust?
+    What's your liability if someone gets food poisoning?
+
+TRADE-004:
+  title: Geographic scope
+  status: pending
+  decision: Neighborhood / 1-3 km radius (candidate)
+  rationale: |
+    Question: "Is neighborhood density sufficient for network effects?"
+    Walkable distance (1-3 km) is realistic for pickup. But unintended consequence:
+    If neighborhood is sparse (5 listings, 100 potential users), network feels dead.
+    Users won't join app that has no listings. This is the chicken-egg problem.
+    Also: Neighborhoods change (gentrification, seasonal vacations) — density isn't stable.
+    Summer = 20% of users go away = network effects disappear.
+  mitigations:
+    - Target dense urban neighborhoods first (where network effects work)
+    - Seed listings yourself before launch (give away your own items)
+    - Expand to nearby neighborhoods once you reach 50+ active listings
+    - Track seasonal variance; plan for summer (expect 20% drop in activity)
+  blockers: |
+    Can you reach critical mass in target neighborhood?
+    Is density sufficient year-round?
+
+TRADE-005:
+  title: Legal & food safety liability
+  status: pending
+  decision: TBD - user-responsible approach
+  rationale: |
+    Question: "What's your legal liability if food causes harm?"
+    Minimal oversight (user responsible) is simplest, but risky.
+    Someone lists spoiled food, someone else gets food poisoning,
+    they sue you (not the lister). TOS might not protect you.
+    Unintended consequence: One incident = reputation destroyed + legal fees.
+    Also: Good Samaritan laws vary by location (some protect, some don't).
+    Operating in gray zone until forced to deal with it.
+  mitigations:
+    - Consult lawyer BEFORE launch on food liability
+    - Research Good Samaritan laws in target area
+    - Strong TOS (users assume all risk — though might not hold)
+    - Require photos + expiry dates (creates accountability)
+    - Consider liability insurance before launch
+  blockers: |
+    Can you launch without lawyers?
+    Do Good Samaritan laws protect you?
+
+TRADE-INTEGRATION:
+  title: Ecosystem integration with Manage Perishables
+  status: pending
+  decision: TBD - auto-list expiring items?
+  rationale: |
+    Question: "Does auto-listing from Manage Perishables help or create chaos?"
+    Auto-listing items expiring soon could help reduce waste.
+    But unintended consequence: Users get surprised marketplace notifications.
+    They might not want items auto-listed without permission (feels invasive).
+    Also: Auto-listing creates household coordination problems.
+    Two people both using app, both trying to list/remove same item = conflict.
+  mitigations:
+    - Don't auto-list without explicit user permission
+    - Show confirmation before listing ("Ready to share cilantro?")
+    - Only auto-list if Trade has critical mass (don't bother if app is dead)
+    - For households: clarify ownership (whose item is this?)
+  blockers: |
+    Will auto-listing feel helpful or invasive?
+    Can you handle household coordination?
+
+TRADE-NETWORK_EFFECTS:
+  title: Network effects & viability
+  status: pending
+  decision: TBD - is this sustainable?
+  rationale: |
+    Question: "Why would users use this instead of Nextdoor/Facebook Groups?"
+    Incumbents have network effects. You're building on empty marketplace.
+    Unintended consequence: Even if you build perfectly, users might just use
+    existing platforms where their neighbors already are.
+    Also: Market might be too small. How many neighborhoods actually want this?
+    And if you monetize (ads, fees), you break the community vibe.
+  mitigations:
+    - Target specific neighborhood (dense, engaged community first)
+    - Measure if users prefer this over Facebook Groups
+    - Plan long-term: what makes this sticky vs. Nextdoor?
+    - Delay monetization until you have network effects
+  blockers: |
+    What differentiates this from Nextdoor?
+    Can you reach critical mass before users drift to Facebook?

@@ -1,0 +1,104 @@
+# Recommend Recipe: Decisions
+# Status: pending (to be locked), locked, shipped
+
+RECIPE-001:
+  title: Recipe source
+  status: pending
+  decision: Rasamalaysia only for Phase 1
+  rationale: |
+    Question: "Why would users use this instead of Google/ChatGPT?"
+    Malaysian-focused, detailed recipes. But unintended consequences:
+    (1) Single source = single point of failure. If Rasamalaysia changes site, parsing breaks.
+    (2) Limited recipes might create disappointing results ("only 47 recipes with chicken").
+    (3) Dependency risk: Legal issues (scraping) or partnership changes kill the feature.
+    (4) Network effects favor incumbents — why not just use Rasamalaysia directly?
+  mitigations:
+    - Verify recipes are parseable and stable BEFORE committing
+    - Have fallback plan if scraping breaks (manual curation?)
+    - Consider reaching out to Rasamalaysia for partnership/licensing
+    - Count recipes early: if <100 total, supplement with second source
+  blockers: |
+    Are recipes detailed enough to parse?
+    How many Rasamalaysia recipes exist?
+    What's your legal relationship with the site?
+
+RECIPE-002:
+  title: Ingredient matching
+  status: pending
+  decision: TBD - exact vs. fuzzy
+  rationale: |
+    Question: "What if 'fuzzy matching' creates nonsense recommendations?"
+    Exact = precise but rigid ("oil" doesn't match "coconut oil").
+    Fuzzy = flexible but wrong ("chicken breast" matches "chicken liver" matches "bone broth").
+    Unintended consequence: Bad matches erode trust. If user gets a few garbage recipes,
+    they stop using the feature entirely.
+    Also: Semantic matching requires understanding ingredient hierarchies,
+    which is complex and fragile.
+  mitigations:
+    - Start with exact matching (safe, boring, but reliable)
+    - Build feedback loop: user can report "this doesn't work"
+    - Only add fuzzy matching if you can curate the hierarchy
+    - Test extensively before shipping
+  blockers: |
+    Should "chicken breast" match "chicken"?
+    Can you build a reliable ingredient hierarchy?
+
+RECIPE-003:
+  title: Recommendations
+  status: pending
+  decision: Real-time (update as you type)
+  rationale: |
+    Question: "Does real-time create analysis paralysis or just right?"
+    Real-time immediate feedback. But unintended consequence:
+    If adding "spice" shows 5000 recipes, users get overwhelmed.
+    They can't decide and cook nothing (analysis paralysis).
+    Also: Real-time requires fast backend — slow response = broken UX.
+  mitigations:
+    - Limit results to top 20-30 (not all 200+)
+    - Add "Search" button as fallback if real-time feels overwhelming
+    - Show match percentage so users understand filtering
+  blockers: |
+    Is real-time overwhelming, or just right?
+    How many results trigger decision paralysis?
+
+RECIPE-004:
+  title: Data collection & curation
+  status: pending
+  decision: TBD - scraping vs. manual vs. partnership
+  rationale: |
+    Question: "How will you maintain recipe data long-term?"
+    Scraping is fast but fragile (site changes break it).
+    Manual curation is reliable but doesn't scale.
+    Partnership is ideal but requires negotiation.
+    Unintended consequence: If you choose scraping and it breaks,
+    app becomes useless overnight with no way to recover.
+    If you choose manual, you'll burn out maintaining recipes.
+  mitigations:
+    - Test scraping stability before committing
+    - Have backup plan (manual curation) if scraping breaks
+    - Consider reaching out to Rasamalaysia for legitimate partnership
+    - Start with <100 recipes (manual), scale only if demand exists
+  blockers: |
+    Most sustainable approach for long-term?
+    What's Rasamalaysia's openness to partnership?
+
+RECIPE-INTEGRATION:
+  title: Ecosystem integration with Manage Perishables
+  status: pending
+  decision: TBD - auto-suggest recipes for expiring items?
+  rationale: |
+    Question: "Does this help use food, or create noise?"
+    Auto-suggesting recipes for cilantro expiring tomorrow could help.
+    But unintended consequence: If suggestions are bad (user hates cilantro recipes),
+    users feel pestered. They disable notifications from this feature,
+    which kills engagement.
+    Also: Suggestions only work if Recommend Recipe has critical mass.
+    If recipes are limited, suggestions feel useless.
+  mitigations:
+    - Don't auto-suggest without user opt-in
+    - Only enable if Recommend Recipe has 200+ recipes
+    - Let users control suggestion frequency
+    - Quality over quantity: only suggest if confidence is high
+  blockers: |
+    Will recipe suggestions help or annoy?
+    Do you have enough recipes to make suggestions useful?
