@@ -1,0 +1,81 @@
+# MVP Launch Checklist
+
+mvp_scope:
+  description: "Minimum viable product for the Trade Perishables marketplace"
+  target_date: null
+  status: "in_progress"
+
+acceptance_criteria:
+  - criterion: "Users can sign up with email and location"
+    status: null
+    flows: ["USER_ACCOUNT_LOCATION"]
+
+  - criterion: "Users can list items (Give Away, Trade, Group Buy)"
+    status: null
+    flows: ["CREATE_LISTING_GIVEAWAY", "CREATE_LISTING_TRADE", "CREATE_LISTING_GROUP_BUY"]
+
+  - criterion: "Users can upload photos and expiry dates"
+    status: null
+    flows: ["CREATE_LISTING_GIVEAWAY"]
+
+  - criterion: "Listings display with photos, expiry, and distance"
+    status: null
+    flows: ["BROWSE_SEARCH_LISTINGS"]
+
+  - criterion: "Users can search listings by item name"
+    status: null
+    flows: ["BROWSE_SEARCH_LISTINGS"]
+
+  - criterion: "Users can filter by listing type"
+    status: null
+    flows: ["BROWSE_SEARCH_LISTINGS"]
+
+  - criterion: "Listings geofenced to local area"
+    status: null
+    flows: ["BROWSE_SEARCH_LISTINGS"]
+    notes: "Requires geolocation implementation"
+
+  - criterion: "Users can contact listing creators"
+    status: null
+    flows: ["VIEW_LISTING_DETAIL"]
+
+  - criterion: "Flag system works for reporting abuse"
+    status: null
+    flows: ["VIEW_LISTING_DETAIL"]
+
+  - criterion: "User profiles show activity/reputation signals"
+    status: null
+    flows: ["USER_PROFILE"]
+
+  - criterion: "No in-app messaging required for MVP"
+    status: null
+    notes: "Users contact externally (email, phone)"
+
+excluded_from_mvp:
+  - "In-app messaging"
+  - "Map view for listings"
+  - "Ratings & reviews system"
+  - "Notifications for matching/interest"
+  - "Payment integration"
+  - "Manage Perishables integration (auto-list expiring items)"
+  - "Community features (verified neighborhoods, moderators, leaderboard)"
+  - "Advanced search (cuisine filtering, dietary preferences)"
+  - "Events & swap meets"
+
+core_flows_for_mvp:
+  - "USER_ACCOUNT_LOCATION"
+  - "CREATE_LISTING_GIVEAWAY"
+  - "CREATE_LISTING_TRADE"
+  - "CREATE_LISTING_GROUP_BUY"
+  - "BROWSE_SEARCH_LISTINGS"
+  - "VIEW_LISTING_DETAIL"
+  - "USER_PROFILE"
+
+notes: |
+  - MVP is web-only, no mobile apps
+  - Contact is external (email/phone), reducing MVP complexity
+  - No payment system or billing required
+  - Geofencing can be basic (zip code or simple radius)
+  - User profiles are minimal (activity counts, not detailed bios)
+  - Photo storage can be simple cloud storage (AWS S3, Cloudinary, etc.)
+  - Flag system can be basic (report → admin review)

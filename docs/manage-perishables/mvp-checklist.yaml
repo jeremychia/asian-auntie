@@ -1,0 +1,54 @@
+# MVP Launch Checklist
+
+mvp_scope:
+  description: "Minimum viable product for the Manage Perishables app"
+  target_date: null
+  status: "in_progress"
+
+acceptance_criteria:
+  - criterion: "Users can add items with photos and expiry dates"
+    status: null
+    flows: ["ADD_ITEM"]
+
+  - criterion: "Inventory displays sorted by expiry date with urgency badges"
+    status: null
+    flows: ["VIEW_DASHBOARD"]
+
+  - criterion: "Users receive notifications 3 days, 1 day, and 0 days before expiry"
+    status: null
+    flows: []
+    notes: "Notification flow not yet detailed in flows.yaml"
+
+  - criterion: "Users can mark items as used or delete them"
+    status: null
+    flows: ["MARK_AS_USED", "REMOVE_ITEM"]
+
+  - criterion: "Photos are stored and displayed with items"
+    status: null
+    flows: ["ADD_ITEM", "VIEW_DASHBOARD"]
+    notes: "Requires photo storage implementation"
+
+  - criterion: "Data persists locally (no cloud requirement for MVP)"
+    status: null
+    notes: "Requires local database implementation (SQLite, Realm, etc.)"
+
+excluded_from_mvp:
+  - "Consumption tracking (defer to v1.1)"
+  - "Household sharing"
+  - "Recipe integration"
+  - "Analytics"
+  - "Web dashboard"
+  - "Supermarket integration"
+  - "Advanced tracking (quantities, barcodes, locations)"
+
+core_flows_for_mvp:
+  - "ADD_ITEM"
+  - "VIEW_DASHBOARD"
+  - "MARK_AS_USED"
+  - "REMOVE_ITEM"
+
+notes: |
+  - The flows.yaml includes consumable/single-use item tracking, but this may be v1.1 scope
+  - Consider whether "Track consumption?" prompt in ADD_ITEM is MVP or v1.1
+  - Notification delivery requires platform-specific implementation (Push Kit for iOS, Firebase for Android)
+  - Local data persistence requires choosing a mobile database solution early

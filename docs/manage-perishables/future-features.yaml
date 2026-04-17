@@ -1,0 +1,100 @@
+# Future Features (v2+)
+
+future_features:
+  RECIPE_INTEGRATION:
+    name: Recipe Integration
+    priority: high
+    description: Suggest recipes based on items expiring soon and help users coordinate ingredients
+    features:
+      - Suggest recipes based on items expiring soon
+      - Link from recipe → required ingredients from inventory
+      - Cross off ingredients as you cook
+    open_questions:
+      - Which recipe APIs should we integrate with?
+      - How do we rank recipe suggestions by urgency vs. appeal?
+      - Should users be able to save favorite recipes?
+
+  ANALYTICS_INSIGHTS:
+    name: Analytics & Insights
+    priority: high
+    description: Track waste patterns, spending, and usage trends
+    features:
+      - Waste percentage by category ("You waste ~30% of dairy items")
+      - Item longevity trends ("Cilantro lasts 5 days on average for you")
+      - Spending over time
+      - Waste patterns by category
+    open_questions:
+      - How frequently should we surface these insights (weekly, monthly)?
+      - Should insights be aggregated by category or item?
+      - Should users be able to set waste reduction goals?
+
+  HOUSEHOLD_SHARING:
+    name: Household & Shared Inventory
+    priority: medium
+    description: Share inventory with household members and manage shared items
+    features:
+      - Share inventory with household members
+      - Conflict resolution (who used it?)
+      - Notifications for others when items are about to expire
+      - Per-member consumption tracking
+    open_questions:
+      - How should permissions work (read-only vs. edit)?
+      - How do we handle disputes about who used an item?
+      - Should removal reasons be attributed to specific household members?
+
+  SUPERMARKET_INTEGRATION:
+    name: Supermarket & Pricing Integration
+    priority: medium
+    description: Help users buy smarter and save money on groceries
+    features:
+      - Know current prices of items you frequently buy
+      - Shopping list generation ("You're out of milk, it's $3.99 at X store")
+      - Price alerts ("Milk is 50% off this week, you usually buy it")
+      - Best-by-date comparison shopping
+    open_questions:
+      - Which supermarkets/APIs should we start with?
+      - How often should we update prices?
+      - Should we integrate with existing shopping list apps?
+
+  ADVANCED_TRACKING:
+    name: Advanced Item Tracking
+    priority: medium
+    description: Track quantities, storage locations, categories, and barcodes
+    features:
+      - Quantity tracking ("3 jars of peanut butter")
+      - Item categories (Dairy, Produce, Pantry, etc.)
+      - Storage location tracking ("Fridge shelf 2")
+      - Barcode scanning for standard products
+    open_questions:
+      - Should barcodes auto-populate item name and category?
+      - How should users manage multiple quantities of the same item?
+      - Should storage locations have expiry date impacts (e.g., fridge vs. pantry)?
+
+  WEB_DASHBOARD:
+    name: Web Dashboard (Full Admin)
+    priority: medium
+    description: Full inventory management on desktop for power users
+    features:
+      - Full inventory management
+      - Bulk add/edit items
+      - Export inventory to CSV
+      - Advanced filtering and sorting
+      - Removal history and analytics
+    open_questions:
+      - Should web dashboard sync in real-time with mobile app?
+      - Should web-only features (exports, bulk ops) be available on mobile?
+      - How should we handle data conflicts between web and mobile?
+
+  TRADE_INTEGRATION:
+    name: Trade Perishables Integration
+    priority: low
+    description: Allow users to trade unopened items with neighbors
+    features:
+      - List unopened items for trade
+      - Browse items available nearby
+      - Notification when removing unopened items ("Want to list this for trade?")
+      - Integration with trade-perishables service
+    open_questions:
+      - What qualifies as "tradeable" (unopened only)?
+      - How do we handle packaging/storage verification?
+      - Should there be a rating system for traders?

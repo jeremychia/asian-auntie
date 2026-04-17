@@ -1,0 +1,122 @@
+# Future Features (v2+)
+
+future_features:
+  AUTO_INGREDIENT_RECOGNITION:
+    name: Auto-Ingredient Recognition
+    priority: high
+    description: Use OCR/vision to automatically detect ingredients from photos
+    features:
+      - Users take photo of fridge/cabinet
+      - OCR/vision detects labels and items
+      - Auto-populates ingredient list
+      - Manual editing allowed for corrections
+    open_questions:
+      - Which vision API should we use (Google Cloud Vision, AWS Rekognition, etc.)?
+      - How accurate is current OCR for food labels?
+      - Should we build a custom model for common ingredients?
+
+  REVIEWS_COMMUNITY:
+    name: Reviews & Community
+    priority: high
+    description: Allow users to share their cooking experiences and build community
+    features:
+      - Users write reviews with ratings (1-5 stars)
+      - Users upload photos of their cooked dish
+      - Community leaderboard (most-rated recipes, most-reviewed chefs)
+      - User profiles and following system
+    open_questions:
+      - How do we prevent spam/low-quality reviews?
+      - Should recipes have verified reviews (from actually cooking)?
+      - How should moderation work for user-generated content?
+
+  ADVANCED_RECOMMENDATIONS:
+    name: Advanced ML-Based Recommendations
+    priority: high
+    description: Use machine learning to improve recommendations
+    features:
+      - Machine learning: recommend recipes liked by users with similar tastes
+      - Dietary filters: show only vegetarian, vegan, gluten-free, etc.
+      - Cuisine filters: show only Thai, Malaysian, Vietnamese, etc.
+      - Difficulty level: filter by Easy/Medium/Hard
+    open_questions:
+      - What data points should drive the ML model (likes, cuisine preference, etc.)?
+      - How much user data do we need to train a good model?
+      - Should filtering be rule-based or ML-driven?
+
+  MULTI_SOURCE_EXPANSION:
+    name: Multi-Source Recipe Expansion
+    priority: medium
+    description: Expand recipe database beyond Rasamalaysia
+    features:
+      - Recipes from multiple food blogs and sources
+      - Verification process for new sources to ensure quality and authenticity
+      - Cultural authenticity badges (curated by community experts)
+    open_questions:
+      - Which sources should we prioritize (region, cuisine, quality)?
+      - How do we verify authenticity without overwhelming curators?
+      - Should we prioritize volume or quality?
+
+  MEAL_PLANNING:
+    name: Meal Planning
+    priority: medium
+    description: Help users plan meals and generate shopping lists
+    features:
+      - Save favorite recipes
+      - Generate weekly meal plan based on saved recipes
+      - Auto-generate shopping list from meal plan
+    open_questions:
+      - Should meal plans account for nutritional balance?
+      - How should we handle recipes with shared ingredients?
+      - Should meal planning integrate with grocery pricing?
+
+  PERISHABLES_INTEGRATION:
+    name: Integration with Manage Perishables
+    priority: medium
+    description: Connect recipe recommendations to pantry inventory
+    features:
+      - Pull ingredient list from perishables inventory
+      - "Cook this tonight" suggestions based on items expiring soon
+      - Check off ingredients as you use them
+    open_questions:
+      - How do we sync ingredient names between apps?
+      - Should expiring items highlight urgency in recipe suggestions?
+      - Should using an ingredient mark it as consumed in Manage Perishables?
+
+  RECIPE_PERSONALIZATION:
+    name: Recipe Personalization
+    priority: medium
+    description: Tailor recommendations to individual user preferences
+    features:
+      - User preferences (favorite cuisines, dietary restrictions)
+      - Learning: improve recommendations based on likes/dislikes
+      - "Saved recipes" collection
+    open_questions:
+      - How should users set preferences (onboarding, settings, implicit)?
+      - Should preferences override the matching algorithm?
+      - How quickly should the app adapt to changing preferences?
+
+  MOBILE_APPS:
+    name: Native Mobile Apps
+    priority: low
+    description: Expand from web to native iOS and Android apps
+    features:
+      - Native iOS/Android apps with same features as web
+      - Offline recipe browsing
+      - Shareable recipe cards with photos
+    open_questions:
+      - Should mobile be React Native, Flutter, or separate native?
+      - How should offline sync work?
+      - Should app-only features (camera access, etc.) be added?
+
+  RECIPE_SAVING:
+    name: Recipe Saving & Collections
+    priority: low
+    description: Allow users to organize and curate their favorite recipes
+    features:
+      - Bookmark/save favorite recipes
+      - Create collections (e.g., "Quick weeknight meals", "Impress guests")
+      - Share collections with friends
+    open_questions:
+      - Should collections be public or private?
+      - Should users be able to collaborate on collections?
+      - How do we prevent recipe hoarding?

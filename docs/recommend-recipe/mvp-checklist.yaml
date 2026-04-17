@@ -1,0 +1,69 @@
+# MVP Launch Checklist
+
+mvp_scope:
+  description: "Minimum viable product for the Recommend Recipe app"
+  target_date: null
+  status: "in_progress"
+
+acceptance_criteria:
+  - criterion: "Users can input ingredients via text input with autocomplete"
+    status: null
+    flows: ["INGREDIENT_INPUT"]
+
+  - criterion: "Recipe database contains Rasamalaysia recipes with ingredients parsed"
+    status: null
+    notes: "Requires recipe scraping/data pipeline"
+
+  - criterion: "Recommendations display in real-time as ingredients are added"
+    status: null
+    flows: ["RECIPE_RECOMMENDATION"]
+
+  - criterion: "Recipes ranked by ingredient match percentage"
+    status: null
+    flows: ["RECIPE_RECOMMENDATION"]
+
+  - criterion: "Each recipe displays source, link, ingredients, and instructions"
+    status: null
+    flows: ["RECIPE_DETAIL"]
+
+  - criterion: "Users can like/dislike recipes"
+    status: null
+    flows: ["LIKE_DISLIKE_RATING"]
+
+  - criterion: "Ratings stored locally (no backend required for MVP)"
+    status: null
+    notes: "Requires local storage implementation"
+
+  - criterion: "'Go to Source' link works and links to original recipe"
+    status: null
+    flows: ["RECIPE_DETAIL"]
+
+  - criterion: "Mobile-friendly responsive design"
+    status: null
+    notes: "Design/frontend requirement"
+
+excluded_from_mvp:
+  - "Auto-ingredient recognition (OCR/vision)"
+  - "Reviews & community features"
+  - "Advanced ML-based recommendations"
+  - "Dietary/cuisine filtering"
+  - "Difficulty level filtering"
+  - "Multi-source recipe expansion"
+  - "Meal planning"
+  - "Integration with Manage Perishables (v1)"
+  - "User preferences & personalization"
+  - "Mobile native apps"
+  - "Recipe saving/bookmarking"
+  - "Social sharing"
+
+core_flows_for_mvp:
+  - "INGREDIENT_INPUT"
+  - "RECIPE_RECOMMENDATION"
+  - "RECIPE_DETAIL"
+  - "LIKE_DISLIKE_RATING"
+
+notes: |
+  - MVP is web-only, single-source (Rasamalaysia)
+  - Ratings are preference signals for future v2+ ML improvements
+  - No user accounts required for MVP
+  - Consider early on: recipe data quality and freshness strategy

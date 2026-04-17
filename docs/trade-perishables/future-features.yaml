@@ -1,0 +1,138 @@
+# Future Features (v2+)
+
+future_features:
+  MESSAGING_CHAT:
+    name: In-App Messaging & Chat
+    priority: high
+    description: Reduce friction of external email/phone coordination
+    features:
+      - Direct messaging between traders
+      - Conversation history in one place
+      - Notification when message received
+    open_questions:
+      - Should messages auto-delete after trade is complete?
+      - How should we handle disputes (chat log as evidence)?
+      - Should chat be moderated for abuse?
+
+  MAP_VIEW:
+    name: Map View & Geospatial Search
+    priority: high
+    description: Help users visualize and discover nearby listings
+    features:
+      - See listings on a map
+      - Geospatial search (within X km radius)
+      - Pick up points marked on map
+    open_questions:
+      - Should map be the default view or secondary?
+      - How do we handle privacy (exact addresses vs. general area)?
+      - Should pickup points be customizable?
+
+  RATINGS_REVIEWS:
+    name: Ratings & Reviews System
+    priority: high
+    description: Build trust and reputation in the community
+    features:
+      - 1-5 star ratings per trade
+      - Written reviews
+      - Reputation badges (e.g., "Trusted trader")
+    open_questions:
+      - Should ratings be bidirectional (both parties rate each other)?
+      - How do we prevent fake reviews or rating manipulation?
+      - Should low ratings lead to account suspension?
+
+  NOTIFICATIONS:
+    name: Smart Notifications
+    priority: high
+    description: Keep users engaged and informed of relevant activity
+    features:
+      - New listings matching your interests
+      - Someone interested in your item
+      - Group buy reaching required shares
+      - Message notifications
+    open_questions:
+      - How do we avoid notification fatigue?
+      - Should users define notification preferences?
+      - Should notifications be opt-in or opt-out?
+
+  PAYMENT_INTEGRATION:
+    name: Payment Integration
+    priority: medium
+    description: Reduce cash exchange and enable split payments
+    features:
+      - Optional, trust-based payments for trades
+      - Split bills for group buys
+      - Payment history and receipt generation
+    open_questions:
+      - Should we use Stripe, PayPal, or other?
+      - Should payment be mandatory or optional?
+      - How do we handle disputes/refunds?
+
+  PERISHABLES_INTEGRATION:
+    name: Manage Perishables Integration
+    priority: medium
+    description: Auto-suggest listings of items expiring soon
+    features:
+      - Integrate with "Manage Perishables" app
+      - Auto-list items expiring soon (with user approval)
+      - Notify network when something is about to expire
+      - One-click listing from Manage Perishables
+    open_questions:
+      - How often should we suggest expiring items (daily, real-time)?
+      - Should auto-listing be opt-in or opt-out?
+      - Should we let users set an "auto-list expiring items" rule?
+
+  COMMUNITY_FEATURES:
+    name: Community Features & Trust System
+    priority: medium
+    description: Strengthen community bonds and moderation
+    features:
+      - Verified neighborhoods (verify resident status)
+      - Community moderators
+      - Leaderboard (most active traders)
+      - Community events (swap meets, bulk buying groups)
+    open_questions:
+      - How do we verify neighborhood status (address verification)?
+      - Should moderators be elected or appointed?
+      - Should events be managed in-app or externally?
+
+  ADVANCED_SEARCH:
+    name: Advanced Search & Filtering
+    priority: medium
+    description: Help users find exactly what they need
+    features:
+      - Filter by cuisine type (if integrated with Recommend Recipe)
+      - Dietary preferences (vegan, organic, etc.)
+      - Quality/condition filters
+      - Save search filters for future browsing
+    open_questions:
+      - How do users specify dietary preferences (tags, keywords)?
+      - Should we auto-categorize items or rely on user input?
+      - How do we prevent over-filtering and hiding listings?
+
+  BULK_OPERATIONS:
+    name: Bulk Operations & Management
+    priority: low
+    description: Help power users manage multiple listings
+    features:
+      - Bulk update listing status (Available → Claimed)
+      - Bulk archive old listings
+      - Listing analytics (views, interest count, etc.)
+      - Export trade history
+    open_questions:
+      - Should bulk operations be admin-only or for all users?
+      - What analytics would help users most?
+      - Should listing history be private or shareable?
+
+  MOBILE_APPS:
+    name: Native Mobile Apps
+    priority: low
+    description: Reach users where they are (mobile-first)
+    features:
+      - Native iOS/Android apps
+      - Camera integration for easy photo uploads
+      - Push notifications
+      - Offline browsing
+    open_questions:
+      - Should mobile be React Native, Flutter, or separate native?
+      - How should offline sync work?
+      - Should mobile have app-only features?

@@ -6,9 +6,9 @@ Quick reference for all docs. Start here.
 
 **New to the project?** Read in this order:
 1. [Problem statement: Manage Perishables](manage-perishables/problem-statement.md) — What are we solving?
-2. [Decisions: Manage Perishables](manage-perishables/decisions.yaml) — What did we decide?
-3. [Features: Manage Perishables](manage-perishables/features.md) — What are we building?
-4. [Flows: Manage Perishables](manage-perishables/flows.yaml) — How do users actually use this?
+2. [MVP Checklist: Manage Perishables](manage-perishables/mvp-checklist.yaml) — What are we building?
+3. [Flows: Manage Perishables](manage-perishables/flows.yaml) — How do users interact with features?
+4. [Decisions: Manage Perishables](manage-perishables/decisions.yaml) — Why did we choose this approach?
 
 **Want to understand a specific feature?** Go to its folder:
 - [Manage Perishables](manage-perishables/README.md)
@@ -26,8 +26,8 @@ Quick reference for all docs. Start here.
 - [Flows](manage-perishables/flows.yaml) — Happy paths, decision points & edge cases
 
 ### Developer
-- [Features](manage-perishables/features.md) — What to build & acceptance criteria
-- [Flows](manage-perishables/flows.yaml) — How users interact with the feature
+- [MVP Checklist](manage-perishables/mvp-checklist.yaml) — What to build & acceptance criteria
+- [Flows](manage-perishables/flows.yaml) — Step-by-step user interactions, edge cases, data specs
 - [Decisions](manage-perishables/decisions.yaml) — Why we made choices & what could go wrong
 - [Open questions](manage-perishables/questions.yaml) — Known unknowns to design around
 
@@ -49,8 +49,8 @@ Quick reference for all docs. Start here.
 - [Questions](manage-perishables/questions.yaml) — Critical questions organized by first principles, inversion, & failure modes
 
 ### Building Features
-- [Flows](manage-perishables/flows.yaml) — Happy paths, decision points, edge cases
-- [Features](manage-perishables/features.md) — Detailed acceptance criteria
+- [MVP Checklist](manage-perishables/mvp-checklist.yaml) — Acceptance criteria & scope
+- [Flows](manage-perishables/flows.yaml) — Happy paths, decision points, edge cases, data specs
 
 ### Evaluating Scope
 - [Questions](manage-perishables/questions.yaml) — What we're still debating (organized by impact)
@@ -68,8 +68,9 @@ feature/
 ├── problem-statement.md   (why, who, what problem)
 ├── decisions.yaml         (locked decisions + rationale + unintended consequences)
 ├── questions.yaml         (open questions organized by first principles & failure modes)
-├── flows.yaml             (user flows: happy path, decision points, edge cases)
-└── features.md            (detailed specs + acceptance criteria)
+├── flows.yaml             (user flows: happy path, decision points, edge cases, data specs)
+├── mvp-checklist.yaml     (MVP scope + acceptance criteria)
+└── future-features.yaml   (v2+ roadmap with priorities)
 ```
 
 **Master docs** (not in feature folders):
@@ -86,13 +87,14 @@ feature/
 → Once decided, update `decisions.yaml` with rationale + unintended consequences
 
 ### If you're building a feature:
-→ Read `features.md` for acceptance criteria
-→ Reference `flows.yaml` for the happy path
+→ Read `mvp-checklist.yaml` for acceptance criteria
+→ Reference `flows.yaml` for step-by-step interactions, edge cases, data specs
 → Check `decisions.yaml` for why we chose this approach
 → Review `questions.yaml` for known risks to design around
 
 ### If you're clarifying scope:
-→ Check `features.md` for what's in MVP
+→ Check `mvp-checklist.yaml` for what's in MVP & what's excluded
+→ Check `future-features.yaml` for v2+ roadmap
 → Check `questions.yaml` for what's deferred and why
 → Check `decisions.yaml` for why we chose scope (including risks)
 
@@ -124,17 +126,17 @@ feature/
 
 ## Current Status
 
-| Feature | Problem | Decisions | Features | Flows | Questions |
-|---------|---------|-----------|----------|-------|-----------|
-| Manage Perishables | ✅ | 5 locked | ✅ | ✅ | 25 |
-| Recommend Recipe | ✅ | 4 locked | ✅ | ✅ | 28 |
-| Trade Perishables | ✅ | 5 locked | ✅ | ✅ | 39 |
+| Feature | Problem | MVP | Flows | Decisions | Future | Questions |
+|---------|---------|-----|-------|-----------|--------|-----------|
+| Manage Perishables | ✅ | ✅ | ✅ | 5 locked | ✅ | 25 |
+| Recommend Recipe | ✅ | ✅ | ✅ | 4 locked | ✅ | 28 |
+| Trade Perishables | ✅ | ✅ | ✅ | 5 locked | ✅ | 39 |
 
-**Next steps**:
-1. Choose 3 "core blockers" per feature to answer first
-2. Build with decisions + flows as your spec
-3. Learn from implementation, update decisions with real findings
+**How to move forward**:
+1. For implementation: Use `mvp-checklist.yaml` + `flows.yaml` as the spec
+2. For scope decisions: Reference `mvp-checklist.yaml` to see what's in/out
+3. For learning & iteration: Update `decisions.yaml` with real-world findings as you build
 
 ---
 
-*Last updated: 2026-04-17*
+*Last updated: 2026-04-17 — Restructured: removed features.md, added mvp-checklist.yaml & future-features.yaml*
