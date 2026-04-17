@@ -1,8 +1,8 @@
 # Manage Perishables: User Flows
 
 flows:
-  ADD_ITEM:
-    name: Add Item
+  ADD_INDIVIDUAL_ITEM:
+    name: Add Individual Item
     goal: Add an item to inventory
     happy_path:
       - User taps "+" button
@@ -11,7 +11,7 @@ flows:
       - System sends photo to image recognition API (or barcode scanner)
       - System auto-fills: Item name, item type, estimated shelf life
       - User taps "Confirm" to accept auto-fill (or edits if needed)
-      - If consumable: offer "Track consumption?" toggle (default: on)
+      - If consumable in parts: offer "Track consumption?" toggle (default: on)
       - User confirms toggle or leaves default
       - User taps "Save"
       - Item appears in inventory list sorted by expiry date
@@ -52,6 +52,58 @@ flows:
       - For estimated shelf life: use generic (e.g., "2 weeks from now") or specific dates from package?
       - What's the fallback UX if user truly rejects all auto-suggestions?
       - Should we cache recognition results for common items (e.g., "soy sauce")  to reduce API calls?
+
+  ADD_FROM_RECEIPT:
+    name: Add Items from Receipt
+    goal: Bulk add multiple items to inventory by scanning/uploading a receipt
+    happy_path:
+      - User taps "Add from receipt" button
+      - System opens camera (or shows photo/file picker)
+      - User snaps photo of receipt (or uploads receipt image)
+      - System sends receipt to OCR API to extract item list
+      - System parses: Item names, quantities, prices, and dates (purchase date, expiry if visible)
+      - System displays parsed items in a list for user review and confirmation
+      - User can edit/delete items from the list before adding
+      - User taps "Confirm and Add"
+      - System attempts to run image recognition on each item for auto-fill (shelf life, type)
+      - For items without recognition: show minimal form with item name and allow expiry date entry
+      - Items added to inventory
+      - Toast notification: "Added X items from receipt"
+    fallback_path:
+      - If OCR fails or receipt is unclear
+      - System asks user to manually list items
+      - User enters items one-by-one (name, quantity, optionally expiry date)
+      - Proceed as happy_path from confirmation onward
+    decision_points:
+      - If receipt OCR succeeds: show parsed item list for review
+      - If OCR fails: fall back to manual entry with guided form
+      - If expiry date visible on receipt: use it, allow user override
+      - If expiry date not visible: offer generic shelf-life suggestion based on item type
+      - For quantities >1: create individual items or single item with quantity tracker?
+      - If item already in inventory: show warning, allow user to skip or create duplicate
+    edge_cases:
+      - Receipt image is blurry: ask "Can't read clearly. Try again or enter manually?"
+      - OCR parses incorrect items: user can delete/edit before confirming
+      - Receipt is from store with unknown product database: fall back to image recognition per item
+      - User uploads non-receipt image: show error "Doesn't look like a receipt. Try again."
+      - User cancels mid-flow: discard parsed items or save as draft?
+      - Multiple receipts uploaded: batch process or one-at-a-time?
+    data_collected:
+      - Receipt photo (JPEG)
+      - Receipt purchase date (parsed from receipt if visible)
+      - Parsed item list (name, quantity, price if visible)
+      - User edits to parsed items (additions, deletions, corrections)
+      - Final items added (with recognition confidence scores)
+      - OCR confidence score for receipt parse
+      - Timestamp of bulk add
+    open_questions:
+      - Which OCR API? (Google Cloud Vision, AWS Textract, Tesseract, commercial solution?)
+      - For quantities: should 2x soy sauce create 2 separate items or 1 item with qty=2?
+      - Should we match receipt items against a product database (e.g., UPC lookup)?
+      - How do we determine expiry dates for items where it's not on receipt?
+      - Should we store receipt metadata (date, store, total price) for analytics/insights?
+      - Should users be able to retry OCR if first parse is bad?
+      - Future: Integration with grocery delivery apps (scan order confirmation instead of receipt)?
 
   VIEW_DASHBOARD:
     name: View Dashboard
