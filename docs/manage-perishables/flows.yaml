@@ -6,40 +6,52 @@ flows:
     goal: Add an item to inventory
     happy_path:
       - User taps "+" button
-      - System shows form with Photo, Name, Expiry Date fields
-      - User takes photo (or skips)
-      - User types item name (e.g., "Tamarind paste")
-      - User enters expiry date (date picker or manual entry)
-      - System auto-detects item type (consumable vs. single-use)
+      - System opens camera (or shows photo picker)
+      - User snaps photo of item (or selects from gallery)
+      - System sends photo to image recognition API (or barcode scanner)
+      - System auto-fills: Item name, item type, estimated shelf life
+      - User taps "Confirm" to accept auto-fill (or edits if needed)
       - If consumable: offer "Track consumption?" toggle (default: on)
       - User confirms toggle or leaves default
       - User taps "Save"
       - Item appears in inventory list sorted by expiry date
+    fallback_path:
+      - If image recognition fails or user skips photo
+      - System shows minimal form: Item name (required), Expiry date (required)
+      - User types item name and enters expiry date
+      - Proceed as happy_path from confirmation onward
     decision_points:
-      - If user skips photo: save without image, use generic icon
-      - If user enters past expiry date: warn "This expired on X, are you sure?"
-      - If user enters today's date: flag as "Use today" alert
+      - If image recognition succeeds: show auto-filled name, type, estimated expiry
+      - If image recognition fails: fall back to manual entry form
+      - If barcode scanned: look up product database for exact name and shelf life
+      - If estimated expiry seems off (e.g., "use by 1 year from now"): allow user override
       - If item is detected as consumable (sauce, oil, spice, condiment): show "Track consumption?" prompt
       - If user opts in to consumption tracking: enable progress tracking on item detail
+      - User accepts auto-fill without editing: instant save, minimal friction
+      - User edits any field: validate before saving
     edge_cases:
-      - User takes photo then changes mind: show "Discard photo?" warning
-      - User navigates away mid-entry: save draft or discard?
+      - Image recognition returns wrong item: user can edit name/type before saving
+      - Barcode lookup fails: fall back to image recognition, then manual entry
+      - User skips photo entirely: fall back to manual entry (minimal form)
+      - User navigates away mid-entry: save draft or discard? (consider: too much friction?)
       - Duplicate item names: allow (user might have multiple jars)
-      - User enters expiry in different format (e.g., "2 weeks"): parse or ask to clarify?
       - User enables tracking then changes mind: allow toggle on item detail page
+      - Photo is blurry/unclear: ask "Can't read clearly. Try again or enter manually?"
     data_collected:
       - Item name (required)
       - Expiry date (required, ISO format)
-      - Photo (optional, JPEG)
+      - Photo (required, JPEG — triggers recognition)
       - Item type (auto-detected: sauce, oil, spice, condiment, produce, dairy, other)
       - Track consumption flag (boolean, default: true for consumables, false for single-use)
+      - Recognition confidence score (for debugging/learning)
       - Timestamp added
     open_questions:
-      - Photo format: date picker vs. text entry?
-      - Should we suggest item names via autocomplete?
-      - Should we estimate expiry for items without printed dates?
-      - What item types should default to consumption tracking?
-      - Should consumption tracking be per-category or user-configurable?
+      - Which image recognition API? (Google Vision, OpenAI, custom ML model?)
+      - Should we implement barcode scanning before or after image recognition?
+      - How accurate do we need auto-fill to be for MVP? (80%? 90%?)
+      - For estimated shelf life: use generic (e.g., "2 weeks from now") or specific dates from package?
+      - What's the fallback UX if user truly rejects all auto-suggestions?
+      - Should we cache recognition results for common items (e.g., "soy sauce")  to reduce API calls?
 
   VIEW_DASHBOARD:
     name: View Dashboard
