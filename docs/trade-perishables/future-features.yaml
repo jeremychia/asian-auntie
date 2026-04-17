@@ -1,138 +1,113 @@
 # Future Features (v2+)
 
 future_features:
-  MESSAGING_CHAT:
-    name: In-App Messaging & Chat
+  IN_APP_MESSAGING:
+    name: In-App Messaging
     priority: high
-    description: Reduce friction of external email/phone coordination
+    phase: v2
+    description: Replace external coordination with in-app chat between giver and receiver
+    rationale: |
+      MVP relies on external coordination (WhatsApp, SMS) after the giver chooses to respond.
+      This works at pilot scale but creates friction: contact info must be shared externally,
+      no record of coordination in the app, no nudges if communication stalls.
+      In-app messaging solves all three while keeping both parties' personal contact private.
     features:
-      - Direct messaging between traders
-      - Conversation history in one place
-      - Notification when message received
+      - Simple thread per listing (giver + receiver only)
+      - System message on match: "Someone wants your [item] — say hi!"
+      - Notification on new message
+      - Thread auto-archives after listing is marked claimed or expired
     open_questions:
-      - Should messages auto-delete after trade is complete?
-      - How should we handle disputes (chat log as evidence)?
-      - Should chat be moderated for abuse?
+      - Should message history persist after a listing closes?
+      - How do we handle message abuse (moderation at scale)?
+      - Should we support multiple interested parties messaging the giver simultaneously?
 
-  MAP_VIEW:
-    name: Map View & Geospatial Search
-    priority: high
-    description: Help users visualize and discover nearby listings
-    features:
-      - See listings on a map
-      - Geospatial search (within X km radius)
-      - Pick up points marked on map
-    open_questions:
-      - Should map be the default view or secondary?
-      - How do we handle privacy (exact addresses vs. general area)?
-      - Should pickup points be customizable?
-
-  RATINGS_REVIEWS:
-    name: Ratings & Reviews System
-    priority: high
-    description: Build trust and reputation in the community
-    features:
-      - 1-5 star ratings per trade
-      - Written reviews
-      - Reputation badges (e.g., "Trusted trader")
-    open_questions:
-      - Should ratings be bidirectional (both parties rate each other)?
-      - How do we prevent fake reviews or rating manipulation?
-      - Should low ratings lead to account suspension?
-
-  NOTIFICATIONS:
-    name: Smart Notifications
-    priority: high
-    description: Keep users engaged and informed of relevant activity
-    features:
-      - New listings matching your interests
-      - Someone interested in your item
-      - Group buy reaching required shares
-      - Message notifications
-    open_questions:
-      - How do we avoid notification fatigue?
-      - Should users define notification preferences?
-      - Should notifications be opt-in or opt-out?
-
-  PAYMENT_INTEGRATION:
-    name: Payment Integration
+  TRADE_BARTER:
+    name: Trade / Barter Listings
     priority: medium
-    description: Reduce cash exchange and enable split payments
-    features:
-      - Optional, trust-based payments for trades
-      - Split bills for group buys
-      - Payment history and receipt generation
+    phase: v2
+    description: Allow users to offer item-for-item exchanges (not just give-aways)
+    rationale: |
+      "I have tamarind paste, I'd love gochujang" is a natural community exchange.
+      Barter is more complex than give-away (two-way logistics, value perception, coordination)
+      but builds on the same trust infrastructure.
+    requirements:
+      - Give-away loop must be proven working before adding trade complexity
+      - Both items must be sealed/unopened (same safety rules as give-away)
+      - No financial component — pure item exchange
+      - In-app messaging (above) should be shipped first
     open_questions:
-      - Should we use Stripe, PayPal, or other?
-      - Should payment be mandatory or optional?
-      - How do we handle disputes/refunds?
+      - How does "I want to trade for X" get expressed in a listing?
+      - Should the receiver offer a specific item, or a category?
+      - How do we handle asymmetric value perception ("my miso is worth more than your fish sauce")?
 
-  PERISHABLES_INTEGRATION:
-    name: Manage Perishables Integration
+  GROUP_BUY:
+    name: Group Buy / Split Bulk Purchases
     priority: medium
-    description: Auto-suggest listings of items expiring soon
-    features:
-      - Integrate with "Manage Perishables" app
-      - Auto-list items expiring soon (with user approval)
-      - Notify network when something is about to expire
-      - One-click listing from Manage Perishables
+    phase: v2
+    description: Coordinate before buying to split a bulk purchase among community members
+    rationale: |
+      Different timing to give-away: coordination happens before purchase, not after.
+      Solves the "supermarket sells 1kg of tamarind but I only need 200g" problem at source.
+    requirements:
+      - Requires in-app messaging or coordination tool
+      - No payment processing in app — participants handle split externally (e.g., PayNow)
+      - Clear initiator/organiser role (who buys, who collects payment)
     open_questions:
-      - How often should we suggest expiring items (daily, real-time)?
-      - Should auto-listing be opt-in or opt-out?
-      - Should we let users set an "auto-list expiring items" rule?
+      - How does the organiser manage who has paid before purchasing?
+      - What happens if not enough people join (organiser is stuck with full quantity)?
+      - Should the app handle payment, or explicitly stay out of it?
 
-  COMMUNITY_FEATURES:
-    name: Community Features & Trust System
+  EXPANDED_COMMUNITY_SCOPE:
+    name: Expand Beyond Pilot Community
     priority: medium
-    description: Strengthen community bonds and moderation
-    features:
-      - Verified neighborhoods (verify resident status)
-      - Community moderators
-      - Leaderboard (most active traders)
-      - Community events (swap meets, bulk buying groups)
+    phase: v2
+    description: Open beyond the initial pilot to a broader neighborhood or city
+    rationale: |
+      Pilot validates the give-away loop. Expansion brings network effects that make
+      the feature more useful (more listings, more matches, faster claims).
+    requirements:
+      - Pilot success threshold must be met (5+ completed give-aways)
+      - Legal review complete for target jurisdictions
+      - Moderation plan in place for larger community
+      - Community code model replaced with neighborhood-based verification or address check
     open_questions:
-      - How do we verify neighborhood status (address verification)?
-      - Should moderators be elected or appointed?
-      - Should events be managed in-app or externally?
+      - What's the right expansion unit? (same building -> same estate -> same postal code -> city)
+      - How do we verify neighborhood membership without full identity verification?
+      - Should communities be self-organized (any group can create one) or geography-based?
 
-  ADVANCED_SEARCH:
-    name: Advanced Search & Filtering
-    priority: medium
-    description: Help users find exactly what they need
-    features:
-      - Filter by cuisine type (if integrated with Recommend Recipe)
-      - Dietary preferences (vegan, organic, etc.)
-      - Quality/condition filters
-      - Save search filters for future browsing
-    open_questions:
-      - How do users specify dietary preferences (tags, keywords)?
-      - Should we auto-categorize items or rely on user input?
-      - How do we prevent over-filtering and hiding listings?
-
-  BULK_OPERATIONS:
-    name: Bulk Operations & Management
+  PARTIAL_QUANTITIES:
+    name: Partial Quantity Give-Aways
     priority: low
-    description: Help power users manage multiple listings
-    features:
-      - Bulk update listing status (Available → Claimed)
-      - Bulk archive old listings
-      - Listing analytics (views, interest count, etc.)
-      - Export trade history
+    phase: v3+
+    description: Allow give-away of opened items (partial quantities) with hygiene design
+    rationale: |
+      The sealed-only rule handles the hygiene and verification problems for MVP.
+      Partial quantities (e.g., 600g of tamarind paste) are the most common real-world
+      give-away scenario — but require solving: container hygiene, quantity verification,
+      and receiver trust in item condition.
+    requirements:
+      - Hygiene guidelines for transferring partial quantities (suitable containers, sealing)
+      - Photo of opened item + quantity estimate required
+      - Stronger disclaimer for opened items
+      - Legal review of liability for opened item transfers
     open_questions:
-      - Should bulk operations be admin-only or for all users?
-      - What analytics would help users most?
-      - Should listing history be private or shareable?
+      - How does the giver communicate quantity accurately without weighing?
+      - Should opened items have a shorter auto-expiry window?
+      - Is there a meaningful category distinction (liquid vs. dry vs. paste) for guidance?
 
-  MOBILE_APPS:
-    name: Native Mobile Apps
+  REPUTATION_SYSTEM:
+    name: Reputation and Trust Scores
     priority: low
-    description: Reach users where they are (mobile-first)
+    phase: v2 (after expansion)
+    description: Build trust signals for users beyond the pilot community
+    rationale: |
+      Within the pilot, neighbors know each other — reputation is social, not algorithmic.
+      When expanding to strangers, reputation scores become necessary trust infrastructure.
     features:
-      - Native iOS/Android apps
-      - Camera integration for easy photo uploads
-      - Push notifications
-      - Offline browsing
+      - Simple "successful give-aways" count per user (not star ratings)
+      - "Verified community member" badge after X completed give-aways
+      - No written reviews in v2 (too much moderation overhead)
     open_questions:
-      - Should mobile be React Native, Flutter, or separate native?
-      - How should offline sync work?
-      - Should mobile have app-only features?
+      - Should reputation be give-away count, or something more nuanced?
+      - How do we prevent gaming (fake give-aways to inflate score)?
+      - Should low-reputation users have listing restrictions?

@@ -59,8 +59,19 @@ Users have leftover or available ingredients at home and want to know what Asian
 - Users care deeply about **recipe source** — trust is earned, not given
 - **Authenticity** matters — they want real recipes from real sources, not LLM inventions
 - **Ingredient matching** is the entry point — "what can I cook?" is the primary question
-- **Community aspect** is desirable — seeing what others cooked and their reviews would build trust
+- **Partial matches are useful** — "you have 6 of 8 ingredients" is actionable information
+- **Inventory integration** removes double-entry friction — users already logged their pantry
+- **Community aspect** is desirable long-term but introduces moderation complexity — deferred to v3+
+- **Corpus breadth vs. depth tension**: a narrow, well-curated corpus is more trustworthy than a broad,
+  inconsistent one — better to cover SE Asian well than all of Asia poorly
+
+## Revised Scope Constraints
+
+- Phase 1 recipe source: Malaysian + SE Asian only — stated explicitly in UI to set expectations
+- Recipe instructions are never displayed inline — always linked to original source (copyright)
+- Community features not in scope until moderation and accounts infrastructure exists
+- Feedback mechanism is structured (reason-based), not binary like/dislike
 
 ---
 
-*Last updated: 2026-04-16*
+*Last updated: 2026-04-17*

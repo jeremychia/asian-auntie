@@ -1,84 +1,132 @@
 # Trade Perishables: User Flows
 
+# MVP scope: Give Away only, sealed/unopened items only, within a pilot community.
+# Trade and Group Buy are future features — not designed here yet.
+
 flows:
   CREATE_GIVEAWAY_LISTING:
     name: Create Give Away Listing
-    goal: List an excess item I'm giving away
-    happy_path:
-      - User taps "List New Item"
-      - System shows type selector [Give Away | Trade | Group Buy]
-      - User selects "Give Away"
-      - Form appears [Photo | Name | Expiry Date | Notes | Location]
-      - User fills out (photo & expiry optional, name required)
-      - User taps "Post"
-      - Listing appears in marketplace, visible to neighbors
+    goal: List a sealed item I'm giving away before it expires — in under 2 minutes
+    design_constraints:
+      - Sealed/unopened items only (enforced by listing form — user confirms this)
+      - Photo is required — it's the primary trust signal for sealed items
+      - Purchase date and expiry date both required — gives receiver the full picture
+      - No partial quantities, no opened items
+    primary_path:
+      - User taps "Give away" (accessible from manage-perishables item detail, or standalone)
+      - If item comes from manage-perishables: name, expiry date, and photo pre-filled
+      - Form shows: photo (pre-filled or tap to add), item name, purchase date, expiry date,
+        pickup notes (optional, e.g., "Lobby, Mon-Fri evenings")
+      - Confirmation checkbox: "This item is sealed in its original packaging"
+        — required before posting. Brief note: "We only accept sealed items for safety."
+      - User taps "List it"
+      - Listing appears in community feed
+      - Toast: "Listed! You'll be notified when someone's interested."
+    fallback_path:
+      - User creates listing without a manage-perishables item (standalone)
+      - Same form, all fields manual
+      - Photo required — if no photo, cannot submit ("Add a photo so others can verify the item")
     decision_points:
-      - If photo is missing: warn "Photos get more interest, but optional"
-      - If expiry date is in past: warn "This already expired, are you sure?"
-      - If location is not set: use profile location or ask user to set
+      - Expiry date in the past: block listing with "This item has already expired and can't be listed"
+      - Expiry date within 24 hours: warn "This expires very soon — are you sure you want to list it?"
+      - Photo missing: block submission
+      - Sealed checkbox unchecked: block submission
+      - Listing auto-expires 7 days after posting if not claimed (or on expiry date, whichever is sooner)
     edge_cases:
-      - Photo upload fails: allow retry or skip
-      - User posts outside geofence: warn "This location is outside your neighborhood"
-      - User is not verified resident: show warning ("Unverified members may get less engagement")
+      - Photo upload fails: retry prompt, cannot submit without photo
+      - User tries to list an opened item: sealed checkbox is the guard — honest declaration required
+      - User edits listing after posting: allowed for pickup notes only; name/dates/photo locked after publish
+      - Item gets claimed while user is editing: listing marked claimed, edit discarded
     data_collected:
-      - Item name (required)
-      - Expiry date (optional)
-      - Photo (optional)
-      - Location (required, uses profile or user input)
-      - Listing type (Give Away)
+      - Item name
+      - Purchase date
+      - Expiry date
+      - Photo (required, JPEG)
+      - Pickup notes (optional)
+      - Sealed confirmation (boolean — always true at submit; false would block)
+      - Source (from manage-perishables inventory vs. standalone)
       - Created timestamp
-    open_questions:
-      - Should listings auto-expire after 7 days, or require manual deletion?
-      - Should user be able to edit after posting, or only delete?
-      - Should we notify user when someone views their listing?
+      - Auto-expiry timestamp (min of: listing_date + 7 days, item expiry date)
 
   BROWSE_LISTINGS:
-    name: Browse Listings
-    goal: Find items available nearby
+    name: Browse Community Listings
+    goal: See what's available in my community
+    design_constraints:
+      - Only give-away listings exist in MVP (no type filter needed)
+      - Urgency communicated by both color AND text label (same rule as manage-perishables)
+      - Location shown as area/building hint only — never exact address
     happy_path:
-      - User opens app
-      - System shows list of recent listings (sorted by newest)
-      - Each listing shows [Photo | Name | Type icon | Distance | "Posted by" name]
-      - User can filter [All / Give Away / Trade / Group Buy]
-      - User can search by item name
+      - User opens Trade Perishables tab
+      - System shows listings from their community, sorted by expiry date (soonest first)
+      - Each listing card shows: photo, item name, expiry label ("2 DAYS" / "TODAY" / date),
+        building/area hint (e.g., "Block 45"), time since posted
+      - Search bar at top: search by item name (fuzzy match)
       - User taps listing to see detail
     decision_points:
-      - If 0 listings nearby: show "No items yet. Be the first to post!"
-      - If item expires today: show 🔴 red badge
-      - If item expires in 1-2 days: show 🟡 yellow badge
+      - 0 listings in community: "Nothing listed yet — be the first to give something away"
+      - Item expires today: "TODAY" label + red background
+      - Item expires in 1-2 days: "2 DAYS" / "1 DAY" + orange background
+      - Listing has been claimed: removed from feed automatically
+      - Listing auto-expired: removed from feed automatically
     edge_cases:
-      - User is outside geofence: show "No listings in your area" + nearby areas?
-      - Listings load slowly: show skeleton loaders or "Loading..."
-      - User scrolls to bottom: show "No more listings" or paginate?
+      - User's own listing appears in feed: show "Your listing" badge, no "I want this" button
+      - Listing photo fails to load: show item name + expiry on neutral background (same as manage-perishables text card)
+      - Community has no other members yet: show pilot-specific empty state ("Invite a neighbor to get started")
     data_collected:
-      - Filters applied (type, search term)
       - Listings viewed
-      - Time spent browsing
-    open_questions:
-      - Map view (future) or list view only in MVP?
-      - Should we show "1 hour ago" vs. exact timestamp?
-      - Should search be fuzzy ("tamarint" matches "tamarind") or exact?
+      - Search terms used
+      - Time in feed before tapping a listing
+      - Scroll depth (are users seeing all listings or just the top few?)
 
-  CONTACT_LISTING_OWNER:
-    name: Contact Listing Owner
-    goal: Ask about an item I want
+  VIEW_LISTING_DETAIL:
+    name: View Listing Detail
+    goal: Decide if I want this item and express interest without sharing my contact details
+    design_note: |
+      Contact info is NOT revealed directly. Privacy risk is too high.
+      Instead: receiver taps "I want this" -> giver gets notified -> giver chooses how to respond.
+      This keeps receiver anonymous until giver engages, and gives giver control.
     happy_path:
-      - User views listing detail
-      - User taps "Contact"
-      - System reveals owner's contact info (email/phone)
-      - User copies or taps to open email/messaging app
-      - User sends message (outside app)
-      - Coordination happens externally
-      - User picks up item
+      - User taps listing in feed
+      - System shows: large photo, item name, purchase date, expiry date, sealed confirmation tick,
+        pickup notes (if any), building/area (no exact address), time posted
+      - Disclaimer shown once per session: "Items are shared as-is. Check packaging before accepting."
+      - User taps "I want this"
+      - System sends notification to giver: "Someone in [building/area] is interested in your [item name]"
+      - Confirmation to receiver: "The owner has been notified. They'll reach out if available."
+      - Giver decides whether to respond (via in-app message stub or external — see TRADE-002)
     decision_points:
+      - Item already claimed: show "This has been claimed" — no "I want this" button
+      - User is the giver: show "Your listing" view with option to mark as claimed or delete
+      - Multiple people express interest: giver sees count, chooses who to give to (FIFO suggested)
     edge_cases:
-      - Owner has only email, user prefers phone: show email only
-      - User's own listing: hide "Contact" button
-      - Contact info is invalid: show error when user tries to contact
+      - User taps "I want this" then changes mind: no cancellation needed (giver may not have seen yet)
+      - Giver doesn't respond within 48 hours: receiver sees "No response yet — item may still be available"
+      - Two users tap "I want this" simultaneously: both notified to giver; giver picks one
     data_collected:
-      - Listing ID contacted
-      - Contact method used (email/phone)
-      - Timestamp
-    open_questions:
-      - Should we add in-app messaging in v1 or defer to v2?
-      - Should system track successful trades / completion rate?
+      - Listing ID viewed
+      - Whether "I want this" was tapped
+      - Whether disclaimer was shown (first session)
+      - Time between opening detail and tapping interest
+
+  MARK_AS_CLAIMED:
+    name: Mark Item as Claimed / Remove Listing
+    goal: Close the loop once item has been picked up or is no longer available
+    happy_path:
+      - Giver receives interest notification
+      - Giver coordinates pickup (via their preferred channel)
+      - After pickup, giver opens listing and taps "Mark as given"
+      - System removes listing from feed, logs completion
+      - Optional: "Did the pickup go smoothly?" Yes / Had an issue (free text for internal review)
+    decision_points:
+      - Giver wants to cancel listing (no longer available): "Remove listing" with reason
+        (options: "Already gave it away elsewhere" / "Changed my mind" / "Item expired")
+      - Listing auto-expires: removed silently, no action needed from giver
+    edge_cases:
+      - Giver marks as claimed but pickup hasn't happened yet: that's fine, trust-based system
+      - Multiple interested parties: giver marks claimed after giving to one — others see "claimed" state
+    data_collected:
+      - Listing ID
+      - Outcome (given / cancelled / auto-expired)
+      - Cancellation reason (if cancelled)
+      - Days between listing and claim/expiry (measures how quickly items move)
+      - Whether feedback was provided (yes / issue)

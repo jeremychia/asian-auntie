@@ -3,224 +3,212 @@
 flows:
   ADD_INDIVIDUAL_ITEM:
     name: Add Individual Item
-    goal: Add an item to inventory with minimal friction
+    goal: Add an item to inventory with minimal friction — ideally completable in under 15 seconds
     happy_path:
       - User taps "+" button
-      - System opens camera (or shows photo picker)
+      - System opens camera immediately (no intermediate screen)
       - User snaps photo of item (or selects from gallery)
       - System sends photo to image recognition API (checks cache first)
       - System recognizes: Item name, item type, estimated shelf life
-      - If confidence ≥85%: auto-save silently, item appears in dashboard with "Added" toast
-      - If confidence 60–85%: show quick 2-field edit form (name + expiry), user confirms, saves
-      - If confidence <60%: show minimal fallback form (name + expiry required)
-      - Consumption tracking configured server-side based on item type (no user prompt at add time)
-      - Item appears in inventory list sorted by expiry date
+      - Regardless of confidence: system shows a brief confirmation card ("Fish sauce — expires June 2026")
+        with a single "Looks good ✓" button and an "Edit" link — never auto-saves without user seeing result
+      - If confidence ≥85%: card pre-filled, user confirms with one tap
+      - If confidence 60–85%: card pre-filled, expiry date field highlighted for quick review
+      - If confidence <60%: card shown with empty name + expiry fields, user fills in
+      - User confirms → item saved → dashboard updates
+      - Photo is optional: user can skip camera entirely and go straight to the name+expiry form
     fallback_path:
-      - If image recognition fails (confidence <60%) or photo is unclear
-      - System shows minimal form: Item name (required), Expiry date (required)
-      - User types item name and enters expiry date
-      - User taps "Save"
-      - Item saved with tracking default (ON if consumable type detected, OFF otherwise)
+      - If image recognition fails or user skips photo
+      - System shows minimal form: Item name (required), Expiry date (required), photo optional
+      - Item name uses fuzzy autocomplete from known Asian pantry items (top ~100 items)
+      - Date picker defaults to +1 week for produce-type items, +6 months for pantry items
+        (based on item type if detected, otherwise +3 months as neutral default)
+      - User taps "Save" → item saved → dashboard updates
     decision_points:
-      - If recognition confidence ≥85%: auto-save, no form shown
-      - If recognition confidence 60–85%: show quick edit form (name + date only)
-      - If recognition confidence <60%: show fallback form
-      - If recognized item type is consumable (sauce, oil, spice, condiment, dairy): set tracking=true
-      - If recognized item type is single-use (fresh produce, bakery): set tracking=false
-      - If item type is unknown: default tracking=false, user can toggle on detail page
-      - User edits fields: validate name (non-empty), validate date (future or today)
-      - User can toggle tracking ON/OFF post-save on item detail page
+      - Confidence ≥85%: one-tap confirm (pre-filled card)
+      - Confidence 60–85%: pre-filled card, expiry field highlighted for verification
+      - Confidence <60%: empty form (name + expiry required)
+      - Item without photo: text-only card on dashboard (styled deliberately, not a broken photo card)
+      - Date picker: never default to today (too easy to accidentally save wrong date)
+      - Validate expiry date: must be within 2 years from today; warn if >18 months (unusual)
+      - Validate expiry date: if date is in the past, block save with "That date has already passed"
     edge_cases:
-      - Image recognition returns wrong item: user taps edit on the added item card (shows full detail page)
-      - Photo is blurry/unclear: system shows "Try again or enter manually" — user can retake or use fallback form
-      - User skips photo entirely: go directly to fallback form
-      - User navigates away mid-capture: discard (no draft save — low friction is paramount)
+      - Recognition returns wrong item: user taps "Edit" on confirmation card before saving
+      - Photo is blurry/unclear: system shows "Hard to read — try again or enter manually"
+      - User skips photo entirely: go directly to fallback form — not penalised, no reminder
+      - User navigates away mid-capture: discard (no draft save)
       - Duplicate item names: allow (user might have multiple jars of same item)
-      - User changes tracking preference: editable on item detail page at any time (no friction here either)
-      - Cache hit (e.g., "soy sauce"): use cached recognition, instant save
+      - Cache hit (e.g., "soy sauce"): use cached recognition, instant confirm card
+      - International product unrecognised: fall to fallback form, name autocomplete helps
     data_collected:
       - Item name (required)
       - Expiry date (required, ISO format)
-      - Photo (required, JPEG — triggers recognition)
-      - Item type (auto-detected: sauce, oil, spice, condiment, produce, dairy, other, unknown)
-      - Track consumption flag (boolean, server-side default based on type, user-editable)
-      - Recognition confidence score (for debugging/learning/quality monitoring)
+      - Photo (optional, JPEG)
+      - Item type (auto-detected: sauce, oil, spice, condiment, produce, dried, tofu, seafood, dairy, other, unknown)
+      - Recognition confidence score (for debugging/quality monitoring)
       - Timestamp added
-      - Cache hit flag (true if recognized item was served from cache)
+      - Cache hit flag
+      - Has photo flag (for monitoring photo adoption rate)
     open_questions:
-      - Which image recognition API? (Google Vision, OpenAI, custom ML model?)
-      - How accurate do we need recognition to be for MVP? (Set confidence threshold at 60% for fallback; test with 1000+ items to calibrate)
-      - For estimated shelf life: use generic (e.g., "2 weeks from now") or parse package date? (Generic safer for MVP)
-      - How to implement cache efficiently? (In-memory for common items, or lightweight SQLite/Redis?)
-      - Should we log low-confidence recognitions for model retraining?
+      - Which image recognition API? (Google Vision, OpenAI Vision, custom?)
+      - Should autocomplete list be curated manually or seeded from recognition logs?
+      - Should we log low-confidence recognitions for future model improvement?
 
   ADD_FROM_RECEIPT:
     name: Add Items from Receipt
-    goal: Bulk add multiple items to inventory by scanning/uploading a receipt
+    goal: Bulk add item names from a receipt — user fills in expiry dates in one pass
+    design_constraint: |
+      Receipts contain: item names, quantities, prices, purchase date.
+      Receipts almost never contain expiry dates.
+      This flow handles item discovery (what did I buy?) — expiry dates are always a separate step.
+      Do not suggest the system can infer expiry dates from OCR alone.
     happy_path:
-      - User taps "Add from receipt" button
-      - System opens camera (or shows photo/file picker)
-      - User snaps photo of receipt (or uploads receipt image)
-      - System sends receipt to OCR API to extract item list
-      - System parses: Item names, quantities, prices, and dates (purchase date, expiry if visible)
-      - System displays parsed items in a list for user review and confirmation
-      - User can edit/delete items from the list before adding
-      - User taps "Confirm and Add"
-      - System attempts to run image recognition on each item for auto-fill (shelf life, type)
-      - For items without recognition: show minimal form with item name and allow expiry date entry
-      - Items added to inventory
-      - Toast notification: "Added X items from receipt"
+      - User taps "Add from receipt"
+      - System opens camera immediately
+      - User photographs receipt
+      - System runs OCR, extracts item names and quantities
+      - System displays parsed list: each row shows item name + quantity
+      - System applies item type detection per name (e.g., "Fish Sauce 700ml" → sauce type)
+      - System pre-fills a shelf-life estimate per item type as a suggested expiry date
+        (e.g., "Soy sauce → ~12 months", "Baby bok choy → ~5 days")
+      - User reviews list: each item has name (editable), expiry date (editable, pre-filled with estimate)
+      - Items with low-confidence shelf-life estimates are highlighted for user attention
+      - User edits any dates that look wrong, deletes items not relevant (non-food line items)
+      - User taps "Add all" → items saved → dashboard updates
+      - Toast: "Added 8 items — tap to review"
     fallback_path:
-      - If OCR fails or receipt is unclear
-      - System asks user to manually list items
-      - User enters items one-by-one (name, quantity, optionally expiry date)
-      - Proceed as happy_path from confirmation onward
+      - If OCR fails or receipt image is unclear
+      - System shows empty list with "+" button to add items manually one by one
+      - User enters items manually using the same name + expiry form as ADD_INDIVIDUAL_ITEM
+    design_notes:
+      - Shelf-life estimates are explicitly labelled "estimate" — not presented as fact
+      - The review screen is the primary interaction; OCR just pre-populates it to save typing
+      - User always sees and confirms every item before saving — no bulk silent save
+      - If user skips editing a pre-filled estimate: that's fine, they made the choice to accept it
     decision_points:
-      - If receipt OCR succeeds: show parsed item list for review
-      - If OCR fails: fall back to manual entry with guided form
-      - If expiry date visible on receipt: use it, allow user override
-      - If expiry date not visible: offer generic shelf-life suggestion based on item type
-      - For quantities >1: create individual items or single item with quantity tracker?
-      - If item already in inventory: show warning, allow user to skip or create duplicate
+      - OCR confidence high: populate list, user reviews
+      - OCR confidence low: show partial list with flag "Some items may be missing"
+      - Item type identified: show shelf-life estimate with confidence label ("~12 months for sauces")
+      - Item type unknown: expiry field left blank, required before saving that row
+      - If item already in inventory: show subtle "Already in pantry" note, allow duplicate
     edge_cases:
-      - Receipt image is blurry: ask "Can't read clearly. Try again or enter manually?"
-      - OCR parses incorrect items: user can delete/edit before confirming
-      - Receipt is from store with unknown product database: fall back to image recognition per item
-      - User uploads non-receipt image: show error "Doesn't look like a receipt. Try again."
-      - User cancels mid-flow: discard parsed items or save as draft?
-      - Multiple receipts uploaded: batch process or one-at-a-time?
+      - Receipt image blurry: "Hard to read — try again, or add items manually"
+      - OCR parses non-food line items (bags, packaging): user deletes these in review screen
+      - User uploads non-receipt image: "This doesn't look like a receipt. Try again."
+      - Receipt is very long (20+ items): show all in scrollable review list, no truncation
+      - User cancels mid-review: discard all (no draft)
     data_collected:
       - Receipt photo (JPEG)
-      - Receipt purchase date (parsed from receipt if visible)
-      - Parsed item list (name, quantity, price if visible)
-      - User edits to parsed items (additions, deletions, corrections)
-      - Final items added (with recognition confidence scores)
-      - OCR confidence score for receipt parse
-      - Timestamp of bulk add
+      - OCR confidence score
+      - Parsed item list (name, quantity if visible)
+      - User edits to parsed items (what was changed from OCR output)
+      - Final items added with expiry dates and whether date was user-set or estimate-accepted
+      - Purchase date from receipt if parseable
     open_questions:
-      - Which OCR API? (Google Cloud Vision, AWS Textract, Tesseract, commercial solution?)
-      - For quantities: should 2x soy sauce create 2 separate items or 1 item with qty=2?
-      - Should we match receipt items against a product database (e.g., UPC lookup)?
-      - How do we determine expiry dates for items where it's not on receipt?
-      - Should we store receipt metadata (date, store, total price) for analytics/insights?
-      - Should users be able to retry OCR if first parse is bad?
-      - Future: Integration with grocery delivery apps (scan order confirmation instead of receipt)?
+      - Which OCR API? (Google Cloud Vision, AWS Textract)
+      - Shelf-life estimate database: build manually for top 100 Asian pantry items, or use an API?
+      - Should we store receipt metadata (store name, total) for future analytics?
 
   VIEW_DASHBOARD:
     name: View Dashboard
-    goal: See inventory and what's expiring soon
+    goal: Instantly see what needs to be used and find any item quickly
     happy_path:
       - User opens app
       - System loads inventory sorted by expiry date (most urgent first)
-      - Items displayed as large photo cards with food images prominent
-      - Each card has urgency color overlay on bottom third (semi-transparent scrim)
-      - "🔴 Red overlay: Expires today"
-      - "🟠 Orange overlay: Expires in 1-3 days"
-      - "🩶 Gray overlay: Expires in 4+ days"
-      - Item name + expiry date shown in semi-transparent bar at card bottom
-      - No separate badges or labels — urgency communicated purely through color + photo
-      - User can tap "Sort by" button (top-right) to change sort order
-      - Sort menu options: Expiry date, Item type, Consumption progress, Recently added, Alphabetical
-      - User selects sort mode, list re-orders instantly, menu closes
-      - User taps any item card to see detail
+      - Items displayed as cards in a 2-column grid
+      - Cards with photos: full-bleed food photo with urgency label + expiry text overlaid at bottom
+      - Cards without photos: solid background (item-type color or neutral) with item name + expiry text centered
+        — deliberately styled, not a broken placeholder
+      - Urgency communicated by BOTH color AND text label (never color alone):
+        - "TODAY" label + red background/overlay
+        - "2 DAYS" label + orange background/overlay
+        - Expiry date shown as text for items 4+ days out (no urgency color)
+      - Search bar pinned at top — always visible, searches by item name
+      - User can tap "Sort" to change order: Expiry (default), Recently added, Alphabetical
+      - User taps any card to see detail
     decision_points:
-      - If 0 items: show empty state ("No items yet. Add one to get started.")
-      - If 5+ items: show count badge at top
-      - If item expires today: show "Use today!" notification
+      - 0 items: empty state with large "Add your first item" CTA
+      - 1–20 items: full grid, no pagination
+      - 20+ items: search bar becomes critical path — ensure it's prominent
+      - Item expires today: "TODAY" badge, appears at very top regardless of sort
+      - Sort preference persists across sessions
     edge_cases:
-      - User has 100 items: search/filter needed?
-      - User adds item while viewing dashboard: live update or refresh button?
-      - System can't reach camera: show error, allow manual entry instead
+      - User has 50+ items: search handles discovery; sort handles priority
+      - Live update: item added from another screen updates dashboard on return (no manual refresh)
+      - All items expired: show warning state "Everything here has expired" with bulk-remove option
     data_collected:
-      - Display order (by expiry date ascending)
-      - Count of items by urgency level
-      - Last refresh timestamp
+      - Sort mode selected
+      - Search queries (for understanding how users look for items)
+      - Count of items by urgency tier at session open
     open_questions:
-      - Should dashboard show summary (e.g., "5 items, 2 expiring soon")?
-      - Should we auto-refresh, or require manual refresh?
+      - Should the summary line ("3 expiring soon") appear at top of dashboard?
+      - Should sort preference sync across devices or stay local?
 
   MARK_AS_USED:
     name: Mark Item as Used
-    goal: Remove item from inventory or track partial consumption
-    happy_path_single_use:
-      - User views item detail (e.g., milk, fresh produce)
+    goal: Remove a finished item from inventory with minimum taps
+    scope_note: |
+      Consumption tracking (partial use progress bar) is deferred to v2.
+      MVP: items are either in inventory or removed. No partial state.
+      This keeps the add→use loop fast and the dashboard unambiguous.
+    happy_path:
+      - User views item detail
       - User taps "Mark as Used"
-      - System shows confirmation: "Remove tamarind paste from inventory?"
-      - User confirms
-      - System removes item and returns to dashboard
-    happy_path_consumable:
-      - User views item detail (e.g., soy sauce, sesame oil)
-      - Item shows consumption progress bar (current: 0%)
-      - User taps "Mark as Used" or "Update consumption"
-      - System shows consumption input: slider (0-100%) or quick buttons ("Just a bit", "About half", "Most of it", "Empty now")
-      - User selects consumption level
-      - System updates progress bar
-      - If user reaches 100%: show confirmation "Remove empty jar from inventory?" then delete
-      - If user selects <100%: item stays in inventory with updated consumption state, return to dashboard
-    decision_points:
-      - If item has consumption tracking enabled: show progress bar and slider
-      - If item is single-use (no tracking): show simple "Mark as Used" button
-      - If item reaches 100% consumption: prompt for final removal
-      - If item expires today and partially used: show "This expires today, but you still have some left"
+      - System shows brief confirmation: "Done with [item name]?" with Yes / Not yet
+      - User taps Yes
+      - Item removed from inventory, toast shown: "Removed [item name]" with Undo (5s)
+      - Returns to dashboard
     edge_cases:
-      - User decreases consumption (e.g., changes from 50% to 25%): allow edit, no penalty
-      - User marks multiple items quickly: should work smoothly (no lag)
-      - User accidentally marks as used: undo option for next 5 seconds?
-      - User marks as used offline: sync when online?
-      - Item expires while partially used: show warning, but don't auto-delete (user decides)
+      - User taps Undo within 5 seconds: item restored to inventory, removal cancelled
+      - User marks item as used via swipe on dashboard card (shortcut): same confirmation + undo
+      - Item had already expired: removal proceeds normally, no extra warning needed
     data_collected:
       - Item ID
-      - Action timestamp
-      - Consumption percentage (0-100)
-      - User intent (used vs. deleted vs. partially_consumed)
-    open_questions:
-      - Should quick buttons ("Just a bit", "Half") map to exact percentages (10%, 50%) or ranges?
-      - Should consumption edits create a history, or just show current state?
-      - How should expired items with partial consumption be handled? (still show in dashboard? archive?)
+      - Removal timestamp
+      - Intent: used (vs. discarded — see REMOVE_ITEM)
+    deferred_to_v2:
+      - Partial consumption tracking (progress bar, slider, "About half" buttons)
+      - Consumption history per item
+      - "This expires today but you still have some left" partial-use warning
 
   REMOVE_ITEM:
     name: Remove Item from Pantry
-    goal: Remove any item from inventory (expired, unwanted, or other reason) and exit pantry
+    goal: Remove an unwanted or expired item quickly — distinct from "used it" (see MARK_AS_USED)
+    design_note: |
+      REMOVE_ITEM is for items not consumed: expired and discarded, no longer wanted, gifted away.
+      MARK_AS_USED is for items that were eaten/used up.
+      These are two separate intents and are logged separately for future waste analytics.
     happy_path:
-      - User views item detail page
-      - User taps "Remove from Pantry" button (or swipe/delete action)
-      - System shows confirmation modal: "Remove [item name] from pantry?"
-      - Below confirmation: "What's the reason?" with quick reason buttons:
-        - "Don't want it"
-        - "Expired"
-        - "Used it all"
-        - "Other"
-      - User selects reason
-      - If "Other": text field appears for custom reason entry
-      - User confirms removal
-      - System removes item from inventory, logs removal event, returns to dashboard
-      - Toast notification: "Removed [item name]" with undo option (5 sec window)
+      - User views item detail page (or long-presses card on dashboard)
+      - User taps "Remove from Pantry"
+      - System shows confirmation: "Remove [item name]?" with two options:
+        - "Threw it away" (maps to reason: discarded)
+        - "Don't want it" (maps to reason: unwanted)
+      - User selects one
+      - Item removed, toast: "Removed [item name]" with Undo (5s)
+      - Returns to dashboard
+    design_rationale: |
+      Reason selection is kept to two clear options, presented as the confirmation itself — not a
+      separate step after confirmation. This avoids the pattern of "confirm → then also pick reason."
+      "Other" text field removed: too much friction for analytics value. The two options cover 90%+
+      of removal intent. Reason is inferred from item state where possible (expired item → discarded).
     decision_points:
-      - If item is expired: pre-select "Expired" reason, allow override
-      - If item is past expiry by >7 days: show gentle nudge ("This expired a while ago")
-      - If item has consumption tracking: show remaining percentage in removal summary
-      - If no reason selected: default to "unspecified" in removal log
-      - If reason is logged: track for future insights/patterns
+      - Item is expired: pre-select "Threw it away" but allow override
+      - Item is not yet expired: pre-select "Don't want it"
+      - Reason logged automatically; no text input required
     edge_cases:
-      - User undoes removal within 5 seconds: restore item to inventory, reverse removal log entry
-      - User removes multiple items quickly: each creates separate removal log entry
-      - Item was removed offline: sync removal log when online
-      - User removes item but later finds it: undo creates ghost item (data integrity consideration)
-      - Item type not auto-detected: still log removal with "unknown" type
+      - User undoes within 5 seconds: item fully restored, removal log entry reversed
+      - User accidentally removes multiple items: undo works per-item (most recent first)
+      - Item was "Used it all" → user should use MARK_AS_USED flow, not this one
     data_collected:
       - Item ID
       - Item name
-      - Item type (sauce, oil, spice, condiment, produce, dairy, other)
+      - Item type
       - Removal timestamp
-      - Removal reason (dont_want, expired, used_all, other, unspecified)
-      - Removal reason text (if "other")
-      - Consumption percentage at removal (if applicable)
-      - Item expiry date (if applicable)
-      - Days overdue (if expired; days between expiry_date and removal_date)
-      - User ID
-    open_questions:
-      - Should removal insights track patterns (e.g., "You tend to remove unexpired items from X category")?
-      - Should app suggest better storage/reminders based on removal patterns?
-      - Should users be able to view/export removal history?
-      - Future: Should removed items be tradeable via `trade-perishables` integration (e.g., unopened items)?
-      - Future: Should app ask "Want to list this for trade?" when removing unopened items?
+      - Removal reason (discarded, unwanted)
+      - Days overdue at removal (if expired: removal_date minus expiry_date)
+      - Item expiry date
+    deferred_to_v2:
+      - "Want to list this for trade?" prompt on removing unopened items
+      - Removal pattern analytics ("You tend to discard cilantro within 3 days")
+      - Export removal history

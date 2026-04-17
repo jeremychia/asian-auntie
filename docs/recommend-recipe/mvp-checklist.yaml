@@ -1,69 +1,68 @@
 # MVP Launch Checklist
 
 mvp_scope:
-  description: "Minimum viable product for the Recommend Recipe app"
+  description: "Minimum viable product for the Recommend Recipe feature"
   target_date: null
   status: "in_progress"
 
 acceptance_criteria:
-  - criterion: "Users can input ingredients via text input with autocomplete"
+  - criterion: "Users can load ingredients from their manage-perishables inventory in one tap"
     status: null
-    flows: ["INGREDIENT_INPUT"]
+    flows: ["SEARCH_BY_INGREDIENTS"]
+    notes: "Primary flow. Only non-expired items loaded. User can deselect individual chips."
 
-  - criterion: "Recipe database contains Rasamalaysia recipes with ingredients parsed"
+  - criterion: "Users can manually add ingredients via fuzzy autocomplete (fallback path)"
     status: null
-    notes: "Requires recipe scraping/data pipeline"
+    flows: ["SEARCH_BY_INGREDIENTS"]
+    notes: "Same curated ingredient list as manage-perishables. Accepts free text if not in list."
 
-  - criterion: "Recommendations display in real-time as ingredients are added"
+  - criterion: "Recipe database contains >=100 recipes from SE Asian sources with structured ingredient data"
     status: null
-    flows: ["RECIPE_RECOMMENDATION"]
+    notes: "Manually curated for MVP. Source URLs stored per recipe. Instructions NOT stored."
 
-  - criterion: "Recipes ranked by ingredient match percentage"
+  - criterion: "Recipes ranked by ingredient match percentage, partial matches always shown"
     status: null
-    flows: ["RECIPE_RECOMMENDATION"]
+    flows: ["SEARCH_BY_INGREDIENTS"]
+    notes: "Curated synonym map handles common SE Asian ingredient variants. Results capped at 20."
 
-  - criterion: "Each recipe displays source, link, ingredients, and instructions"
+  - criterion: "Recipe detail shows: title, source, cuisine, cook time, per-ingredient match status, and gap summary"
     status: null
-    flows: ["RECIPE_DETAIL"]
+    flows: ["VIEW_RECIPE_DETAIL"]
+    notes: "No inline instructions. 'View full recipe' links to original source URL only."
 
-  - criterion: "Users can like/dislike recipes"
+  - criterion: "Recipe source is shown on every result and detail page"
     status: null
-    flows: ["LIKE_DISLIKE_RATING"]
+    notes: "Trust requirement. Source name + link always visible."
 
-  - criterion: "Ratings stored locally (no backend required for MVP)"
+  - criterion: "Scope communicated in UI: 'Malaysian and Southeast Asian recipes to start'"
     status: null
-    notes: "Requires local storage implementation"
+    notes: "Sets correct expectations. Prevents disappointment for Japanese/Korean pantry users."
 
-  - criterion: "'Go to Source' link works and links to original recipe"
+  - criterion: "Structured feedback after recipe engagement: 'Did you make this?' + optional skip reason"
     status: null
-    flows: ["RECIPE_DETAIL"]
-
-  - criterion: "Mobile-friendly responsive design"
-    status: null
-    notes: "Design/frontend requirement"
+    flows: ["VIEW_RECIPE_DETAIL"]
+    notes: "Replaces binary like/dislike. Shown once per recipe per session, only after 'View full recipe' tap."
 
 excluded_from_mvp:
-  - "Auto-ingredient recognition (OCR/vision)"
-  - "Reviews & community features"
-  - "Advanced ML-based recommendations"
-  - "Dietary/cuisine filtering"
-  - "Difficulty level filtering"
-  - "Multi-source recipe expansion"
-  - "Meal planning"
-  - "Integration with Manage Perishables (v1)"
-  - "User preferences & personalization"
-  - "Mobile native apps"
-  - "Recipe saving/bookmarking"
-  - "Social sharing"
+  - "Binary like/dislike rating (replaced by structured feedback)"
+  - "Recipe instructions displayed inline (copyright — link to source only)"
+  - "Community features: reviews, photos, user profiles (v3+)"
+  - "ML-based recommendations (requires scale; structured feedback is the v2 signal)"
+  - "Auto-ingredient recognition from photos (v2)"
+  - "Dietary/cuisine filtering (v2)"
+  - "Recipe saving/bookmarking (v2)"
+  - "Meal planning (v2+)"
+  - "Multi-source expansion beyond SE Asian (v2 — Chinese, Japanese, Korean)"
+  - "Auto-suggest recipes for expiring items (opt-in only, after recipe corpus is solid)"
+  - "Social sharing (v3+)"
 
 core_flows_for_mvp:
-  - "INGREDIENT_INPUT"
-  - "RECIPE_RECOMMENDATION"
-  - "RECIPE_DETAIL"
-  - "LIKE_DISLIKE_RATING"
+  - "SEARCH_BY_INGREDIENTS (pantry-first + manual fallback)"
+  - "VIEW_RECIPE_DETAIL"
 
 notes: |
-  - MVP is web-only, single-source (Rasamalaysia)
-  - Ratings are preference signals for future v2+ ML improvements
-  - No user accounts required for MVP
-  - Consider early on: recipe data quality and freshness strategy
+  - MVP is a single integrated experience with manage-perishables, not a standalone app
+  - Recipe data pipeline: manual curation to start; scraping only when corpus needs to scale
+  - Legal: confirm scraping/licensing arrangement with recipe sources before launch
+  - Ingredient synonym map (~50 entries) must be built and tested before launch
+  - "Scope" messaging in UI must be finalised in design before development starts

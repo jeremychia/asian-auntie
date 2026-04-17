@@ -1,122 +1,133 @@
 # Future Features (v2+)
 
 future_features:
-  AUTO_INGREDIENT_RECOGNITION:
-    name: Auto-Ingredient Recognition
-    priority: high
-    description: Use OCR/vision to automatically detect ingredients from photos
-    features:
-      - Users take photo of fridge/cabinet
-      - OCR/vision detects labels and items
-      - Auto-populates ingredient list
-      - Manual editing allowed for corrections
-    open_questions:
-      - Which vision API should we use (Google Cloud Vision, AWS Rekognition, etc.)?
-      - How accurate is current OCR for food labels?
-      - Should we build a custom model for common ingredients?
-
-  REVIEWS_COMMUNITY:
-    name: Reviews & Community
-    priority: high
-    description: Allow users to share their cooking experiences and build community
-    features:
-      - Users write reviews with ratings (1-5 stars)
-      - Users upload photos of their cooked dish
-      - Community leaderboard (most-rated recipes, most-reviewed chefs)
-      - User profiles and following system
-    open_questions:
-      - How do we prevent spam/low-quality reviews?
-      - Should recipes have verified reviews (from actually cooking)?
-      - How should moderation work for user-generated content?
-
-  ADVANCED_RECOMMENDATIONS:
-    name: Advanced ML-Based Recommendations
-    priority: high
-    description: Use machine learning to improve recommendations
-    features:
-      - Machine learning: recommend recipes liked by users with similar tastes
-      - Dietary filters: show only vegetarian, vegan, gluten-free, etc.
-      - Cuisine filters: show only Thai, Malaysian, Vietnamese, etc.
-      - Difficulty level: filter by Easy/Medium/Hard
-    open_questions:
-      - What data points should drive the ML model (likes, cuisine preference, etc.)?
-      - How much user data do we need to train a good model?
-      - Should filtering be rule-based or ML-driven?
-
   MULTI_SOURCE_EXPANSION:
     name: Multi-Source Recipe Expansion
-    priority: medium
-    description: Expand recipe database beyond Rasamalaysia
-    features:
-      - Recipes from multiple food blogs and sources
-      - Verification process for new sources to ensure quality and authenticity
-      - Cultural authenticity badges (curated by community experts)
+    priority: high
+    phase: v2
+    description: Expand recipe corpus beyond SE Asian sources to cover the full Asian pantry spectrum
+    rationale: |
+      Phase 1 (SE Asian only) will return no results for users with Japanese, Korean, or Chinese pantries.
+      Expanding to these cuisines significantly broadens usefulness without changing the core interaction.
+    sources_priority:
+      - Chinese (Cantonese/Sichuan): Woks of Life
+      - Japanese: Just One Cookbook
+      - Korean: Maangchi
+      - Vietnamese/Thai: closer to SE Asian base, lower lift
+    requirements:
+      - Each new source requires legal/attribution arrangement before adding
+      - Cuisine tag added to each recipe to enable filtering by cuisine (v2 feature)
+      - Ingredient synonym map expanded to cover new cuisine's pantry vocabulary
     open_questions:
-      - Which sources should we prioritize (region, cuisine, quality)?
-      - How do we verify authenticity without overwhelming curators?
-      - Should we prioritize volume or quality?
+      - Which cuisine to add first? (Chinese likely largest SE Asian diaspora overlap)
+      - Should users be able to filter by cuisine in results?
+
+  STRUCTURED_FEEDBACK_IMPROVEMENT:
+    name: Improve Recommendations from Feedback
+    priority: high
+    phase: v2
+    description: Use structured feedback (made / not-for-me + reason) to improve result ranking
+    rationale: |
+      Binary like/dislike gives no signal on why a recipe was skipped. Structured reasons
+      (too complex / missing ingredient / not my taste) let the system learn meaningfully.
+      v2: use feedback to personalise ranking (surface "made this" recipes' cuisine/complexity
+      profile more; surface "not my taste" less).
+    requirements:
+      - Minimum feedback volume threshold before personalisation kicks in (avoids cold-start noise)
+      - Feedback attributed to session/user without requiring an account (local storage)
+      - Skip reason "missing key ingredient" cross-references against actual pantry gap — useful signal
+    open_questions:
+      - How much feedback is needed before personalisation improves results meaningfully?
+      - Should "made this" recipes be saveable/bookmarkable?
+
+  RECIPE_SAVING:
+    name: Recipe Saving and History
+    priority: medium
+    phase: v2
+    description: Save recipes you liked or made, and see your cooking history
+    features:
+      - Bookmark recipes for later reference
+      - "Made this" history — recipes you've cooked, with date
+      - "Cook again" shortcut from history
+    open_questions:
+      - Should saved recipes be available offline?
+      - Should saves sync across devices (requires accounts)?
+
+  CUISINE_FILTERING:
+    name: Cuisine and Dietary Filtering
+    priority: medium
+    phase: v2
+    description: Filter results by cuisine or dietary requirement
+    rationale: Only meaningful once multi-source expansion adds enough recipes per cuisine to filter usefully.
+    features:
+      - Filter by cuisine (Malaysian, Chinese, Japanese, Korean, Vietnamese, Thai)
+      - Filter by dietary (vegetarian, vegan, no pork, no shellfish)
+    open_questions:
+      - Should dietary filters be set as preferences (persistent) or per-search toggles?
+      - How do we handle recipes with optional non-vegetarian components?
+
+  INGREDIENT_SUBSTITUTION:
+    name: Ingredient Substitution Suggestions
+    priority: medium
+    phase: v2
+    description: When a recipe requires an ingredient the user doesn't have, suggest a viable substitute
+    rationale: |
+      "Missing: galangal" is useful information. "Missing: galangal — ginger works as a substitute"
+      is more useful. This converts "I can't make this" into "I can almost make this."
+    features:
+      - Per-ingredient substitution note in recipe detail (e.g., "galangal -> fresh ginger (different but works)")
+      - Substitution notes are manually curated, not AI-generated
+    open_questions:
+      - How authoritative should substitution suggestions be? (light note vs. strong recommendation)
+      - Should substitutions affect match % calculation?
+
+  EXPIRING_ITEM_SUGGESTIONS:
+    name: Cook This Tonight (Expiry-Driven Suggestions)
+    priority: medium
+    phase: v2
+    description: Proactively suggest recipes when items are about to expire
+    rationale: |
+      The natural connection between manage-perishables and recommend-recipe.
+      "You have bok choy expiring in 2 days — here are 3 recipes that use it."
+    requirements:
+      - Opt-in only — not automatic push notifications
+      - Only triggered when recipe corpus is large enough to reliably return results
+        for expiring items (otherwise the feature feels broken)
+      - Surfaces from expiry notification or as a banner in manage-perishables dashboard
+    open_questions:
+      - Should this appear in manage-perishables or recommend-recipe (or both)?
+      - Trigger threshold: how many expiring items before suggesting?
+
+  REVIEWS_COMMUNITY:
+    name: Reviews and Community
+    priority: low
+    phase: v3+
+    description: Allow users to share photos and notes about recipes they've cooked
+    rationale: |
+      Community trust is valuable but requires: user accounts, content moderation, privacy controls,
+      food safety disclaimers, and significant ongoing maintenance. Not appropriate until the core
+      recipe recommendation experience is well-established.
+    deferred_because:
+      - Product category shift (personal tool -> social platform)
+      - Requires moderation infrastructure
+      - Legal/liability implications if shared recipes lead to food safety issues
+      - Single-user apps don't benefit from community features
+    open_questions:
+      - When is the right time to introduce community? (user count threshold?)
+      - Should reviews be on-platform or linked to external sources?
 
   MEAL_PLANNING:
     name: Meal Planning
-    priority: medium
-    description: Help users plan meals and generate shopping lists
-    features:
-      - Save favorite recipes
-      - Generate weekly meal plan based on saved recipes
-      - Auto-generate shopping list from meal plan
-    open_questions:
-      - Should meal plans account for nutritional balance?
-      - How should we handle recipes with shared ingredients?
-      - Should meal planning integrate with grocery pricing?
-
-  PERISHABLES_INTEGRATION:
-    name: Integration with Manage Perishables
-    priority: medium
-    description: Connect recipe recommendations to pantry inventory
-    features:
-      - Pull ingredient list from perishables inventory
-      - "Cook this tonight" suggestions based on items expiring soon
-      - Check off ingredients as you use them
-    open_questions:
-      - How do we sync ingredient names between apps?
-      - Should expiring items highlight urgency in recipe suggestions?
-      - Should using an ingredient mark it as consumed in Manage Perishables?
-
-  RECIPE_PERSONALIZATION:
-    name: Recipe Personalization
-    priority: medium
-    description: Tailor recommendations to individual user preferences
-    features:
-      - User preferences (favorite cuisines, dietary restrictions)
-      - Learning: improve recommendations based on likes/dislikes
-      - "Saved recipes" collection
-    open_questions:
-      - How should users set preferences (onboarding, settings, implicit)?
-      - Should preferences override the matching algorithm?
-      - How quickly should the app adapt to changing preferences?
-
-  MOBILE_APPS:
-    name: Native Mobile Apps
     priority: low
-    description: Expand from web to native iOS and Android apps
+    phase: v3+
+    description: Plan weekly meals from saved recipes and generate shopping lists
+    rationale: |
+      Valuable but a significant scope expansion — effectively a different product mode.
+      Build after recipe saving, feedback improvement, and cuisine expansion are stable.
     features:
-      - Native iOS/Android apps with same features as web
-      - Offline recipe browsing
-      - Shareable recipe cards with photos
+      - Save recipes to a weekly plan
+      - Consolidated ingredient list across planned recipes
+      - Cross-reference against pantry (what do I already have vs. need to buy?)
     open_questions:
-      - Should mobile be React Native, Flutter, or separate native?
-      - How should offline sync work?
-      - Should app-only features (camera access, etc.) be added?
-
-  RECIPE_SAVING:
-    name: Recipe Saving & Collections
-    priority: low
-    description: Allow users to organize and curate their favorite recipes
-    features:
-      - Bookmark/save favorite recipes
-      - Create collections (e.g., "Quick weeknight meals", "Impress guests")
-      - Share collections with friends
-    open_questions:
-      - Should collections be public or private?
-      - Should users be able to collaborate on collections?
-      - How do we prevent recipe hoarding?
+      - Should meal planning integrate with grocery pricing data?
+      - How should we handle recipes with shared ingredients in the shopping list?

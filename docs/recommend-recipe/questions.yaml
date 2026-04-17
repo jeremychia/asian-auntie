@@ -3,179 +3,195 @@
 # CORE VALUE PROPOSITION
 Q01:
   title: Why would users use this instead of Google/ChatGPT?
-  status: unknown
-  impact: If users can ask ChatGPT "what can I make with chicken?", why install an app?
-  first_principles: What unique value does Rasamalaysia + ingredient matching add?
+  status: answered
+  answer: |
+    Source-grounded results (real recipes, not generated) + inventory-aware matching (no re-typing).
+    ChatGPT can suggest recipes but can't see your pantry and may hallucinate ingredients/techniques.
+    This feature's differentiation is: ingredient-exact matching against verified sources,
+    integrated with your logged inventory, in one tap.
+  residual_risk: Differentiation only holds if recipe corpus is large enough to return useful results.
 
 Q02:
   title: Will users actually have the ingredients they input?
-  status: unknown
-  impact: If recipes suggest items users don't have, app becomes frustrating
-  assumption: "User inputs ingredients they own" might be false
+  status: answered
+  answer: |
+    Primary flow pulls directly from manage-perishables inventory — so yes, by construction.
+    Inventory accuracy is the dependency; this feature inherits whatever accuracy manage-perishables achieves.
+  residual_risk: If inventory is stale (items used but not removed), suggestions include ingredients user no longer has.
 
 Q03:
   title: What if users input aspirational ingredients instead of actual?
-  status: unknown
-  impact: Recommendations are useless ("I wish I had star fruit")
-  behavioral_question: Do users tell the truth about what they have?
+  status: answered
+  answer: |
+    Aspirational input is less likely when primary source is inventory (logged items are real).
+    For manual fallback: user's problem, not a system failure. Results will just not be cookable tonight.
 
 Q04:
   title: Is "recipe recommendations" the actual problem, or is it "I don't know what to cook"?
-  status: unknown
-  impact: Different problems need different solutions
-  inversion: Maybe users don't want recipes, they want meal planning or permission to skip cooking
+  status: open
+  impact: |
+    If the real problem is decision paralysis ("anything will do, just tell me one thing"),
+    showing 20 results ranked by match % doesn't help — it recreates the paralysis.
+    A "just pick one for me" mode might serve better for that use case.
+  proposed_resolution: |
+    Launch with ranked results. Monitor whether users tap the top result or scroll extensively.
+    If scroll depth is high before clicking, consider a "surprise me" single-recipe mode in v2.
 
 # DATA SOURCING & SUSTAINABILITY
 Q05:
-  title: What if Rasamalaysia changes their site structure and breaks parsing?
-  status: unknown
-  impact: All recipes disappear, app becomes useless
-  fragility_risk: Single source dependency is a single point of failure
+  title: What if Rasamalaysia changes site structure and breaks parsing?
+  status: answered
+  answer: |
+    Recipes stored in internal database — not live-scraped on each request.
+    Site changes affect the refresh pipeline, not live users. Weekly refresh detects structural changes.
+    Manual curation is the fallback for MVP.
 
 Q06:
-  title: What's your legal relationship with Rasamalaysia? Scraping without permission?
-  status: unknown
-  impact: Cease & desist could kill the app overnight
-  legal_risk: Operating in gray zone until forced to deal with it
+  title: Legal relationship with recipe sources — scraping without permission?
+  status: open — BLOCKING
+  impact: Cease and desist risk. Platform liability for copyright infringement.
+  required_action: |
+    Reach out to each source before scraping at scale.
+    Options in order of preference:
+    (1) Partnership or data licensing agreement
+    (2) Attribution-only informal arrangement (many food bloggers accept this)
+    (3) Manual curation of recipes explicitly under Creative Commons or similar
+    Do NOT launch with scraped recipes without at minimum attempting contact.
+    See legal-compliance docs for full analysis.
 
 Q07:
-  title: How will you maintain recipe data long-term?
-  status: unknown
-  impact: Recipes need updating (links break, ingredients change)
-  sustainability_question: Is this a passion project or maintainable product?
+  title: How will recipe data be maintained long-term?
+  status: answered
+  answer: |
+    Internal database, weekly refresh checks source URLs for 404s or major changes.
+    Recipe instructions not stored — only metadata + ingredient list. This limits maintenance burden.
+    Manual curation sustainable at <200 recipes. Automation needed above that threshold.
 
 Q08:
-  title: What if recipes are written for Malaysian audiences with assumptions you don't have?
-  status: unknown
-  impact: "Add 3 inches of ginger root" (assumes fresh ginger is cheap/available)
-  localization_risk: Recipes might not work for different markets/resources
+  title: What if recipes assume local availability of ingredients?
+  status: open
+  impact: "Add kaffir lime leaves" might be trivial in KL but impossible in rural UK.
+  proposed_resolution: |
+    Tag recipes with a rough availability profile (SE Asia easy / globally available / specialty).
+    Surfaces in recipe detail: "Some ingredients may be hard to find outside SE Asia."
+    Not a filter in MVP — just informational metadata.
 
 Q09:
-  title: How do you handle recipe copyright/attribution?
-  status: unknown
-  impact: If recipes are scraped, are you violating copyright?
-  ethical_question: Is this fair use or theft?
+  title: Recipe copyright and attribution
+  status: open — BLOCKING
+  impact: Displaying recipe metadata (ingredient list, cook time) without permission is a gray area.
+  proposed_resolution: |
+    Core position: store only ingredient list and metadata (not instructions).
+    Always link to original source. Source name always displayed.
+    This mirrors how Google recipe cards work and is the defensible approach.
+    Full legal analysis in legal-compliance docs.
 
 # MATCHING & RECOMMENDATION QUALITY
 Q10:
-  title: What if "exact matching" misses recipes users could make with substitutions?
-  status: unknown
-  impact: User has "oil" but recipe asks for "coconut oil" — no match
-  quality_risk: Too strict matching limits usefulness
+  title: What if exact matching misses recipes users could make with substitutions?
+  status: answered
+  answer: |
+    Curated synonym map handles the most common equivalences (e.g., "soy sauce" family,
+    "oil" variants, "chilli" variants). Not pure exact, not pure fuzzy — controlled flexibility.
+    Substitution suggestions (e.g., "no galangal? try ginger") are a v2 feature.
 
 Q11:
-  title: What if "fuzzy matching" creates nonsense recommendations?
-  status: unknown
-  impact: "Chicken breast" matches "chicken skin" matches "bone broth" (all chicken-adjacent)
-  quality_risk: Too loose matching creates garbage results
+  title: What if fuzzy matching creates nonsense recommendations?
+  status: answered
+  answer: |
+    Avoided by using curated synonym map rather than string-distance fuzzy matching.
+    Unrecognised ingredients fall back to literal match. Garbage-in is user's problem at that point.
 
 Q12:
-  title: How do you handle ingredient hierarchies? (Coconut milk ⊂ milk ⊂ liquid?)
-  status: unknown
-  impact: Should "milk" recipes suggest to users with "coconut milk"?
-  complexity: Semantic matching is hard and fragile
+  title: How do you handle ingredient hierarchies?
+  status: answered
+  answer: |
+    Synonym map covers the important cases. True hierarchy (coconut milk IS-A milk) not modelled
+    for MVP — too complex and too likely to produce wrong suggestions.
+    Monitor zero-result searches; add mappings as real cases emerge.
 
 Q13:
   title: What if users add "spice" and get 5000 results?
-  status: unknown
-  impact: Results become useless, users give up
-  ux_question: How do you handle extremely broad matches?
+  status: answered
+  answer: |
+    Results capped at 20. Generic ingredients trigger a warning message but are accepted.
+    Users learn quickly that specific ingredients produce better results.
 
 Q14:
   title: What if results feel random or don't improve with more ingredients?
-  status: unknown
-  impact: Users can't tell if the algorithm is working
-  transparency_risk: Opaque matching erodes trust
+  status: answered
+  answer: |
+    Per-ingredient match status in recipe detail shows exactly which ingredients matched.
+    Users can see the logic. If a result feels wrong, they can see why it appeared (or report it).
 
 # ECOSYSTEM & INCENTIVES
 Q15:
   title: What if users just want to browse recipes, not search by ingredients?
-  status: unknown
-  impact: Feature might not match how people actually use recipe apps
-  assumption: Ingredient-first might not be the right interaction model
+  status: open
+  impact: Browse mode (by cuisine, by meal type) is a different interaction model.
+  proposed_resolution: |
+    Ingredient-first is MVP. If users consistently arrive with no ingredients and just browse,
+    add a browse/explore mode in v2. Monitor: how often do users load pantry vs. start with 0 ingredients.
 
 Q16:
-  title: What if Manage Perishables integration creates bad recommendations?
-  status: unknown
-  impact: Auto-suggestions from expiring items might be unappetizing
-  integration_risk: Features conflict (app suggests cilantro you're sick of)
+  title: What if inventory integration creates bad recipe suggestions?
+  status: answered
+  answer: |
+    Users can deselect pantry chips before searching — full control over what's included.
+    No auto-push of recipe suggestions for expiring items (opt-in only, not automatic).
 
 Q17:
-  title: What if no one rates/reviews recipes?
-  status: unknown
-  impact: You can't improve matches over time
-  data_risk: Feedback loop needed to improve algorithm
+  title: What if no one provides feedback on recipes?
+  status: answered
+  answer: |
+    Feedback is optional and lightweight. Zero feedback is fine for MVP — it doesn't break anything.
+    The primary value (find a recipe) works without feedback.
+    Feedback shown only after "View full recipe" tap — highest engagement moment, best response rate.
+  residual_risk: With one primary user, feedback signal is thin regardless. ML is explicitly deferred.
 
 Q18:
-  title: What if community features drive monetization pressure?
-  status: unknown
-  impact: "Premium recipes" or "ads" break the nonprofit feel
-  business_model_risk: How do you sustain this without compromising the mission?
+  title: What if community features drive monetisation pressure?
+  status: answered
+  answer: |
+    Community features deferred to v3+. No monetisation dependency on them in the near term.
 
 # UNINTENDED CONSEQUENCES
 Q19:
-  title: Does this encourage using whatever you have, or buying missing ingredients?
-  status: unknown
-  impact: "We suggest recipes for your ingredients" might reduce actual shopping
-  paradox: App could accidentally reduce user engagement with cooking
+  title: Does this encourage using what you have, or buying missing ingredients?
+  status: open
+  impact: |
+    Showing "Missing: galangal, palm sugar" might send users to the shops, which is fine.
+    But if it consistently shows items that require 3 specialty purchases, the feature
+    feels like a shopping list generator, not a "use what I have" tool.
+  proposed_resolution: |
+    Rank by match %. Items requiring 0-1 missing ingredients surface first.
+    The default experience is "here's what you can make tonight" — not "here's what to buy."
 
 Q20:
   title: What if recommendations create analysis paralysis (too many options)?
-  status: unknown
-  impact: Users can't decide and cook nothing
-  behavioral_risk: More options ≠ better outcomes
-
-Q21:
-  title: What if users rely on app recommendations and lose cooking intuition?
-  status: unknown
-  impact: Long-term, app dependency could weaken cooking skills
-  philosophical_risk: Are you helping or disabling?
-
-Q22:
-  title: What if the app becomes a "crutch" for users who should be exploring?
-  status: unknown
-  impact: Beginners need to learn to improvise, not just follow recipes
-  pedagogical_question: Does this help or hinder cooking education?
+  status: answered
+  answer: |
+    Results capped at 20. Ranked by match % so the top result is the best available option.
+    v2 consideration: "Surprise me" button that surfaces a single top match.
 
 # BUSINESS & GROWTH
 Q23:
-  title: How do you differentiate from existing recipe apps (Yummly, AllRecipes, Serious Eats)?
-  status: unknown
-  impact: If there's no differentiation, users just use established apps
-  competitive_risk: Network effects favor incumbents
+  title: How do you differentiate from existing recipe apps?
+  status: answered
+  answer: |
+    Existing apps (Yummly, AllRecipes) are not inventory-aware and are not Asian-focused.
+    Differentiation: (1) pulls from your actual logged pantry, (2) Asian cuisine focus,
+    (3) source-transparent (not AI-generated). Narrow and intentional beats broad and generic.
 
 Q24:
   title: What if you can only acquire Malaysian diaspora users?
-  status: unknown
-  impact: Market size is capped unless you expand
-  market_risk: Niche might be too small to sustain
-
-Q25:
-  title: What if recipe sourcing becomes your main business cost?
-  status: unknown
-  impact: Not sustainable as a side project
-  sustainability_question: What's the unit economics long-term?
-
-# FIRST PRINCIPLES
-Q26:
-  title: Is "finding recipes" the real problem Asian aunties face?
-  status: unknown
-  impact: If targeting is based on aesthetic, feature won't resonate
-  targeting_risk: Are you building for actual users or for an image?
-
-Q27:
-  title: What if the problem is "wanting to eat the food of my culture" not "finding recipes"?
-  status: unknown
-  impact: Different problem = different solution (maybe app is wrong format)
-  first_principles: Is this about recipes or about cultural identity and belonging?
-
-Q28:
-  title: What if users want guidance, not just recipes?
-  status: unknown
-  impact: Recipes without context (timing, substitutions, tips) are incomplete
-  completeness_risk: Feature might feel hollow
+  status: open
+  impact: Market size question — relevant for growth decisions, not MVP.
+  proposed_resolution: |
+    Phase 2 corpus expansion (Chinese, Japanese, Korean) broadens the addressable market.
+    For MVP, narrow scope is a feature, not a bug.
 
 core_blockers:
-  - What is Rasamalaysia's legal/technical stability? (Can you build on sand?)
-  - How will you handle ingredient matching without a semantic database?
-  - What makes this better than "ChatGPT + Rasamalaysia" for users?
+  - "Legal: confirm scraping/attribution arrangement with Rasamalaysia before launch (Q06, Q09)"
+  - "Recipe count: verify >=100 parseable recipes exist across chosen sources before committing to launch"
+  - "Ingredient synonym map: needs to be built and tested before matching can be validated"

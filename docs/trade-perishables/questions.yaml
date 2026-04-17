@@ -2,249 +2,275 @@
 
 # CORE VALUE PROPOSITION & INCENTIVES
 Q01:
-  title: Why would users trade/give away instead of throwing away?
-  status: unknown
-  impact: If convenient disposal exists, app has no value
-  first_principles: What motivates food sharing? Guilt? Community? Economics?
+  title: Why would users give away instead of throwing away?
+  status: answered
+  answer: |
+    Two motivations that don't require altruism:
+    (1) Waste guilt — most people feel bad throwing away food they paid for. Giving it away
+        feels better than binning it, even if the effort is small.
+    (2) Reciprocity — in a pilot community of people who cook similarly, giving creates
+        social credit. "I gave away tamarind paste last month" sets a norm of sharing.
+    The key: friction must be lower than throwing away. One-tap listing from manage-perishables
+    is the design goal. If listing takes longer than walking to the bin, it won't happen.
 
 Q02:
-  title: Why would users use this instead of existing platforms (Nextdoor, Facebook Groups)?
-  status: unknown
-  impact: Network effects favor incumbents; users already have contacts there
-  competitive_risk: Building on empty marketplace vs. established alternatives
+  title: Why use this instead of Nextdoor or Facebook Groups?
+  status: answered
+  answer: |
+    Not competing on breadth. Differentiating on:
+    (1) Asian pantry specificity — a neighbor who also cooks SE Asian food is a relevant match;
+        a general Nextdoor audience is not
+    (2) manage-perishables integration — log item, see it expiring, give it away in one tap.
+        No existing platform has this loop.
+    (3) Sealed-items-only trust model — Nextdoor/Facebook have no food safety framing at all.
+    The wedge is specificity and integration, not trying to replace general platforms.
 
 Q03:
-  title: Do neighbors actually want to interact with each other this way?
-  status: unknown
-  impact: Some neighborhoods are transient, anonymous, don't trust strangers
-  cultural_question: Is "neighborhood food sharing" even a real desire in target area?
+  title: Do neighbors actually want to interact this way?
+  status: open
+  impact: If target community doesn't want this, no amount of good design fixes it.
+  proposed_resolution: |
+    The pilot answers this directly. Run the pilot, measure completion rate.
+    If items don't get claimed within 48 hours consistently, the desire isn't there.
+    Don't assume — validate with real behavior in the pilot.
 
 Q04:
-  title: What if people give away food out of guilt, not generosity?
-  status: unknown
-  impact: Feature enables procrastination ("I'll list it tomorrow") instead of action
-  unintended_consequence: App becomes guilt extension, not solution
+  title: What if people give away food out of guilt (procrastination, not generosity)?
+  status: answered
+  answer: |
+    This is fine for MVP — the outcome (someone uses the food instead of it going to waste)
+    is the same regardless of the giver's motivation. "Guilt-driven giving" still reduces waste.
+    The concern would be if people use listings as a way to avoid throwing things away
+    without anyone actually picking them up. Auto-expiry on listings (7 days / item expiry)
+    prevents stale listings building up.
 
 Q05:
-  title: Is this actually about food waste, or is it about community building?
-  status: unknown
-  impact: Different problems need different solutions
-  first_principles: Getting the core motivation wrong makes feature wrong
+  title: Is this about food waste or community building?
+  status: answered
+  answer: |
+    Food waste reduction is the primary goal. Community is a byproduct, not the objective.
+    This matters for design decisions: don't add community features (profiles, leaderboards,
+    social feeds) that distract from the core loop (list item -> someone takes it -> waste reduced).
 
 # NETWORK EFFECTS & COLD START
 Q06:
-  title: How many listings are needed before app feels alive?
-  status: unknown
-  impact: Sparse marketplace (5 listings) feels dead and broken
-  cold_start_risk: Chicken-egg problem: users won't join empty marketplace
+  title: How many listings are needed before the feed feels alive?
+  status: answered
+  answer: |
+    In a hyper-local pilot: 3-5 active listings at any time is enough to feel alive.
+    This is achievable with 15-20 participants who cook regularly.
+    City-wide launch would need hundreds of listings — unachievable without significant user base.
+    The pilot model solves this: small community, concentrated density.
 
 Q07:
-  title: What if you can't reach critical mass in target neighborhood?
-  status: unknown
-  impact: App launches but feels useless, users churn
-  viability_question: Is neighborhood density sufficient for network effects?
+  title: What if critical mass isn't reachable in the pilot community?
+  status: answered
+  answer: |
+    Pilot success threshold: 5+ completed give-aways. If this isn't reached in the first
+    month, the feature doesn't have product-market fit in that community — try a different
+    community before expanding. Don't scale a broken loop.
 
 Q08:
-  title: What if early adopters are misaligned with later users?
-  status: unknown
-  impact: First users might be "food bank" types, later users might be "deal seekers"
-  culture_risk: Early community sets tone; tone might attract wrong people
+  title: What if early adopters are misaligned with the product's purpose?
+  status: open
+  impact: If first users treat it as a junk disposal service, the feed culture is set badly.
+  proposed_resolution: |
+    Sealed items only hard block + photo requirement is the quality gate.
+    A sealed item in original packaging cannot be "junk" in the same way old bread could be.
+    Onboarding copy sets the tone: "Give away pantry staples you can't finish — sealed items only."
 
 Q09:
-  title: What happens when marketplace shrinks (seasonal, summer vacations)?
-  status: unknown
-  impact: Network effects disappear, app becomes useless
-  seasonality_risk: Is adoption stable year-round?
+  title: What happens when activity drops seasonally?
+  status: open
+  impact: Pilot community goes on holiday — feed empties — remaining users churn.
+  proposed_resolution: |
+    For the pilot this is acceptable — it's a pilot, not a live product.
+    Monitor activity drops and use them to understand engagement patterns.
+    Auto-expiry keeps feed clean during low-activity periods.
 
 # TRUST & SAFETY
 Q10:
-  title: What if someone gets food poisoning from traded food?
-  status: unknown
-  impact: Liability, legal exposure, reputation destruction
-  legal_risk: P2P food sharing has serious health/legal implications
+  title: What if someone gets food poisoning from a traded item?
+  status: open — BLOCKING
+  impact: Legal liability, reputation risk, potential harm to a real person.
+  proposed_resolution: |
+    Sealed items only is the primary mitigation — a sealed, original-packaging item can be
+    inspected by the receiver. Disclaimer is the secondary layer. No platform money changes hands.
+    However: confirm with legal advice in target jurisdiction before launch.
+    The legal-compliance docs should cover this specifically.
+    Do not launch without legal sign-off on the sealed-items + disclaimer + no-payment model.
 
 Q11:
-  title: What if identity verification doesn't work?
-  status: unknown
-  impact: Scammers, bad actors, people from outside neighborhood
-  trust_risk: Anonymity + no verification = easy fraud
+  title: What if the sealed confirmation checkbox is dishonestly checked?
+  status: answered
+  answer: |
+    The checkbox places responsibility on the giver. If someone lies about an item being sealed
+    and the receiver is harmed, liability shifts to the giver who made the false declaration.
+    The platform acted in good faith based on user attestation.
+    Photo requirement adds a practical check — a photo of a clearly opened item would be visible.
+    Receivers are advised to check packaging before accepting.
 
 Q12:
-  title: What if anonymity is default and attracts bad actors?
-  status: unknown
-  impact: People post fake items, take photos, list things they don't have
-  trust_risk: Anonymity removes accountability
+  title: What if anonymity (display name only) reduces accountability?
+  status: answered
+  answer: |
+    Pilot community is invite-only — members know each other as neighbors.
+    Display name within a known community is sufficient accountability.
+    Anonymous to the public internet, but known within the pilot. This is the right balance.
 
 Q13:
-  title: What if someone trades contaminated food deliberately?
-  status: unknown
-  impact: User gets sick, blames app
-  safety_risk: No way to prevent malicious behavior
+  title: What if someone lists a contaminated item (maliciously or unknowingly)?
+  status: answered
+  answer: |
+    Sealed items only is the main guard — contamination of a sealed item would require
+    tampering, which is a criminal matter, not an app design problem.
+    For unknowing contamination: sealed packaging is the receiver's inspection point.
+    Report/flag mechanism allows community to surface issues quickly.
 
 Q14:
-  title: What if photos are of old/rotten food (not current)?
-  status: unknown
-  impact: Users show up expecting fresh food, find garbage
-  fraud_risk: Photo ≠ reality, with no enforcement
+  title: What if the photo doesn't represent the actual item condition?
+  status: answered
+  answer: |
+    Old/misrepresentative photos are possible. Mitigations:
+    (1) Photo is required at listing time (not from a stock image — user must take it)
+    (2) Listing shows timestamp — receiver knows how old the listing is
+    (3) Receiver is advised to verify packaging at pickup
+    (4) Flag mechanism for reporting misrepresentation
+    Perfect verification isn't possible. Sealed items + photo + community trust context
+    is the pragmatic balance.
 
 Q15:
-  title: Can your TOS actually protect you legally?
-  status: unknown
-  impact: "User assumes all risk" might not hold up in court
-  legal_risk: You might be liable even with disclaimers
+  title: Can the TOS actually protect the platform legally?
+  status: open — BLOCKING
+  impact: Disclaimers may not hold in all jurisdictions.
+  proposed_resolution: |
+    Don't launch without legal review. "User assumes all risk" language is common but not
+    universally enforceable. The sealed-items model is the strongest practical protection —
+    confirm this with legal advice in the target jurisdiction.
 
 # LOGISTICS & FRICTION
 Q16:
-  title: What if pickup logistics are too complicated (no good meeting spots)?
-  status: unknown
-  impact: Users prefer donation (food bank) or trash instead
-  friction_risk: Small logistics problems kill adoption
+  title: What if pickup logistics are too complicated?
+  status: answered
+  answer: |
+    Pickup notes field on listing lets giver specify the arrangement ("Lobby, weekday evenings",
+    "Leave at door 12B"). For a pilot within a single building or estate, logistics are simple.
+    This is one reason the pilot must be hyper-local — 1km radius pickups are a different
+    problem from same-building pickups. Start with same-building or same-estate.
 
 Q17:
-  title: What if people don't want to share their phone number?
-  status: unknown
-  impact: Friction increases abandonment
-  privacy_concern: Asking for contact info is a barrier
+  title: What if people don't want to share contact information?
+  status: answered
+  answer: |
+    They don't have to. The "I want this" model means the receiver never shares contact info.
+    The giver initiates contact using their preferred channel — they control what they share.
+    Receiver only sees "someone in [area] is interested."
 
 Q18:
-  title: What if pickup coordination is awkward (timing, scheduling)?
-  status: unknown
-  impact: Items go bad before pickup, frustration grows
-  ux_risk: Unstructured coordination fails at scale
+  title: What if pickup coordination is awkward or fails?
+  status: answered
+  answer: |
+    For a pilot community (known neighbors), coordination failure is rare and socially recoverable.
+    If giver doesn't respond: listing stays active, receiver sees "no response yet" after 48 hours.
+    If pickup doesn't happen: item auto-expires. No penalty, no friction from the system's side.
+    In-app messaging (v2) would improve this — but external coordination is acceptable at pilot scale.
 
 Q19:
-  title: What if items spoil before pickup (hot weather, no refrigeration)?
-  status: unknown
-  impact: People receive bad food, lose trust
-  reliability_risk: Environment (temperature) affects outcome
+  title: What if items spoil before pickup (especially in hot climates)?
+  status: answered
+  answer: |
+    Sealed items in original packaging are designed for storage — less susceptible than fresh food.
+    Pickup notes can specify storage conditions ("kept in fridge, pick up within 2 days").
+    This is a better problem to have than "no one uses the feature." Accept it for the pilot.
 
 Q20:
-  title: What if users can't easily communicate when things change?
-  status: unknown
-  impact: "I'll pick up at 3pm" without reminder = no-show
-  coordination_risk: Async communication + no notifications = chaos
+  title: What if coordination fails (no-show, forgotten pickup)?
+  status: answered
+  answer: |
+    No-show has low cost: giver re-lists or the item auto-expires.
+    No penalty system in MVP — trust-based, community-normed.
+    If no-shows become a pattern in the pilot, add a lightweight "Did this get picked up?" nudge.
 
 # INCENTIVE MISALIGNMENT
 Q21:
-  title: Does "giving away" incentivize people to be generous, or lazy?
-  status: unknown
-  impact: Some people list trash because it's easier than throwing away
-  unintended_consequence: App becomes junk disposal service, not community tool
+  title: Does give-away incentivize generosity or laziness (junk disposal)?
+  status: answered
+  answer: |
+    Sealed items hard block is the filter. You cannot list opened or partial items.
+    Someone trying to offload a half-eaten bag of flour cannot use this feature.
+    The restriction makes the feature specifically for genuine give-away of useful items.
 
 Q22:
-  title: What if trading teaches people to negotiate, or just creates conflict?
-  status: unknown
-  impact: Haggling over food feels petty
-  social_dynamic_risk: Feature could breed resentment
+  title: What if trading causes conflict or haggling?
+  status: answered
+  answer: |
+    Trading (barter) is explicitly out of MVP scope. All give-aways are free.
+    No negotiation, no haggling. This eliminates the conflict vector entirely for now.
 
 Q23:
-  title: What if reviews/reputation don't matter because users are one-time?
-  status: unknown
-  impact: No incentive to be trustworthy if you never see person again
-  game_theory: One-shot games lack accountability mechanisms
+  title: What if users are one-time participants with no long-term accountability?
+  status: answered
+  answer: |
+    Pilot community is repeat-interaction by design (same neighbors, same building).
+    One-shot game theory doesn't apply when you see the same people regularly.
+    This is another reason the pilot must stay hyper-local.
 
 Q24:
-  title: What if monetization temptation destroys trust?
-  status: unknown
-  impact: "Listing fee" or "premium features" breaks community feeling
-  corruption_risk: Money changes behavior, especially in peer networks
+  title: What if monetisation pressure destroys trust?
+  status: answered
+  answer: |
+    No monetisation in MVP or v2 planning. Give-away is always free.
+    Payment integration (for future trade/barter) is a v2+ consideration with explicit
+    legal and trust design requirements. Not something to add lightly.
 
-# ECOSYSTEM & INTEGRATION RISKS
+# ECOSYSTEM INTEGRATION
 Q25:
-  title: What if Manage Perishables auto-lists items without user consent?
-  status: unknown
-  impact: Users get surprised marketplace notifications
-  integration_risk: Unwanted integrations feel invasive
+  title: What if manage-perishables auto-lists items without user consent?
+  status: answered
+  answer: |
+    Hard no. Give-away is always triggered by explicit user action ("Give away" button).
+    No automatic listing without user review and confirmation. See TRADE-INTEGRATION.
 
 Q26:
-  title: What if someone lists items from someone else's inventory?
-  status: unknown
-  impact: Household members don't coordinate, double-list items
-  multi_user_risk: Without access control, app creates chaos
+  title: What if household members double-list the same item?
+  status: answered
+  answer: |
+    MVP is single-user (manage-perishables MVP scope). Household sharing is a v2 concern.
+    For the pilot, one user per household is assumed.
 
 Q27:
-  title: What if marketplace becomes a dumping ground for things no one wants?
-  status: unknown
-  impact: Stale listings, low-quality items, feels like trash
-  quality_risk: Network effects can amplify bad behavior
-
-Q28:
-  title: What if successful trades lead to dependency (people expect free food)?
-  status: unknown
-  impact: Changes neighborhood culture
-  cultural_risk: Feature could inadvertently create expectations/obligations
+  title: What if the feed becomes a dumping ground for unwanted items?
+  status: answered
+  answer: |
+    Sealed items only prevents the worst case (old opened food, near-expired opened items).
+    Photo required means quality is visually inspectable.
+    Auto-expiry removes stale listings. Flag mechanism handles edge cases.
 
 # UNINTENDED CONSEQUENCES
 Q29:
-  title: Does this reduce food waste, or just move it around?
-  status: unknown
-  impact: If item gets listed, picked up, thrown away anyway = no actual waste reduction
-  impact_question: Are you solving the problem or enabling postponement?
+  title: Does this reduce food waste or just move it around?
+  status: answered
+  answer: |
+    "Moved around" is still better than "thrown away." If the receiver uses the item, waste
+    is reduced. The worst case is the receiver throws it away instead of the giver — same outcome,
+    no worse. Track "marked as given" rate as a proxy for actual transfer.
 
 Q30:
-  title: What if marketplace creates "transaction cost" that prevents action?
-  status: unknown
-  impact: Easier to throw away than list + wait for pickup
-  friction_paradox: Adding a step might make people less likely to share
+  title: What if listing friction is higher than throwing away?
+  status: answered
+  answer: |
+    One-tap listing from manage-perishables is the design response.
+    If the user is already looking at an expiring item in their dashboard, give-away is
+    one extra tap. This must stay as low-friction as possible — the feature dies if it doesn't.
 
 Q31:
   title: Does building community features create social obligation?
-  status: unknown
-  impact: "I should pick up this cilantro" becomes stressful
-  psychological_risk: Community features could create guilt
-
-Q32:
-  title: What if app becomes a source of conflict (who takes what)?
-  status: unknown
-  impact: Neighbor relationships sour over contested items
-  social_risk: Scarcity breeds conflict
-
-Q33:
-  title: What if neighborhood gentrification changes who uses app?
-  status: unknown
-  impact: New residents might have different expectations/behaviors
-  stability_risk: Communities change; cultural fit might not persist
-
-# BUSINESS & VIABILITY
-Q34:
-  title: How do you sustain this without monetization?
-  status: unknown
-  impact: Server costs, moderation, support = ongoing expense
-  sustainability: Is this a passion project or a viable business?
-
-Q35:
-  title: What if your target neighborhood doesn't exist (too dispersed, too transient)?
-  status: unknown
-  impact: No critical mass = app fails
-  market_risk: Geographic targeting is all-or-nothing
-
-Q36:
-  title: What if food waste reduction doesn't matter to most people?
-  status: unknown
-  impact: Motivation is aesthetic, not actual behavior change
-  behavioral_question: Is this solving a real problem or a invented one?
-
-# FIRST PRINCIPLES
-Q37:
-  title: Why are Asian aunties specifically good at food sharing/trading?
-  status: unknown
-  impact: If targeting is just aesthetic, feature won't resonate with actual users
-  targeting_risk: Build for actual problem, not imagined archetype
-
-Q38:
-  title: What if the real problem is "I don't know my neighbors," not "I want to share food"?
-  status: unknown
-  impact: Food is the surface problem; isolation is the deep one
-  root_cause: Are you treating symptom or disease?
-
-Q39:
-  title: What if people would share more if it didn't require creating an account?
-  status: unknown
-  impact: Friction of app installation prevents adoption
-  friction_risk: Technology might be the wrong solution
+  status: answered
+  answer: |
+    Community features are explicitly deferred. MVP is a lightweight notice board.
+    No social graph, no following, no leaderboard. No obligation.
 
 core_blockers:
-  - Is neighborhood food sharing actually desired, or just an idealistic assumption?
-  - What's your legal liability if food causes harm?
-  - Can you reach critical mass in target area? (Viability question)
-  - How do you handle trust without requiring everyone to verify?
+  - "Legal review: food gift liability in target jurisdiction before launch (Q10, Q15)"
+  - "Pilot community: identify and commit 15-20 participants before building"
+  - "Seed listings: primary user must have real listings ready before inviting others"

@@ -3,57 +3,75 @@
 flows:
   SEARCH_BY_INGREDIENTS:
     name: Search by Ingredients
-    goal: Find recipes I can cook with what I have
-    happy_path:
-      - User lands on app
-      - Sees ingredient input field + "Add ingredient" button
-      - User types "chicken"
-      - System shows autocomplete suggestions
-      - User presses Enter or selects from suggestions
-      - "Chicken" appears in "My Ingredients" list
-      - System immediately shows recipes matching ingredients (real-time)
-      - Recipes ranked by match % (highest first)
+    goal: Find recipes I can cook with what I have — with minimal input
+    primary_path:
+      - User opens Recommend Recipe
+      - System shows "Use my pantry" as the primary CTA (large button)
+      - User taps it -> system loads non-expired items from manage-perishables inventory
+      - System displays loaded ingredients as a chip list (e.g., "Fish sauce", "Sesame oil", "Bok choy")
+      - User can deselect any item they don't want to cook with (e.g., saving a special ingredient)
+      - System shows matched recipes, ranked by match % (highest first)
+      - Results capped at top 20 — enough choice, not overwhelming
       - User scrolls, finds recipe, taps to view detail
+    fallback_path:
+      - User has no logged inventory, or wants to search with specific ingredients only
+      - User taps "Add ingredients manually"
+      - Ingredient input field with fuzzy autocomplete (same curated list as manage-perishables)
+      - User adds ingredients one by one; results update after each addition
+      - User can mix: pantry chips + additional manual additions
     decision_points:
-      - If ingredient matches multiple forms (e.g., "chicken", "chicken breast"): show all as options
-      - If no recipes match: show "No recipes found" with suggestion to add more ingredients
-      - If user adds generic ingredient (e.g., "oil"): show very broad matches (200+ recipes)
+      - Pantry has 0 non-expired items: show manual input directly, with note "Add items to your pantry to use this faster next time"
+      - No recipes match any combination: show "No matches found. Try removing an ingredient."
+      - Partial matches always shown: never hide recipes just because match is <100%
+      - Generic ingredient (e.g., "oil"): accept, but show warning "This matches broadly — add specific ingredients for better results"
+      - Results cap at 20, ranked by match %; ties broken by total ingredient count (simpler recipes first)
     edge_cases:
-      - Autocomplete shows 50 suggestions: show top 10, allow scrolling
-      - User typos ingredient name: fuzzy match or ask "did you mean X?"
-      - User adds ingredient then removes it: results update in real-time
-      - User has 0 ingredients: show all recipes or empty state?
+      - User deselects all chips: results clear, prompt "Add at least one ingredient"
+      - Unrecognised typed ingredient: accept as free text, match literally against recipe data
+      - Pantry item named differently from recipe (e.g., "dark soy" vs "dark soy sauce"): fuzzy match handles
+      - User adds then removes ingredient: results update live
+      - Large pantry (40+ items): all chips shown, user scrolls or switches to manual for focused search
     data_collected:
-      - Ingredient list
-      - Recipes viewed (for future learning)
-      - Search session (ingredients → results → clicked recipe)
-    open_questions:
-      - Real-time results or "Search" button?
-      - Should ingredient order matter (for "popular combinations")?
-      - Should we suggest "common ingredient pairs" (e.g., "garlic + soy sauce")?
+      - Ingredient source (pantry / manual / mixed)
+      - Ingredient list used in search
+      - Recipes shown, recipes tapped
+      - Deselected pantry items (signal: what users consciously exclude)
+      - Search session (ingredients -> results -> clicked recipe)
 
   VIEW_RECIPE_DETAIL:
     name: View Recipe Detail
-    goal: See full recipe and decide if I can cook it
+    goal: Quickly assess if this recipe is cookable tonight, then hand off to the source
+    design_constraint: |
+      Recipe instructions are NOT displayed inline. Copyright belongs to the original source.
+      This screen shows enough to make a "can I cook this tonight?" decision, then links out.
     happy_path:
-      - User taps recipe from search results
-      - System shows recipe title, source link, ingredients, instructions, cook time & difficulty
-      - User's ingredients are highlighted
-      - User reads through
-      - User taps "Go to Source" to see original recipe
+      - User taps recipe card from results
+      - System shows: recipe title, source name, cuisine tag, cook time, difficulty
+      - Ingredient list with per-ingredient match status:
+          "Fish sauce — you have it"
+          "Sesame oil — you have it"
+          "Palm sugar — you'll need this"
+          "Galangal — you'll need this"
+      - Summary line: "You have 6 of 8 ingredients. Missing: palm sugar, galangal."
+      - "View full recipe" button opens original source URL in browser
+      - After returning from browser: feedback prompt appears once
+          "Did you make this?" -> Yes / Not for me
+      - If "Not for me": optional structured reason:
+          "Too complex" / "Missing key ingredient" / "Not my taste" / (skip — no answer)
     decision_points:
-      - If user has 80%+ ingredients: highlight "You have most of this!"
-      - If user missing key ingredient: show "You'll need to buy: X"
-      - If cook time >30 min: show warning "Takes longer than 30 minutes"
+      - Match >=80%: highlight "You have most of what you need"
+      - Match <50%: card shown at bottom of results, not promoted
+      - "View full recipe" always links to original source — instructions never shown inline
+      - Feedback prompt: shown once per recipe per session, never repeated if already answered
     edge_cases:
-      - Recipe has 50 ingredients: still show all or summarize?
-      - Original source link broken: fallback to cached version?
-      - Recipe translation issues: show original language option?
+      - Source link broken: show "Source currently unavailable" — title and ingredient list still shown
+      - Recipe has 20+ ingredients: show all with match status, no truncation
+      - User previously marked "Not for me": show faint "You skipped this before" note on card in results
+      - User never taps "View full recipe": no feedback prompt shown (they didn't engage enough to rate)
     data_collected:
       - Recipe ID viewed
-      - Time spent on detail page
-      - Whether user clicked "Go to Source"
-      - Like/dislike rating
-    open_questions:
-      - Should we show similar recipes on this page?
-      - Should we allow saving/bookmarking recipes for later?
+      - Match % at time of view
+      - Whether user tapped "View full recipe" (strongest intent signal)
+      - Feedback: yes-made / not-for-me / no-response
+      - Structured skip reason (if provided)
+      - Time between opening detail and tapping "View full recipe" (or abandoning)

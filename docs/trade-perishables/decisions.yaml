@@ -3,146 +3,152 @@
 
 TRADE-001:
   title: MVP scope
-  status: pending
-  decision: Give Away only (vs. Trade + Group Buy)
+  status: locked
+  decision: Give Away only. Sealed/unopened items only.
   rationale: |
-    Question: "Why would users trade/give away instead of throwing away?"
-    Give Away is simplest to launch, highest likelihood of actual use.
-    Trade requires matching (inventory coordination), Group Buy requires payments.
-    Unintended consequence: "Give Away" might become trash disposal service.
-    Users list things they don't want (easier than throwing away) instead of sharing generously.
-    This kills the app's soul — becomes "free junk depot" instead of community tool.
-    Also: Network effects favor incumbents (Nextdoor, Facebook Groups).
-    Why not just use existing platforms?
+    Three use cases were originally conflated: give-away, bulk-splitting, and trading.
+    Give Away is the only one with the right properties for MVP:
+    - Most urgent timing (item expiring now, not future coordination)
+    - Lowest coordination cost (giver decides unilaterally, receiver accepts or doesn't)
+    - No value exchange to negotiate
+    - Directly reduces waste — the stated core goal
+    Sealed/unopened items only eliminates:
+    - Hygiene risk (no open containers changing hands)
+    - Quantity verification problem (how much is actually left?)
+    - Partial-transfer logistics (containers, weighing, mess)
+    A sealed item in original packaging can be inspected by the receiver. Trust is visual.
   mitigations:
-    - Launch Give Away first, measure actual behavior
-    - Monitor what gets listed (junk vs. actual food)
-    - Consider curation (require description, photos) to discourage trash
-    - Build community values into onboarding ("this is about sharing, not dumping")
-  blockers: |
-    Will users share generously, or just dump trash?
-    Can you reach critical mass vs. Nextdoor/Facebook Groups?
+    - "Give Away" is the only listing type — no type selector in MVP
+    - Sealed checkbox is required before posting — honest declaration by the giver
+    - Photo required — primary trust signal; receiver can see the packaging
+    - "Already opened" items simply cannot be listed — not a warning, a hard block
+  deferred:
+    - Trade (barter exchange): v2 — requires value matching and two-way logistics
+    - Group Buy (split bulk purchases): v2 — requires pre-purchase coordination flow
+    - Partial quantities: v2+ — requires hygiene/container design and quantity verification
 
 TRADE-002:
-  title: Contact method
-  status: pending
-  decision: External (email/phone only)
+  title: Contact and coordination method
+  status: locked
+  decision: |
+    Receiver taps "I want this" -> giver gets notified -> giver initiates contact.
+    No contact info revealed automatically. No in-app messaging in MVP.
+    Coordination happens externally (WhatsApp, SMS, Telegram) after giver responds.
   rationale: |
-    Question: "What if pickup logistics are too complicated?"
-    No in-app messaging = simpler MVP, but adds friction.
-    Unintended consequence: If coordination is awkward, users prefer
-    donation (food bank) or trash instead. Items go bad before pickup.
-    Also: Asking for phone number is a privacy barrier — some users won't share.
-    This reduces network effects.
+    Revealing contact info directly (email/phone on listing detail) is a privacy problem.
+    It exposes the giver's personal details to anyone who views their listing.
+    The "I want this" -> notification model keeps both parties anonymous until the giver
+    chooses to engage. This mirrors how Carousell and similar platforms work.
+    In-app messaging is the right long-term solution but adds significant development complexity.
+    For a pilot community (known neighbors), external coordination is acceptable friction.
   mitigations:
-    - Start with email/phone, measure friction closely
-    - If people stop using app due to coordination, add in-app messaging
-    - Consider "template messages" to make coordination easier
-    - Never require real-time sync (accept async coordination)
-  blockers: |
-    Is friction acceptable?
-    Do users feel safe sharing phone numbers?
+    - Giver notification includes: "[Building/area] neighbor is interested in [item name]"
+    - Giver sees count of interested parties — can choose who to contact
+    - If giver doesn't respond within 48 hours: receiver sees "no response yet" state
+    - Giver's contact method is their choice (they initiate, so they control the channel)
+  deferred:
+    - In-app messaging: v2 — add when coordination friction is confirmed to be causing drop-off
 
 TRADE-003:
-  title: Identity verification
-  status: pending
-  decision: Optional anonymity
+  title: Identity and verification
+  status: locked
+  decision: |
+    Community-scoped, not identity-verified. Users are visible within their pilot community only.
+    No public anonymous access. Joining the pilot requires an invite or community code.
+    Display name shown on listings (first name only, or chosen name). No real-name requirement.
   rationale: |
-    Question: "What if anonymity attracts bad actors or reduces trust?"
-    Optional anonymity is flexible (respects privacy) but riskier.
-    Bad actors can list fake items, photos of old food, contaminated items.
-    Unintended consequence: Food poisoning risk. Someone eats spoiled food,
-    gets sick, blames app. Legal liability.
-    Also: Trust erodes quickly. One bad experience = app is dead.
-    But requiring identity verification adds friction that kills adoption.
+    Full identity verification (ID check, address verification) adds major friction and is
+    disproportionate for a pilot with known neighbors.
+    Full anonymity removes accountability — bad actors have no consequences.
+    Community-scoped with invite is the middle ground: you're known within the community
+    (neighbors can identify you at pickup), but you're not exposing identity to the public internet.
+    The pilot community itself provides the trust layer that verification would otherwise provide.
   mitigations:
-    - Start with optional anonymity, monitor fraud closely
-    - Have reporting/blocking mechanism for bad actors
-    - Require photos + description to reduce fraud
-    - Clear TOS: users assume risk (legal protection, if possible)
-    - If fraud becomes problem, move to required identity verification
-  blockers: |
-    Does anonymity reduce trust?
-    What's your liability if someone gets food poisoning?
+    - Invite/community code required to join — prevents random public access
+    - Display name on listings creates social accountability within the community
+    - Report/flag mechanism for any issues (reviewed manually at pilot scale)
+    - No profile photos required (reduces friction and privacy concern)
+  deferred:
+    - Address verification: only needed if expanding beyond known communities
+    - Reputation system/scores: v2 — needs activity volume to be meaningful
 
 TRADE-004:
   title: Geographic scope
-  status: pending
-  decision: Neighborhood / 1-3 km radius (candidate)
+  status: locked
+  decision: |
+    Hyper-local pilot: a single pre-committed community (building, estate, or cooking group).
+    Do not launch as a city-wide or neighborhood-radius marketplace.
+    Expand scope only after the give-away loop is proven within the pilot.
   rationale: |
-    Question: "Is neighborhood density sufficient for network effects?"
-    Walkable distance (1-3 km) is realistic for pickup. But unintended consequence:
-    If neighborhood is sparse (5 listings, 100 potential users), network feels dead.
-    Users won't join app that has no listings. This is the chicken-egg problem.
-    Also: Neighborhoods change (gentrification, seasonal vacations) — density isn't stable.
-    Summer = 20% of users go away = network effects disappear.
+    Cold start is the #1 risk. A city-wide launch with 10 users produces a feed with 0-2
+    listings — the app feels broken and users churn immediately.
+    A hyper-local pilot with 20-30 committed participants produces a feed that feels alive
+    even at small scale. Density matters more than geographic reach.
+    Pilot communities have pre-existing trust (neighbors already know each other), which
+    removes the verification and reputation problems that plague public marketplaces.
+  cold_start_strategy:
+    - Identify pilot community before building (e.g., Jeremy's building, a cooking group)
+    - Seed with real listings from the primary user before inviting others
+    - Measure: do items get claimed? How quickly? This validates the core loop.
+    - Success threshold before expanding: 5+ successful give-aways within pilot community
   mitigations:
-    - Target dense urban neighborhoods first (where network effects work)
-    - Seed listings yourself before launch (give away your own items)
-    - Expand to nearby neighborhoods once you reach 50+ active listings
-    - Track seasonal variance; plan for summer (expect 20% drop in activity)
-  blockers: |
-    Can you reach critical mass in target neighborhood?
-    Is density sufficient year-round?
+    - Pilot is invite-only (community code) — no organic public discovery
+    - Empty state messaging is tailored to pilot context ("Invite a neighbor to get started")
+    - Geographic radius not used in MVP — community membership is the boundary
 
 TRADE-005:
-  title: Legal & food safety liability
-  status: pending
-  decision: TBD - user-responsible approach
+  title: Legal and food safety
+  status: locked
+  decision: |
+    Sealed items only + required disclaimer + no financial exchange.
+    Consult legal before any expansion beyond the closed pilot.
   rationale: |
-    Question: "What's your legal liability if food causes harm?"
-    Minimal oversight (user responsible) is simplest, but risky.
-    Someone lists spoiled food, someone else gets food poisoning,
-    they sue you (not the lister). TOS might not protect you.
-    Unintended consequence: One incident = reputation destroyed + legal fees.
-    Also: Good Samaritan laws vary by location (some protect, some don't).
-    Operating in gray zone until forced to deal with it.
+    P2P food exchange has real liability risk. Food safety regulations vary by jurisdiction.
+    For the pilot:
+    - Sealed items in original packaging: receiver can inspect and reject. Giver's liability is minimal.
+    - No financial exchange: avoids food vendor licensing requirements that apply to paid transfer.
+    - Disclaimer shown to receiver: "Items are shared as-is. Check packaging before accepting."
+    - This mirrors what happens when you give a sealed jar to a friend — legally, it's a gift.
+    Beyond the pilot (opening to the public, enabling partial quantities, or enabling payment)
+    requires legal advice before proceeding.
   mitigations:
-    - Consult lawyer BEFORE launch on food liability
-    - Research Good Samaritan laws in target area
-    - Strong TOS (users assume all risk — though might not hold)
-    - Require photos + expiry dates (creates accountability)
-    - Consider liability insurance before launch
-  blockers: |
-    Can you launch without lawyers?
-    Do Good Samaritan laws protect you?
+    - Hard block on opened/partial items — seals the largest liability vector
+    - Disclaimer on every listing detail view (shown once per session, not dismissed-forever)
+    - No money changes hands — platform never touches food safety regulations for commercial sale
+    - TOS clearly states items are user-to-user gifts; platform is a notice board, not a food vendor
+  blockers:
+    - Legal review required before: public launch, partial items, any payment features
 
 TRADE-INTEGRATION:
-  title: Ecosystem integration with Manage Perishables
-  status: pending
-  decision: TBD - auto-list expiring items?
+  title: Integration with Manage Perishables
+  status: locked
+  decision: |
+    One-click listing from manage-perishables item detail (pre-fills listing form).
+    No auto-listing without explicit user action.
   rationale: |
-    Question: "Does auto-listing from Manage Perishables help or create chaos?"
-    Auto-listing items expiring soon could help reduce waste.
-    But unintended consequence: Users get surprised marketplace notifications.
-    They might not want items auto-listed without permission (feels invasive).
-    Also: Auto-listing creates household coordination problems.
-    Two people both using app, both trying to list/remove same item = conflict.
+    The natural moment to give something away is when the user sees it expiring in their
+    manage-perishables dashboard. "Give away" button on the item detail page makes this
+    frictionless — form pre-fills with name, expiry date, and photo already logged.
+    Auto-listing without action would feel invasive — users don't want items appearing
+    in a community feed without their knowledge.
   mitigations:
-    - Don't auto-list without explicit user permission
-    - Show confirmation before listing ("Ready to share cilantro?")
-    - Only auto-list if Trade has critical mass (don't bother if app is dead)
-    - For households: clarify ownership (whose item is this?)
-  blockers: |
-    Will auto-listing feel helpful or invasive?
-    Can you handle household coordination?
+    - "Give away" is a button, not an automatic trigger
+    - Pre-fill is a convenience, not a commitment — user still reviews and confirms
+    - Integration only surfaces for items that are: not yet expired, sealed (user confirms at listing)
 
 TRADE-NETWORK_EFFECTS:
-  title: Network effects & viability
-  status: pending
-  decision: TBD - is this sustainable?
+  title: Network effects and differentiation from existing platforms
+  status: locked
+  decision: |
+    Don't compete with Nextdoor or Facebook Groups on breadth.
+    Differentiate on: Asian pantry specificity, manage-perishables integration, and
+    the framing of items as food (not junk) within a community that cooks similarly.
   rationale: |
-    Question: "Why would users use this instead of Nextdoor/Facebook Groups?"
-    Incumbents have network effects. You're building on empty marketplace.
-    Unintended consequence: Even if you build perfectly, users might just use
-    existing platforms where their neighbors already are.
-    Also: Market might be too small. How many neighborhoods actually want this?
-    And if you monetize (ads, fees), you break the community vibe.
-  mitigations:
-    - Target specific neighborhood (dense, engaged community first)
-    - Measure if users prefer this over Facebook Groups
-    - Plan long-term: what makes this sticky vs. Nextdoor?
-    - Delay monetization until you have network effects
-  blockers: |
-    What differentiates this from Nextdoor?
-    Can you reach critical mass before users drift to Facebook?
+    Nextdoor and Facebook Groups exist and have users. Building a general give-away
+    marketplace and expecting people to switch is not viable.
+    Differentiation: this is specifically for Asian pantry items — specialty ingredients
+    that someone in a general group might not understand or want. A neighbor who also
+    cooks Southeast Asian food is a more relevant match than the general population.
+    The manage-perishables integration creates a unique loop: log item -> see it expiring ->
+    give it away in one tap. No existing platform has this.
+    Start narrow, start with people who already cook similarly. That's the wedge.

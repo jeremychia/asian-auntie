@@ -3,76 +3,88 @@
 
 MANAGE-001:
   title: Photo requirement
-  status: pending
-  decision: Optional (user can skip)
+  status: locked
+  decision: Optional — camera opens by default, but skip is always one tap away
   rationale: |
-    Question: "Why would users actually use this vs. their memory?"
-    Reduces friction for quick adds. However, optional photos create two problems:
-    (1) Inconsistent data quality — some items have photos, others don't, making search harder
-    (2) Unintended consequence: Users might skip photos for shame items (junk food, expired food)
-    This creates a biased inventory that doesn't reflect reality.
+    Photos are the fastest path to recognition and the richest visual in the dashboard.
+    But requiring photos creates friction at the worst moment (unpacking groceries).
+    Making photos optional, with a well-designed text-only card fallback, means:
+    - Users who take photos get a richer dashboard and faster add (recognition pre-fills)
+    - Users who skip photos still have a fully functional item card
+    The text-only card must be deliberately styled — not a broken image placeholder.
+    It uses item-type color coding or a neutral background with prominent name + expiry text.
   mitigations:
-    - Consider gentle nudge ("Photos help you remember") vs. barrier
-    - Don't penalize users without photos (no "shame" score)
-  blockers: |
-    How important is visual context for recognition?
-    Will photo bias create blind spots in inventory?
+    - Camera opens by default on tapping "+" — taking a photo is the path of least resistance
+    - "Skip photo" option is clearly available but not prominent
+    - No shame messaging, no nudge to add photos later
+    - Dashboard text cards look intentional, not degraded
 
 MANAGE-002:
   title: Expiry date input
-  status: pending
-  decision: TBD - date picker vs. free text
+  status: locked
+  decision: Date picker with smart defaults — never defaults to today
   rationale: |
-    Question: "When users add items, will dates be accurate or guesses?"
-    Date picker guarantees valid dates but slower; free text faster but requires parsing.
-    Critical risk: Inaccurate expiry dates undermine entire system.
-    Unintended consequence: Users might underestimate (throw away good food)
-    or overestimate (eat spoiled food). App becomes unreliable.
+    Free text is faster but introduces parsing failures and garbage data silently.
+    Date picker guarantees valid ISO dates, which is worth the minor friction.
+    The key insight: the default value matters more than the input method.
+    Default to today = high error rate (user taps Save without changing it).
+    Default to +shelf-life estimate = fast for typical cases, user adjusts when wrong.
+    Smart defaults by item type:
+      - Produce / fresh herbs: +5 days
+      - Dairy / tofu: +7 days
+      - Opened sauces / condiments: +6 months
+      - Unopened pantry items (sauces, oils, dried): +12 months
+      - Unknown type: +3 months (neutral)
+    Items from recognition: if a printed date is detected in the photo, use it directly
+    and label it "Printed date" so user knows it's exact, not estimated.
+    Items without printed dates: use shelf-life default, label as "Estimated".
   mitigations:
-    - Date picker is slower but prevents garbage data
-    - Consider "estimated" flag for items without printed dates
-    - Show confidence - 'Best guess of 1 week' vs. 'Exact March 15'
-  blockers: |
-    Which reduces errors and friction best?
-    Can system validate that dates are realistic (not 100 years)?
+    - Validate: date must be today or in future (block past dates)
+    - Validate: date must be within 2 years (warn if >18 months — unusual)
+    - "Estimated" label on pre-filled dates signals the user should verify
+    - User can always scroll the date picker to override
 
 MANAGE-003:
   title: Notification window
-  status: pending
-  decision: 3 days before expiry (candidate)
+  status: locked
+  decision: Notify before the nearest upcoming cooking day — not a fixed X-days window
   rationale: |
-    Question: "What happens when users ignore warnings or feel nagged?"
-    3 days gives time to use item. But wrong window kills the feature entirely.
-    Unintended consequence: Too aggressive → notification fatigue → users disable all alerts
-    Once disabled, hard to re-engage. Worse: Users might feel guilty ("nagged"),
-    creating negative emotion around the app.
-    Too lenient → not enough time to cook → users ignore alerts.
+    A 3-day blanket window assumes the user cooks every 2-3 days. If Jeremy cooks weekends
+    only, a Wednesday notification is accurate but unactionable — he can't use the item until
+    Saturday. An unactionable notification is worse than no notification (creates guilt, not action).
+    Better model: ask once at onboarding "What days do you usually cook?" (e.g., Fri/Sat/Sun).
+    Then: notify the evening before the nearest cooking day where the item will expire before
+    the *following* cooking day.
+    Example: item expires Thursday, user cooks Sat/Sun → notify Wednesday evening
+    ("Fish sauce expires tomorrow — use it this weekend?")
+    This makes every notification actionable.
   mitigations:
-    - Start with 3 days, measure disable rate closely
-    - Add "snooze" instead of binary notification
-    - Let users customize window (5 days, 3 days, 1 day)
-    - Frame notifications as helpful, not accusatory
-  blockers: |
-    Is 3 days right for your cooking patterns?
-    What's the threshold where notification fatigue kills engagement?
+    - Onboarding question is optional — if skipped, fall back to 3-day window
+    - User can change cooking days in settings at any time
+    - Snooze option: "Remind me tomorrow" (pushes 24h, not indefinitely)
+    - Never more than 2 notifications per day regardless of how many items expire
+    - Frame as "use it" not "it's expiring" — actionable language
+  notification_schedule:
+    - T-1 cooking day: primary notification (most useful)
+    - Day of expiry: fallback if item still in inventory (brief, not guilt-inducing)
+    - No notification after expiry — item just sits at top of dashboard as red
 
 MANAGE-004:
   title: Item names
-  status: pending
-  decision: TBD - free text vs. autocomplete
+  status: locked
+  decision: Free text with fuzzy autocomplete from a curated Asian pantry list (~100 items)
   rationale: |
-    Question: "What if expiry dates are completely wrong from day one?"
-    Free text = user can type anything, less consistent; Autocomplete = faster, more searchable.
-    But autocomplete requires curated list (maintenance burden).
-    Unintended consequence: If names aren't consistent ("tamarind paste", "tamarind", "TPaste"),
-    search/filtering becomes useless. Notifications might miss items because of name variance.
+    Pure free text leads to "tamarind", "tamarind paste", "TPaste" — search becomes unreliable.
+    Full autocomplete-only is too restrictive for the long tail of Asian pantry items.
+    Fuzzy autocomplete threads the needle: fast for common items, always overridable.
+    Curated list starts at ~100 items covering the most common Southeast/East Asian pantry staples.
+    Search uses fuzzy matching so "tamarind" finds "tamarind paste" — no exact match required.
   mitigations:
-    - Start with free text, monitor most-used items
-    - Add autocomplete for top 20 items only (low maintenance)
-    - Don't require matching — "tamarind" should find "tamarind paste"
-  blockers: |
-    Would autocomplete help or slow you down?
-    Can inconsistent naming break the feature?
+    - Autocomplete fires after 2 characters
+    - "Not in the list? Just type it" — free text always accepted
+    - Top suggestion pre-selected, one tap to accept
+    - List maintained manually; seed from recognition logs over time
+    - Item names are user-editable post-save on item detail page
 
 MANAGE-005:
   title: MVP scope
@@ -94,105 +106,86 @@ MANAGE-005:
 
 MANAGE-006:
   title: Consumption tracking for gradual-use items
-  status: pending
-  decision: |
-    Auto-detect item type during ADD_ITEM.
-    Default consumption tracking ON for consumables (sauces, oils, spices, condiments).
-    Allow user to opt-in/opt-out for any item during add, or toggle on item detail.
-    When tracking enabled, show progress bar on item detail.
-    MARK_AS_USED flow branches: slider/buttons for consumables vs. instant delete for single-use.
+  status: locked
+  decision: Deferred to v2 — not in MVP
   rationale: |
-    Question: "How do we track items that are used gradually vs. all-at-once?"
-    Some items (sauces, oils) get consumed over weeks/months in small amounts.
-    Others (milk, produce) are typically used in one sitting.
-    Unintended consequence (if ignored): Users might throw away half-full bottles
-    thinking expiry means they must discard. Or forget they have partially-used items.
-    Unintended consequence (if too aggressive): Over-tracking consumption becomes friction—
-    app feels like a chore instead of a helper.
-  mitigations:
-    - Auto-detect reduces friction (user doesn't think about it)
-    - But allow opt-out (user can disable for specific items)
-    - Simple UX: slider + quick buttons, not detailed input
-    - Keep progress bar visible but non-intrusive
-    - Don't require update on every use—just when composition changes
-  blockers: |
-    What item types should trigger auto-detect? (sauce, oil, spice, condiment, vinegar, paste)
-    Should quick buttons map to fixed percentages (10%, 50%, 100%) or user-configurable?
-    How to handle expired items with partial consumption? (warning? archive? still show?)
+    Consumption tracking (progress bars, sliders, "About half" buttons) requires ongoing user input
+    with no direct payoff in the core MVP use case (expiry reminders).
+    Tracking "you've used 35% of soy sauce" doesn't change its expiry date or improve notifications.
+    For MVP, items are binary: in inventory or removed. This keeps MARK_AS_USED fast (two taps).
+    In v2, when recipe recommendations need accurate quantities, consumption tracking adds real value.
+    Until then, it adds friction without meaningful benefit.
+  v2_design_notes: |
+    When implemented in v2:
+    - Progress bar visible on item card and detail page
+    - Update consumption via quick buttons (25% / 50% / 75% / 100%) — not a slider
+    - "Just a bit" language removed in favour of explicit percentages (less ambiguous)
+    - Reaching 100% → triggers MARK_AS_USED confirmation
+    - Expired + partially consumed: show "Still have some left?" prompt, user decides
 
 MANAGE-007:
   title: Dashboard visual design — minimalist modern approach
-  status: pending
+  status: locked
   decision: |
-    Items displayed as large photo cards with urgency communicated via background color overlay.
-    Card layout: Full-bleed food photo (70% of card height) with semi-transparent urgency overlay.
-    Item name + expiry date shown in semi-transparent bar at bottom of card.
-    No separate badges, labels, or icons — urgency is inherent in the visual design.
-    Subtle rounded corners (8-12px), whitespace-heavy layout, card-based with soft shadows.
+    2-column card grid. Two card variants, both first-class:
+    (A) Photo card: full-bleed food photo, dark gradient scrim at bottom, item name + expiry text overlaid
+    (B) Text card: solid background (item-type accent color or neutral gray), item name + expiry text centered
+    Both variants have identical dimensions and corner radius — no visual hierarchy between them.
+    Text card is not a placeholder or fallback state — it is a deliberate design choice.
+    Urgency overlay (see MANAGE-008) applies identically to both card types.
+    Subtle rounded corners (12px), tight grid spacing, no drop shadows (flat design).
   rationale: |
-    Question: "How do we design for instant recognition while maintaining minimalism?"
-    Users recognize items primarily through photos, not text. Urgency should be visual, not labeled.
-    Overlaying color on the photo itself (vs. separate badge) reduces visual clutter.
-    This approach makes the dashboard feel modern, clean, and less "noisy" than icon-badge combos.
-    Unintended consequence (if not done right): Photos might obscure text or make expiry date hard to read.
+    Photos are optional. If the dashboard treats text cards as broken photo cards (gray placeholder,
+    missing-image icon), users without photos feel penalised. A deliberate text card design means
+    the experience is equally good regardless of photo presence.
+    Item-type accent colors on text cards (e.g., green for produce, amber for sauces) give visual
+    variety without requiring photos.
   mitigations:
-    - Use semi-transparent scrim (dark gradient) behind text for legibility
-    - Ensure text contrast meets WCAG AA standards
-    - Test with actual food photos to verify readability
-    - Provide text-only fallback if photo fails to load
-  blockers: |
-    Will semi-transparent overlays make photos look awkward or clinical?
-    Is the bottom text bar intuitive enough, or should it float top-right?
+    - Dark gradient scrim on photo cards ensures WCAG AA text contrast regardless of photo content
+    - Text cards use high-contrast text on muted background
+    - Both card types tested with actual content before ship
 
 MANAGE-008:
   title: Dashboard urgency color system
-  status: pending
+  status: locked
   decision: |
-    Three-tier color system applied as background overlay on item cards:
-    🔴 Red: Expires today (high urgency)
-    🟠 Orange: Expires in 1-3 days (medium urgency)
-    🩶 Gray: Expires in 4+ days (low urgency)
-    Colors applied as semi-transparent overlay on bottom third of photo, or as accent bar.
+    Three-tier urgency system using BOTH color AND text label — never color alone:
+    🔴 "TODAY" — red background/overlay + "TODAY" text label
+    🟠 "2 DAYS" / "3 DAYS" — orange background/overlay + exact day count
+    Default — no urgency color, expiry date shown as plain text (e.g., "Jun 14")
+    Text label sits in the card's bottom bar alongside item name.
+    Color enhances; text communicates. System works identically for color-blind users.
   rationale: |
-    Question: "Can color alone communicate urgency, or do we need badges?"
-    Color is faster to process than text + icons. Users learn the system after 1-2 uses.
-    Reduces cognitive load compared to multi-element badges (icon + text + color).
-    Aligns with modern mobile design (iOS Health, Fitness apps use similar approach).
+    Red/orange are in the same range that ~8% of males cannot distinguish (red-green color blindness).
+    Relying on color alone as the primary urgency signal fails for a meaningful user segment.
+    Color + explicit text label makes the system redundant in the right way: color for fast
+    visual scanning, text for reliability. This is how iOS system alerts, warning banners, and
+    health apps handle critical information.
   mitigations:
-    - Test color blindness accessibility (red/green insensitive users)
-    - Consider secondary signal (stripe pattern or icon) for accessibility
-    - Verify colors contrast sufficiently against food photos (varies widely)
-  blockers: |
-    Does color alone feel insufficient (users want explicit labels)?
-    Which layout (bottom bar vs. corner accent) feels more intuitive?
+    - "TODAY" and day-count labels are always present regardless of color rendering
+    - Test with color blindness simulation tools (Sim Daltonism, Figma plugins)
+    - Text color on red/orange backgrounds must pass WCAG AA (white text on these colors passes)
 
 MANAGE-009:
   title: Dashboard sort/filter functionality
-  status: pending
+  status: locked
   decision: |
-    Tap "Sort by" button (top-right) to open menu with options:
-    - Expiry date (default, descending: most urgent first)
-    - Item type (group sauces, produce, dairy, etc.)
-    - Consumption progress (highest % used first)
-    - Recently added (newest items first)
+    Search bar always visible at top of dashboard (primary discovery mechanism for large inventories).
+    Sort button (top-right) opens a minimal menu with three options only:
+    - Expiry date (default, most urgent first)
+    - Recently added (newest first)
     - Alphabetical (A-Z)
-    UI: Simple modal menu or segmented control chips (horizontal scrollable).
-    Sort direction can be toggled (ascending/descending).
+    Sort preference persists across sessions.
+    "By consumption progress" and "By item type" removed from MVP — too complex, low usage expected.
   rationale: |
-    Question: "How do users find items in a growing inventory?"
-    Default (expiry date) handles 80% of use cases. But power users benefit from flexibility.
-    By item type: Useful for meal planning ("what dairy do I have?")
-    By consumption: Helps prioritize finishing open bottles before they expire.
-    Recently added: Helps remember what you just bought.
-    Modal menu keeps UI clean (no persistent sort UI clutter).
+    With 50+ items, search is the primary way to find things — not sort. Sort is for browsing.
+    Three sort options cover the real use cases without overwhelming. The fourth (consumption
+    progress) depends on v2 consumption tracking, so it's removed for now.
+    Persisting sort preference removes one tap per session for users who don't use the default.
   mitigations:
-    - Start with modal menu (simpler implementation)
-    - Monitor which sort modes users actually use
-    - Consider "Remember last sort preference" to reduce clicks
-    - Don't overwhelm with too many sort options initially
-  blockers: |
-    Should sort preference persist across app sessions?
-    Should there be a "reverse sort" toggle, or just tap-to-toggle direction?
+    - Search uses fuzzy matching: "soy" finds "dark soy sauce", "soy sauce", "soybean paste"
+    - Search searches item name only (not type, not notes) for simplicity
+    - Sort preference syncs locally; cross-device sync deferred to v2
 
 MANAGE-INTEGRATION:
   title: Ecosystem integration with other features

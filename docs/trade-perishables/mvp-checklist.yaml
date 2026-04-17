@@ -1,81 +1,97 @@
 # MVP Launch Checklist
 
 mvp_scope:
-  description: "Minimum viable product for the Trade Perishables marketplace"
+  description: "Minimum viable product for Trade Perishables — give-away only, sealed items, pilot community"
   target_date: null
   status: "in_progress"
 
+pre_launch_gates:
+  - gate: "Pilot community identified and committed (min 15-20 participants)"
+    status: null
+    notes: "Do not build before this is confirmed. Cold start is fatal without pre-committed users."
+
+  - gate: "Legal review of food gift liability in target jurisdiction"
+    status: null
+    notes: "Sealed items + no payment + disclaimer is the defensible position. Confirm before launch."
+
+  - gate: "Seed listings from primary user ready before inviting others"
+    status: null
+    notes: "Feed must not be empty when first users join."
+
 acceptance_criteria:
-  - criterion: "Users can sign up with email and location"
+  - criterion: "Users can join via invite/community code (no open public signup)"
     status: null
-    flows: ["USER_ACCOUNT_LOCATION"]
+    flows: ["ONBOARDING"]
+    notes: "Community-scoped access only. Invite model prevents random public access."
 
-  - criterion: "Users can list items (Give Away, Trade, Group Buy)"
+  - criterion: "Users can create a give-away listing with required fields: photo, name, purchase date, expiry date, sealed confirmation"
     status: null
-    flows: ["CREATE_LISTING_GIVEAWAY", "CREATE_LISTING_TRADE", "CREATE_LISTING_GROUP_BUY"]
+    flows: ["CREATE_GIVEAWAY_LISTING"]
+    notes: "All fields required. Sealed checkbox must be checked to submit. Past expiry dates blocked."
 
-  - criterion: "Users can upload photos and expiry dates"
+  - criterion: "Listings pre-fill from manage-perishables inventory (one-tap listing)"
     status: null
-    flows: ["CREATE_LISTING_GIVEAWAY"]
+    flows: ["CREATE_GIVEAWAY_LISTING"]
+    notes: "Name, expiry, photo pulled from inventory item if navigating from manage-perishables."
 
-  - criterion: "Listings display with photos, expiry, and distance"
+  - criterion: "Community feed shows listings sorted by expiry date with urgency labels (TODAY / N DAYS)"
     status: null
-    flows: ["BROWSE_SEARCH_LISTINGS"]
+    flows: ["BROWSE_LISTINGS"]
+    notes: "Color + text urgency (not color alone). Location shown as area/building hint only."
 
-  - criterion: "Users can search listings by item name"
+  - criterion: "Users can search feed by item name"
     status: null
-    flows: ["BROWSE_SEARCH_LISTINGS"]
+    flows: ["BROWSE_LISTINGS"]
 
-  - criterion: "Users can filter by listing type"
-    status: null
-    flows: ["BROWSE_SEARCH_LISTINGS"]
-
-  - criterion: "Listings geofenced to local area"
-    status: null
-    flows: ["BROWSE_SEARCH_LISTINGS"]
-    notes: "Requires geolocation implementation"
-
-  - criterion: "Users can contact listing creators"
+  - criterion: "Users can tap 'I want this' to notify the giver — without exposing their contact details"
     status: null
     flows: ["VIEW_LISTING_DETAIL"]
+    notes: "No contact info revealed automatically. Giver gets notification and chooses to respond."
 
-  - criterion: "Flag system works for reporting abuse"
+  - criterion: "Food safety disclaimer shown on listing detail (once per session)"
     status: null
     flows: ["VIEW_LISTING_DETAIL"]
+    notes: "Required for legal defensibility. Brief, not alarming."
 
-  - criterion: "User profiles show activity/reputation signals"
+  - criterion: "Givers can mark listings as 'Given away' or remove them"
     status: null
-    flows: ["USER_PROFILE"]
+    flows: ["MARK_AS_CLAIMED"]
+    notes: "Claimed listings removed from feed automatically."
 
-  - criterion: "No in-app messaging required for MVP"
+  - criterion: "Listings auto-expire after 7 days or on item expiry date (whichever is sooner)"
     status: null
-    notes: "Users contact externally (email, phone)"
+    flows: ["CREATE_GIVEAWAY_LISTING", "MARK_AS_CLAIMED"]
+    notes: "Auto-expiry keeps feed fresh without requiring giver action."
+
+  - criterion: "Users can flag/report a listing (basic — routes to manual review)"
+    status: null
+    notes: "Minimum abuse prevention. At pilot scale, manual review is acceptable."
 
 excluded_from_mvp:
-  - "In-app messaging"
-  - "Map view for listings"
-  - "Ratings & reviews system"
-  - "Notifications for matching/interest"
-  - "Payment integration"
-  - "Manage Perishables integration (auto-list expiring items)"
-  - "Community features (verified neighborhoods, moderators, leaderboard)"
-  - "Advanced search (cuisine filtering, dietary preferences)"
-  - "Events & swap meets"
+  - "Trade / barter listings (v2)"
+  - "Group Buy / split purchase listings (v2)"
+  - "Partial quantity listings — opened items (v2+ with hygiene design)"
+  - "In-app messaging (v2 — coordination is external for pilot)"
+  - "Map view (v2)"
+  - "Ratings and reputation system (v2 — needs activity volume)"
+  - "Public/open signup (pilot is invite-only)"
+  - "Payment integration (never in MVP — legal complexity)"
+  - "Push notifications (pilot can use email notifications to start)"
+  - "User profiles with reputation badges"
+  - "Advanced filtering (cuisine, dietary)"
+  - "Community events / swap meets"
+  - "Auto-listing without user action"
 
 core_flows_for_mvp:
-  - "USER_ACCOUNT_LOCATION"
-  - "CREATE_LISTING_GIVEAWAY"
-  - "CREATE_LISTING_TRADE"
-  - "CREATE_LISTING_GROUP_BUY"
-  - "BROWSE_SEARCH_LISTINGS"
+  - "CREATE_GIVEAWAY_LISTING"
+  - "BROWSE_LISTINGS"
   - "VIEW_LISTING_DETAIL"
-  - "USER_PROFILE"
+  - "MARK_AS_CLAIMED"
 
 notes: |
-  - MVP is web-only, no mobile apps
-  - Contact is external (email/phone), reducing MVP complexity
-  - No payment system or billing required
-  - Geofencing can be basic (zip code or simple radius)
-  - User profiles are minimal (activity counts, not detailed bios)
-  - Photo storage can be simple cloud storage (AWS S3, Cloudinary, etc.)
-  - Flag system can be basic (report → admin review)
+  - MVP is web-based (mobile-responsive) — no native apps required
+  - Contact is external (giver initiates after receiving interest notification)
+  - No payment system — give-away is always free
+  - Photo storage: simple cloud storage (S3, Cloudinary)
+  - Email notifications for "I want this" events (no push notifications in MVP)
+  - Pilot success metric: 5+ completed give-aways before expanding community scope

@@ -57,12 +57,27 @@ When you cook niche cuisines or live alone, supermarket quantities are often too
 
 ## Related Insights
 
-- **Trust matters**: Users need confidence in the source and freshness of shared items
-- **Logistics are complex**: Pickup, delivery, timing all need to work
-- **Community aspect is key**: Knowing neighbors/community members builds trust
-- **Low friction for small trades**: Should be easy for quick pickups, not formal marketplace overhead
-- **Verification needed**: "Is this item actually fresh?" and "Who am I trading with?"
+- **Trust comes from community context, not app features**: Start within a known group (building,
+  cooking community) rather than a public marketplace. Scores and ratings add friction without
+  replacing the trust that proximity and familiarity provide.
+- **Sealed items solve most verification problems**: If the item is in original, sealed packaging,
+  the receiver can inspect it themselves. Opened items are unverifiable remotely.
+- **Cold start is the biggest risk**: This feature is useless with zero nearby listings. Launch
+  requires a pre-committed pilot community, not a public launch hoping for organic adoption.
+- **Three use cases ≠ one product**: Give-away, bulk splitting, and trading have different timing,
+  coordination costs, and trust requirements. Give-away is the simplest — start there.
+- **Food safety liability is real**: Even informal food transfers carry risk. Sealed items + clear
+  disclaimers + no partial quantities is the minimum bar.
+- **Partial quantities are logistically hard**: Sticky pastes, liquids, and loose dry goods in
+  open containers are messy, unhygienic, and quantity-unverifiable. Scope to sealed only for MVP.
+
+## Revised Scope Constraints
+
+- MVP: give-away of sealed/unopened items only, within a defined pilot community
+- No financial exchange, no barter, no partial quantities in MVP
+- Food safety: sealed items + purchase/expiry dates required in listing + platform disclaimer
+- Cold start strategy: pilot with a specific pre-committed group before any public expansion
 
 ---
 
-*Last updated: 2026-04-16*
+*Last updated: 2026-04-17*
