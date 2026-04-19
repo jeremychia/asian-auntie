@@ -7,8 +7,12 @@ flows:
     happy_path:
       - User taps "+" button
       - System opens camera immediately (no intermediate screen)
-      - User snaps photo of item (or selects from gallery)
-      - System sends photo to image recognition API (checks cache first)
+      - User snaps photo of item (or selects from gallery) — can add multiple photos (e.g., barcode, item appearance, label)
+      - After each photo, system shows thumbnail strip and "Add another photo" option alongside "Done"
+      - System sends all photos to recognition pipeline (checks cache first):
+          - Barcode photo: decoded via barcode/QR scanner for exact product lookup
+          - Other photos: sent to image recognition API for visual identification
+          - If multiple signals available, system merges results (barcode result takes priority over visual)
       - System recognizes: Item name, item type, estimated shelf life
       - Regardless of confidence: system shows a brief confirmation card ("Fish sauce — expires June 2026")
         with a single "Looks good ✓" button and an "Edit" link — never auto-saves without user seeing result
@@ -16,10 +20,10 @@ flows:
       - If confidence 60–85%: card pre-filled, expiry date field highlighted for quick review
       - If confidence <60%: card shown with empty name + expiry fields, user fills in
       - User confirms → item saved → dashboard updates
-      - Photo is optional: user can skip camera entirely and go straight to the name+expiry form
+      - Photos are optional: user can skip camera entirely and go straight to the name+expiry form
     fallback_path:
-      - If image recognition fails or user skips photo
-      - System shows minimal form: Item name (required), Expiry date (required), photo optional
+      - If image recognition fails or user skips photos
+      - System shows minimal form: Item name (required), Expiry date (required), photos optional
       - Item name uses fuzzy autocomplete from known Asian pantry items (top ~100 items)
       - Date picker defaults to +1 week for produce-type items, +6 months for pantry items
         (based on item type if detected, otherwise +3 months as neutral default)
@@ -28,14 +32,17 @@ flows:
       - Confidence ≥85%: one-tap confirm (pre-filled card)
       - Confidence 60–85%: pre-filled card, expiry field highlighted for verification
       - Confidence <60%: empty form (name + expiry required)
-      - Item without photo: text-only card on dashboard (styled deliberately, not a broken photo card)
+      - Item without photos: text-only card on dashboard (styled deliberately, not a broken photo card)
+      - Multiple photos provided: system picks the best visual photo for the dashboard card (prefer appearance over barcode)
       - Date picker: never default to today (too easy to accidentally save wrong date)
       - Validate expiry date: must be within 2 years from today; warn if >18 months (unusual)
       - Validate expiry date: if date is in the past, block save with "That date has already passed"
     edge_cases:
       - Recognition returns wrong item: user taps "Edit" on confirmation card before saving
-      - Photo is blurry/unclear: system shows "Hard to read — try again or enter manually"
-      - User skips photo entirely: go directly to fallback form — not penalised, no reminder
+      - One photo is blurry/unclear but another is usable: system uses the usable one silently
+      - All photos are blurry/unclear: system shows "Hard to read — try again or enter manually"
+      - User skips photos entirely: go directly to fallback form — not penalised, no reminder
+      - User adds redundant photos (e.g., two barcodes): deduplicate silently, show one result
       - User navigates away mid-capture: discard (no draft save)
       - Duplicate item names: allow (user might have multiple jars of same item)
       - Cache hit (e.g., "soy sauce"): use cached recognition, instant confirm card
@@ -43,14 +50,18 @@ flows:
     data_collected:
       - Item name (required)
       - Expiry date (required, ISO format)
-      - Photo (optional, JPEG)
+      - Photos (optional, JPEG, up to N per item — at least barcode and appearance distinguished by type tag)
       - Item type (auto-detected: sauce, oil, spice, condiment, produce, dried, tofu, seafood, dairy, other, unknown)
       - Recognition confidence score (for debugging/quality monitoring)
       - Timestamp added
       - Cache hit flag
       - Has photo flag (for monitoring photo adoption rate)
+      - Photo count per item
+      - Photo types present (barcode, appearance, label, other)
     open_questions:
       - Which image recognition API? (Google Vision, OpenAI Vision, custom?)
+      - Which barcode lookup API/database for product identification from barcodes?
+      - What is the max number of photos per item? (cap needed for storage)
       - Should autocomplete list be curated manually or seeded from recognition logs?
       - Should we log low-confidence recognitions for future model improvement?
 

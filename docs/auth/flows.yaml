@@ -1,0 +1,90 @@
+# Auth: User Flows
+
+flows:
+  REGISTER:
+    name: Register
+    goal: Create a new account with minimal friction
+    happy_path:
+      - User navigates to /register (web) or POSTs to /api/v1/auth/register (API)
+      - User enters username and password
+      - System validates: username not already taken, password meets minimum length (8 chars)
+      - System strips leading/trailing whitespace from username
+      - System hashes password with bcrypt and stores user record
+      - Web: user is logged in immediately and redirected to /dashboard
+      - API: returns 201 with { user_id } — client then calls /api/v1/auth/login to obtain tokens
+    decision_points:
+      - Username already taken: return error "That username is already in use"
+      - Password too short (<8 chars): return error "Password must be at least 8 characters"
+      - Username blank or whitespace-only: return error "Username is required"
+    edge_cases:
+      - Username with leading/trailing spaces: strip before saving
+      - Registration while already logged in (web): redirect to /dashboard, no new account created
+    data_collected:
+      - Username (stored)
+      - Password hash (stored via bcrypt, plaintext never persisted)
+      - created_at timestamp
+
+  LOGIN:
+    name: Login
+    goal: Authenticate an existing user and start a session or obtain tokens
+    happy_path:
+      - Web: user submits /login form with username + password
+        - System looks up user by username, verifies bcrypt hash
+        - Flask-Login calls login_user(user, remember=True)
+        - Session cookie set (HttpOnly, Secure in production)
+        - Redirect to /dashboard (or original destination if redirected from a protected route)
+      - API: client POSTs { username, password } to /api/v1/auth/login
+        - System verifies credentials (same lookup + bcrypt check)
+        - Returns { access_token (15 min JWT), refresh_token (30 days JWT) }
+        - Refresh token stored in refresh_tokens table for server-side revocation
+    decision_points:
+      - Wrong username or password: return generic error "Invalid username or password"
+        (never reveal which field is wrong — prevents username enumeration)
+      - Account does not exist: same generic error as wrong password
+      - Too many failed attempts (>10 in 1 min per IP): 429 Too Many Requests
+    edge_cases:
+      - User navigates to /login while already logged in (web): redirect to /dashboard
+      - API client sends expired access token: 401 Unauthorized with { error: "token_expired" }
+      - API client sends malformed token: 401 Unauthorized with { error: "invalid_token" }
+    data_collected:
+      - Login timestamp (logged to stdout, not stored in DB for MVP)
+      - Login success/failure outcome (logged for monitoring)
+      - IP address (used for rate limiting only, not stored)
+
+  LOGOUT:
+    name: Logout
+    goal: End the user's session and invalidate tokens
+    happy_path:
+      - Web: user taps "Log out" → POST /logout
+        - Flask-Login calls logout_user()
+        - Session cookie cleared
+        - Redirect to /login
+      - API: client POSTs to /api/v1/auth/logout with the refresh token in the request body
+        - Server marks refresh token as revoked in refresh_tokens table
+        - Access token expires naturally (15 min max) — no server-side blocklist needed at prototype scale
+        - Returns 200 OK
+    edge_cases:
+      - Logout with already-expired session (web): redirect to /login silently
+      - Logout with already-revoked refresh token (API): return 200 OK (idempotent)
+      - User logs out on one device: other devices' refresh tokens remain valid
+        (acceptable for prototype — add per-device token tracking in v2 if needed)
+
+  TOKEN_REFRESH:
+    name: Refresh Access Token
+    goal: Obtain a new access token without requiring the user to re-enter their password
+    happy_path:
+      - API client's access token is near expiry or has expired (401 received)
+      - Client POSTs refresh token to /api/v1/auth/refresh
+      - Server verifies refresh token: valid JWT signature, not expired, not revoked in DB
+      - Server issues new access token (15 min TTL)
+      - Server rotates refresh token: old token marked revoked, new token issued and stored
+      - Returns { access_token, refresh_token }
+    decision_points:
+      - Refresh token expired (>30 days): 401 — client must re-authenticate with username/password
+      - Refresh token revoked (user logged out): 401 — client must re-authenticate
+      - Refresh token has unknown jti (not in DB): 401 — treat as potential token theft, require re-auth
+    edge_cases:
+      - Network failure mid-refresh: client retries with the same refresh token
+        (token not yet rotated if server did not respond — retry is safe)
+      - Two concurrent refresh attempts with same token: first succeeds, second gets 401
+        (rotation ensures only one winner — correct and safe behaviour)

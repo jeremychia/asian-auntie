@@ -38,6 +38,19 @@ Quick reference for all docs. Start here.
 
 ---
 
+## Engineering
+
+### Setup & Running the App
+- [Engineering Setup](engineering/setup.md) — prerequisites, local dev, env vars, phone access, cloud deploy
+
+### Design
+- [Design System](engineering/design-system.md) — colour palette, typography, spacing, component specs
+
+### Auth
+- [Auth Flows](auth/flows.yaml) — register, login, logout, token refresh — happy paths, decision points, edge cases
+
+---
+
 ## Strategic Guides
 
 ### Decision Making
