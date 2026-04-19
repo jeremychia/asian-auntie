@@ -1,0 +1,16 @@
+{
+  "name": "Asian Auntie",
+  "short_name": "Asian Auntie",
+  "description": "Track your Asian pantry — never let ingredients expire again.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2d6a4f",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

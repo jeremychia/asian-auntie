@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Add item — Asian Auntie{% endblock %}
+
+{% block content %}
+<div class="content">
+
+{% if step == 'photo' %}
+{# ── Step 1: Photo capture ───────────────────────────────────────── #}
+<div class="step-header">
+  <span class="step-label">Step 1 of 2</span>
+  <p class="step-hint">Take one or more photos and we'll fill in the details for you.</p>
+</div>
+
+<form method="post" action="{{ url_for('perishables.add_item') }}" enctype="multipart/form-data" id="photo-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="step" value="photo">
+
+  {# Thumbnail strip — populated by JS as photos are added #}
+  <div class="photo-strip" id="photo-strip"></div>
+
+  {# Photo entries — each contains a file input and type select, added dynamically #}
+  <div id="photo-entries"></div>
+
+  <div class="photo-capture-zone" id="capture-zone">
+    <span class="photo-capture-icon">📷</span>
+    <p class="photo-capture-text">Point your camera at the expiry date label</p>
+    <label class="photo-capture-label">
+      Take photo
+      <input type="file" name="photos" accept="image/*" capture="environment"
+             class="visually-hidden" id="photo-0" data-idx="0"
+             onchange="handlePhotoSelected(this)">
+    </label>
+    <select name="photo_types" id="type-select-0" class="visually-hidden">
+      <option value="appearance" selected>Appearance</option>
+      <option value="barcode">Barcode</option>
+      <option value="label">Label</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+
+  <div id="photo-actions" hidden>
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" onclick="addAnotherPhoto()">Add another photo</button>
+      <button type="submit" class="btn btn-primary">Done</button>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <a href="{{ url_for('perishables.add_item') }}?skip=1" class="skip-link">Skip — enter manually</a>
+  </div>
+</form>
+
+<script>
+let photoCount = 0;
+
+function handlePhotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const idx = parseInt(input.dataset.idx);
+  const typeSelect = document.getElementById('type-select-' + idx);
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const strip = document.getElementById('photo-strip');
+
+    // Build thumbnail with inline type label
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    thumb.id = 'thumb-' + idx;
+    thumb.innerHTML =
+      '<img src="' + e.target.result + '" alt="Photo ' + (idx + 1) + '">' +
+      '<select class="photo-type-label" onchange="syncTypeSelect(this, ' + idx + ')">' +
+        '<option value="appearance"' + (typeSelect.value === 'appearance' ? ' selected' : '') + '>Appearance</option>' +
+        '<option value="barcode"' + (typeSelect.value === 'barcode' ? ' selected' : '') + '>Barcode</option>' +
+        '<option value="label"' + (typeSelect.value === 'label' ? ' selected' : '') + '>Label</option>' +
+        '<option value="other"' + (typeSelect.value === 'other' ? ' selected' : '') + '>Other</option>' +
+      '</select>';
+    strip.appendChild(thumb);
+
+    document.getElementById('capture-zone').hidden = true;
+    document.getElementById('photo-actions').hidden = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function syncTypeSelect(thumbSelect, idx) {
+  const typeSelect = document.getElementById('type-select-' + idx);
+  if (typeSelect) typeSelect.value = thumbSelect.value;
+}
+
+function addAnotherPhoto() {
+  photoCount++;
+  const idx = photoCount;
+
+  // Add a hidden file input + type select pair to the form
+  const entries = document.getElementById('photo-entries');
+  const entry = document.createElement('div');
+  entry.id = 'entry-' + idx;
+  entry.innerHTML =
+    '<input type="file" name="photos" accept="image/*" capture="environment" ' +
+           'class="visually-hidden" id="photo-' + idx + '" data-idx="' + idx + '" ' +
+           'onchange="handlePhotoSelected(this)">' +
+    '<select name="photo_types" id="type-select-' + idx + '" class="visually-hidden">' +
+      '<option value="appearance" selected>Appearance</option>' +
+      '<option value="barcode">Barcode</option>' +
+      '<option value="label">Label</option>' +
+      '<option value="other">Other</option>' +
+    '</select>';
+  entries.appendChild(entry);
+  document.getElementById('photo-' + idx).click();
+}
+
+// Auto-open camera on page load
+window.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('photo-0').click();
+});
+</script>
+
+
+{% elif step == 'confirm' %}
+{# ── Step 2: Confirmation ────────────────────────────────────────── #}
+{% set high_conf = confidence >= 0.85 and form.name.data %}
+{% set mid_conf  = confidence >= 0.60 and confidence < 0.85 %}
+{% set low_conf  = confidence < 0.60 %}
+
+<div class="step-header">
+  <span class="step-label">Step 2 of 2</span>
+  <p class="step-hint">
+    {% if high_conf %}Looking good — confirm or edit below.{% endif %}
+    {% if mid_conf %}Check the expiry date looks right.{% endif %}
+    {% if low_conf %}Hard to read — please fill in the details.{% endif %}
+  </p>
+</div>
+
+{% if photo_items %}
+<div class="photo-strip photo-strip--static">
+  {% for photo in photo_items %}
+  <div class="photo-thumb">
+    <img src="{{ url_for('uploaded_file', filename=photo['path']) }}"
+         alt="{{ photo['type'] | capitalize }}">
+    <span class="photo-type-label photo-type-label--static">{{ photo['type'] | capitalize }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('perishables.add_item') }}">
+  {{ form.hidden_tag() }}
+  <input type="hidden" name="step" value="confirm">
+  {{ form.photo_paths_json() }}
+  {{ form.confidence_score() }}
+  {{ form.cache_hit() }}
+
+  {% if high_conf %}
+  <div class="confirm-card">
+    <p class="confirm-card__summary">
+      <strong>{{ form.name.data }}</strong>
+      {% if form.expiry_date.data %}&nbsp;· expires {{ form.expiry_date.data.strftime("%-d %b %Y") }}{% endif %}
+    </p>
+    <div class="confirm-card__actions">
+      <button type="submit" class="btn btn-primary">Looks good</button>
+      <a href="#" class="btn-ghost btn"
+         onclick="document.getElementById('edit-section').hidden=false;this.style.display='none';return false">
+        Edit
+      </a>
+    </div>
+  </div>
+  <div id="edit-section" hidden>
+  {% else %}
+  <div id="edit-section">
+    {% if low_conf %}<span class="hint">Hard to read — please fill in the details below.</span>{% endif %}
+    {% if mid_conf %}<span class="hint">Check the expiry date looks right.</span>{% endif %}
+  {% endif %}
+
+    <label for="name">Item name</label>
+    {{ form.name(id="name", list="pantry-items", placeholder="e.g. Fish sauce") }}
+    {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+
+    <label for="item_type">Type</label>
+    {{ form.item_type(id="item_type") }}
+
+    <label for="expiry_date">Expiry date</label>
+    {{ form.expiry_date(id="expiry_date", class=("field-highlight" if mid_conf else "")) }}
+    {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    <small id="expiry-warning" class="field-warning" hidden></small>
+
+    <div class="form-actions">
+      {{ form.submit(class="btn btn-primary") }}
+      <a href="{{ url_for('perishables.add_item') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </div>
+</form>
+
+
+{% else %}
+{# ── Manual entry form ──────────────────────────────────────────── #}
+<div class="step-header">
+  <span class="step-label">Manual entry</span>
+  <p class="step-hint">Fill in the details for your item.</p>
+</div>
+
+<form method="post" action="{{ url_for('perishables.add_item') }}" enctype="multipart/form-data">
+  {{ form.hidden_tag() }}
+  <input type="hidden" name="step" value="manual">
+
+  <label for="name">Item name</label>
+  {{ form.name(id="name", list="pantry-items", placeholder="e.g. Fish sauce", autofocus=true) }}
+  {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+
+  <label for="item_type">Type</label>
+  {{ form.item_type(id="item_type") }}
+
+  <label for="expiry_date">Expiry date</label>
+  {{ form.expiry_date(id="expiry_date") }}
+  {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+  <small id="expiry-warning" class="field-warning" hidden></small>
+
+  <label for="photo">Photo (optional)</label>
+  {{ form.photo(id="photo", accept="image/*", capture="environment") }}
+
+  <div class="form-actions">
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('perishables.dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endif %}
+
+
+{# ── Autocomplete list ──────────────────────────────────────────── #}
+<datalist id="pantry-items">
+  <option value="Fish sauce"><option value="Light soy sauce"><option value="Dark soy sauce">
+  <option value="Oyster sauce"><option value="Hoisin sauce"><option value="Sweet soy sauce">
+  <option value="Sesame oil"><option value="Chilli oil"><option value="Coconut milk">
+  <option value="Coconut cream"><option value="Rice vinegar"><option value="Black vinegar">
+  <option value="Mirin"><option value="Sake"><option value="Shaoxing wine">
+  <option value="Miso paste"><option value="Gochujang"><option value="Doenjang">
+  <option value="Sambal oelek"><option value="Sriracha"><option value="XO sauce">
+  <option value="Doubanjiang"><option value="Black bean sauce"><option value="Char siu sauce">
+  <option value="Plum sauce"><option value="Sweet chilli sauce"><option value="Teriyaki sauce">
+  <option value="Ponzu"><option value="Maggi seasoning"><option value="Shrimp paste">
+  <option value="Tamarind paste"><option value="Coconut sugar"><option value="Palm sugar">
+  <option value="Rock sugar"><option value="Condensed milk"><option value="Evaporated milk">
+  <option value="Gochugaru"><option value="Five spice powder"><option value="Curry powder">
+  <option value="Turmeric powder"><option value="White pepper"><option value="Sichuan peppercorn">
+  <option value="Star anise"><option value="Dried chillies"><option value="Chilli flakes">
+  <option value="Lemongrass paste"><option value="Galangal powder">
+  <option value="Jasmine rice"><option value="Glutinous rice"><option value="Brown rice">
+  <option value="Rice flour"><option value="Tapioca starch"><option value="Cornstarch">
+  <option value="Potato starch"><option value="Panko breadcrumbs">
+  <option value="Rice noodles"><option value="Glass noodles"><option value="Egg noodles">
+  <option value="Udon noodles"><option value="Soba noodles"><option value="Instant noodles">
+  <option value="Wonton wrappers"><option value="Spring roll wrappers"><option value="Dumpling wrappers">
+  <option value="Silken tofu"><option value="Firm tofu"><option value="Tofu puffs">
+  <option value="Dried shiitake mushrooms"><option value="Wood ear mushrooms"><option value="Dried shrimp">
+  <option value="Dried scallops"><option value="Fermented black beans"><option value="Lily buds">
+  <option value="Bean curd skin"><option value="Kombu"><option value="Nori">
+  <option value="Wakame"><option value="Bonito flakes"><option value="Dashi stock">
+  <option value="Fish balls"><option value="Fish cakes"><option value="Lap cheong">
+  <option value="Water chestnuts"><option value="Bamboo shoots"><option value="Baby corn">
+  <option value="Sesame seeds"><option value="Black sesame seeds">
+</datalist>
+
+
+<script>
+const shelfLifeDefaults = {
+  produce: 7, tofu: 7, seafood: 7, dairy: 7,
+  sauce: 180, oil: 180, condiment: 180, dried: 180, spice: 180,
+  other: 90, unknown: 90,
+};
+
+function applyDateDefault() {
+  const typeEl = document.getElementById('item_type');
+  const dateEl = document.getElementById('expiry_date');
+  if (!typeEl || !dateEl || dateEl.value) return;
+  const days = shelfLifeDefaults[typeEl.value] ?? 90;
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  dateEl.value = d.toISOString().slice(0, 10);
+  checkExpiryWarning();
+}
+
+function checkExpiryWarning() {
+  const dateEl = document.getElementById('expiry_date');
+  const warnEl = document.getElementById('expiry-warning');
+  if (!dateEl || !warnEl || !dateEl.value) { if (warnEl) warnEl.hidden = true; return; }
+  const chosen = new Date(dateEl.value);
+  const limit = new Date();
+  limit.setMonth(limit.getMonth() + 18);
+  warnEl.hidden = chosen <= limit;
+  if (!warnEl.hidden) warnEl.textContent = "That's over 18 months away — is this right?";
+}
+
+document.getElementById('item_type')?.addEventListener('change', applyDateDefault);
+document.getElementById('expiry_date')?.addEventListener('change', checkExpiryWarning);
+
+applyDateDefault();
+checkExpiryWarning();
+</script>
+
+</div>
+{% endblock %}

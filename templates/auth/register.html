@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Create account — Asian Auntie{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <p class="auth-eyebrow">Asian Auntie</p>
+    <h1>Create account</h1>
+
+    <form method="post" action="{{ url_for('auth.register') }}">
+      {{ form.hidden_tag() }}
+
+      <label for="username">{{ form.username.label.text }}</label>
+      {{ form.username(id="username", autocomplete="username", autofocus=true) }}
+      {% for error in form.username.errors %}
+        <small class="field-error">{{ error }}</small>
+      {% endfor %}
+
+      <label for="password">{{ form.password.label.text }}</label>
+      {{ form.password(id="password", autocomplete="new-password") }}
+      <small style="color: var(--text-muted); display: block; margin-top: -0.5rem; margin-bottom: 0.75rem;">
+        At least 8 characters.
+      </small>
+      {% for error in form.password.errors %}
+        <small class="field-error">{{ error }}</small>
+      {% endfor %}
+
+      {{ form.submit(class="btn btn-primary btn-full") }}
+    </form>
+
+    <p class="auth-footer">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
