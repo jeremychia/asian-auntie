@@ -11,16 +11,19 @@ You have 3 features to design. Here's the fastest path to building.
 **Output**: Answers to "Core Questions to Lock In"
 
 For **Manage Perishables**, pick 3:
+
 - [ ] Notification timing: 3 days before expiry?
 - [ ] Photo optional or mandatory?
 - [ ] Scale: single-user or future household?
 
 For **Recommend Recipe**, pick 3:
+
 - [ ] Rasamalaysia only, or multi-source?
 - [ ] Real-time recommendations or Search button?
 - [ ] How to scrape recipes (manual vs. automated)?
 
 For **Trade Perishables**, pick 3:
+
 - [ ] Give Away only, or include Trade + Group Buy?
 - [ ] In-app messaging or email/phone only?
 - [ ] What's the neighborhood boundary?
@@ -36,6 +39,7 @@ For **Trade Perishables**, pick 3:
 **Output**: One clear user flow per feature (in USER-FLOWS.md)
 
 Example for Manage Perishables "Add Item":
+
 ```
 1. User taps "+"
 2. Takes photo (optional)
@@ -52,6 +56,7 @@ That's it. Don't add edge cases yet; just the happy path.
 ### Day 3: Start Building (∞)
 
 You're ready. You have:
+
 - ✅ Core decisions made
 - ✅ Happy path documented
 - ✅ Acceptance criteria (from features.md)
@@ -68,6 +73,7 @@ Build the happy path first. Edge cases come later.
 You'll validate your answer by building. Wrong answers now → learning opportunity later.
 
 **Example decision**:
+
 - Q: "Photo optional or mandatory?"
 - A: "Optional. Users can skip for speed."
 - Why: Reduces friction, but might hurt quality. We'll learn from usage.
@@ -77,20 +83,20 @@ You'll validate your answer by building. Wrong answers now → learning opportun
 
 ## What NOT to Do
 
-❌ Don't write detailed specs before building  
-❌ Don't try to answer all 20 open questions  
-❌ Don't design all edge cases upfront  
-❌ Don't wait for perfect alignment — good enough wins  
+❌ Don't write detailed specs before building
+❌ Don't try to answer all 20 open questions
+❌ Don't design all edge cases upfront
+❌ Don't wait for perfect alignment — good enough wins
 ❌ Don't overthink aesthetics (mobile first, then polish)
 
 ---
 
 ## What to Do
 
-✅ Answer 3 core questions per feature  
-✅ Write one happy path per feature  
-✅ Build the happy path end-to-end  
-✅ Learn from building (update docs as you go)  
+✅ Answer 3 core questions per feature
+✅ Write one happy path per feature
+✅ Build the happy path end-to-end
+✅ Learn from building (update docs as you go)
 ✅ Keep docs lightweight (no more than 100 lines per section)
 
 ---
@@ -125,14 +131,17 @@ Week 3: Expand & refine
 Ask yourself:
 
 1. **Can I explain the core problem in 1 sentence?**
+
    - "Users waste food because they forget what they have and when it expires"
    - ✅ Yes → Ready
 
 2. **Can I walk through the happy path in 2 minutes?**
-   - "User adds item, gets notified before expiry, marks as used" 
+
+   - "User adds item, gets notified before expiry, marks as used"
    - ✅ Yes → Ready
 
 3. **Do I know the 3-5 biggest decisions?**
+
    - "Notifications at 3 days. Photos optional. Single user only."
    - ✅ Yes → Ready
 
@@ -144,4 +153,4 @@ If you answered ✅ to all 4, **start coding today**. You know enough.
 
 ---
 
-*Last updated: 2026-04-17*
+_Last updated: 2026-04-17_

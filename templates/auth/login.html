@@ -1,6 +1,4 @@
-{% extends "base.html" %}
-{% block title %}Log in — Asian Auntie{% endblock %}
-
+{% extends "base.html" %} {% block title %}Log in — Asian Auntie{% endblock %}
 {% block content %}
 <div class="auth-wrap">
   <div class="auth-card">
@@ -11,15 +9,15 @@
       {{ form.hidden_tag() }}
 
       <label for="username">{{ form.username.label.text }}</label>
-      {{ form.username(id="username", autocomplete="username", autofocus=true) }}
-      {% for error in form.username.errors %}
-        <small class="field-error">{{ error }}</small>
+      {{ form.username(id="username", autocomplete="username", autofocus=true)
+      }} {% for error in form.username.errors %}
+      <small class="field-error">{{ error }}</small>
       {% endfor %}
 
       <label for="password">{{ form.password.label.text }}</label>
-      {{ form.password(id="password", autocomplete="current-password") }}
-      {% for error in form.password.errors %}
-        <small class="field-error">{{ error }}</small>
+      {{ form.password(id="password", autocomplete="current-password") }} {% for
+      error in form.password.errors %}
+      <small class="field-error">{{ error }}</small>
       {% endfor %}
 
       <label>

@@ -45,7 +45,7 @@ future_features:
     priority: medium
     phase: v2
     description: Save recipes you liked or made, and see your cooking history
-    features:
+    features: |
       - Bookmark recipes for later reference
       - "Made this" history — recipes you've cooked, with date
       - "Cook again" shortcut from history

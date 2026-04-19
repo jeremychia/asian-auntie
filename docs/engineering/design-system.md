@@ -8,22 +8,22 @@ Asian Auntie is a mobile-first pantry tracker. The visual design should feel cle
 
 Two colours only. Everything derives from them.
 
-| Role | Name | Hex | Use |
-|------|------|-----|-----|
-| Background | Pale Amber | `#CFD78C` | Page background — the canvas |
-| Text / primary | Crimson Violet | `#700143` | All body text, headings, links, buttons |
-| Primary hover | — | `#56022f` | Pressed/hovered state |
-| Muted text | — | `rgba(112,1,67,0.55)` | Secondary labels, hints — translucent crimson, not grey |
-| Card | White | `#ffffff` | Cards and form containers only — keeps form content readable |
-| Nav | Crimson Violet | `#700143` | Nav bar background (inverted: amber text on crimson) |
+| Role           | Name           | Hex                   | Use                                                          |
+| -------------- | -------------- | --------------------- | ------------------------------------------------------------ |
+| Background     | Pale Amber     | `#CFD78C`             | Page background — the canvas                                 |
+| Text / primary | Crimson Violet | `#700143`             | All body text, headings, links, buttons                      |
+| Primary hover  | —              | `#56022f`             | Pressed/hovered state                                        |
+| Muted text     | —              | `rgba(112,1,67,0.55)` | Secondary labels, hints — translucent crimson, not grey      |
+| Card           | White          | `#ffffff`             | Cards and form containers only — keeps form content readable |
+| Nav            | Crimson Violet | `#700143`             | Nav bar background (inverted: amber text on crimson)         |
 
 Semantic urgency colours are the only exception — they carry meaning that would be lost if mapped to the brand palette:
 
-| State | Colour |
-|-------|--------|
-| Urgent (today) | `#c0392b` |
+| State             | Colour    |
+| ----------------- | --------- |
+| Urgent (today)    | `#c0392b` |
 | Warning (≤2 days) | `#d97706` |
-| Expired | `#718096` |
+| Expired           | `#718096` |
 
 ### Why this approach
 
@@ -39,20 +39,22 @@ The two brand colours appear everywhere, exclusively. No neutral greys, no warm-
 weights: 400 (body), 500 (labels), 600 (card names, subheadings), 700 (brand, badges)
 ```
 
-| Scale | Usage | Size / Weight |
-|-------|-------|---------------|
-| Brand | Nav brand name | 1rem / 700 |
-| H2 | Page titles | 1.5rem / 600 |
-| Body | Form labels, descriptions | 1rem / 400 |
-| Small | Badges, hints, errors | 0.8–0.9rem / 500–700 |
+| Scale | Usage                     | Size / Weight        |
+| ----- | ------------------------- | -------------------- |
+| Brand | Nav brand name            | 1rem / 700           |
+| H2    | Page titles               | 1.5rem / 600         |
+| Body  | Form labels, descriptions | 1rem / 400           |
+| Small | Badges, hints, errors     | 0.8–0.9rem / 500–700 |
 
 **Why Plus Jakarta Sans:**
+
 - Humanist-geometric hybrid — warm but structured
 - Excellent legibility at small sizes on mobile screens
 - Slightly elevated x-height keeps it readable at 14–16px
 - Pairs well with the earthy palette without adding a heritage or decorative feel
 
 **Alignment rules:**
+
 - All body text: left-aligned
 - Auth cards: centred on screen, left-aligned text within the card
 - Badges/urgency labels: left-aligned, uppercase, tight letter-spacing
@@ -98,11 +100,11 @@ Mobile-first. The primary target is a phone held in one hand.
 
 Three urgency tiers, communicated via a left border stripe:
 
-| State | Left border | Badge colour |
-|-------|-------------|--------------|
-| Today | `#c0392b` (red) | red |
-| Soon (≤2 days) | `#d97706` (amber) | amber |
-| OK | `#e5e7eb` (neutral) | muted grey |
+| State          | Left border         | Badge colour |
+| -------------- | ------------------- | ------------ |
+| Today          | `#c0392b` (red)     | red          |
+| Soon (≤2 days) | `#d97706` (amber)   | amber        |
+| OK             | `#e5e7eb` (neutral) | muted grey   |
 
 Cards use a white background. On hover: shadow deepens slightly. No colour fill changes.
 

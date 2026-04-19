@@ -9,6 +9,7 @@ Quick answers to common questions. For the full decision log, see [DESIGN-DECISI
 A: Yes, if the log grows. That's why we use YAML instead of prose — it's ~70% more token-efficient and queryable.
 
 **Strategy**:
+
 - Keep each decision concise (1 line for decision, 1 line for rationale, 1 line for blockers)
 - Archive old decisions annually
 - Query by `status: pending` or `status: locked` instead of reading everything
@@ -20,11 +21,13 @@ Current size: ~30 decisions = ~200 lines of YAML = 400-500 tokens. Manageable.
 ## How to Use
 
 **Reading a decision**:
+
 1. Look up `status: locked` decisions to understand what's already committed
 2. Look up `status: pending` decisions to see what's still TBD
 3. Check the `blockers` field to see what question needs answering
 
 **Adding a new decision**:
+
 1. Add a new entry to `DESIGN-DECISIONS.yaml`
 2. Set `status: pending` until it's locked
 3. Move to `status: locked` after you've decided
@@ -48,7 +51,7 @@ A: Delete them. A decision log should be current decisions only, not decision hi
 
 **Q: How many decisions should I have?**
 
-A: Ideally 3-5 *locked* decisions per feature before development. Everything else is optional detail.
+A: Ideally 3-5 _locked_ decisions per feature before development. Everything else is optional detail.
 
 ---
 

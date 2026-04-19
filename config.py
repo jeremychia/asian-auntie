@@ -24,7 +24,9 @@ class Config:
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB max upload
 
     # CORS — comma-separated origins from env, fallback to localhost
-    ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:5000").split(",")
+    ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:5000").split(
+        ","
+    )
 
     # OpenAI
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

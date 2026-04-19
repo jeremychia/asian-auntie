@@ -1,5 +1,5 @@
-from datetime import datetime, timezone, timedelta
-from flask import Blueprint, request, jsonify, current_app
+from datetime import datetime, timezone
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -31,6 +31,7 @@ def _issue_tokens(user: User):
 
     # Decode to get jti for storage
     from flask_jwt_extended import decode_token
+
     decoded = decode_token(refresh_token)
     jti = decoded["jti"]
     expires_at = datetime.fromtimestamp(decoded["exp"], tz=timezone.utc)
@@ -83,7 +84,10 @@ def login():
     if user and bcrypt.check_password_hash(user.password_hash, data["password"]):
         access_token, refresh_token = _issue_tokens(user)
         logger.info("api_login_success", user_id=user.id)
-        return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
+        return (
+            jsonify({"access_token": access_token, "refresh_token": refresh_token}),
+            200,
+        )
 
     logger.warning("api_login_failed", username=data.get("username"))
     # Generic error — never reveal which field is wrong
@@ -111,7 +115,10 @@ def refresh():
 
     access_token, new_refresh_token = _issue_tokens(user)
     logger.info("api_token_refreshed", user_id=user_id)
-    return jsonify({"access_token": access_token, "refresh_token": new_refresh_token}), 200
+    return (
+        jsonify({"access_token": access_token, "refresh_token": new_refresh_token}),
+        200,
+    )
 
 
 @api_auth_bp.route("/logout", methods=["POST"])

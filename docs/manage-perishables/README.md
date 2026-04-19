@@ -12,12 +12,12 @@ A mobile-first app to track household perishables, prevent food waste, and get t
 
 ## At a Glance
 
-| Aspect | Status |
-|--------|--------|
-| Primary User | Individual (personal tracking) |
-| Platform | Mobile-first (iOS/Android), web secondary |
-| MVP Scope | Inventory tracking + expiry notifications |
-| Phase | Design & specification |
+| Aspect       | Status                                    |
+| ------------ | ----------------------------------------- |
+| Primary User | Individual (personal tracking)            |
+| Platform     | Mobile-first (iOS/Android), web secondary |
+| MVP Scope    | Inventory tracking + expiry notifications |
+| Phase        | Design & specification                    |
 
 ## How to Use This Documentation
 
@@ -30,4 +30,4 @@ A mobile-first app to track household perishables, prevent food waste, and get t
 
 ---
 
-*Last updated: 2026-04-16*
+_Last updated: 2026-04-16_

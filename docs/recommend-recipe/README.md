@@ -12,13 +12,13 @@ An AI-powered recipe recommendation engine that suggests Asian recipes based on 
 
 ## At a Glance
 
-| Aspect | Status |
-|--------|--------|
-| Primary User | Home cooks wanting to use available ingredients |
-| Scope | Asian recipes with real sources (not LLM-generated) |
-| Recipe Sources | Phase 1: Rasamalaysia; Phase 2: Multiple sources |
-| MVP Focus | Input ingredients → get recommendations |
-| Phase | Design & specification |
+| Aspect         | Status                                              |
+| -------------- | --------------------------------------------------- |
+| Primary User   | Home cooks wanting to use available ingredients     |
+| Scope          | Asian recipes with real sources (not LLM-generated) |
+| Recipe Sources | Phase 1: Rasamalaysia; Phase 2: Multiple sources    |
+| MVP Focus      | Input ingredients → get recommendations             |
+| Phase          | Design & specification                              |
 
 ## How to Use This Documentation
 
@@ -31,4 +31,4 @@ An AI-powered recipe recommendation engine that suggests Asian recipes based on 
 
 ---
 
-*Last updated: 2026-04-16*
+_Last updated: 2026-04-16_

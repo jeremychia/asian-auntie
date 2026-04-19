@@ -12,7 +12,9 @@ class LoginForm(FlaskForm):
 
 
 class RegisterForm(FlaskForm):
-    username = StringField("Username", validators=[DataRequired(), Length(min=1, max=64)])
+    username = StringField(
+        "Username", validators=[DataRequired(), Length(min=1, max=64)]
+    )
     password = PasswordField("Password", validators=[DataRequired(), Length(min=8)])
     submit = SubmitField("Create account")
 

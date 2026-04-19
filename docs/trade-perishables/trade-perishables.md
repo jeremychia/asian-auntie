@@ -9,11 +9,13 @@ find someone nearby who wants them.
 ## Scope Decision: What this feature covers in MVP
 
 Three use cases were initially identified:
+
 1. **Give away excess** (item expiring, someone nearby can use it)
 2. **Split bulk purchases** (coordinate before buying to share cost)
 3. **Trade items** (barter exchange)
 
 MVP covers **give-away only**. Reasoning:
+
 - Give-away has the most urgent timing (item expiring now)
 - Lowest coordination cost — giver decides, receiver accepts or doesn't
 - No value exchange to negotiate, no pre-purchase coordination
@@ -25,6 +27,7 @@ MVP covers **give-away only**. Reasoning:
 ### Sealed/unopened items only (MVP)
 
 Partial quantity transfers (e.g., 600g of tamarind paste from a 1kg jar) introduce:
+
 - Hygiene risk (open container, handling, re-sealing)
 - Verification difficulty (how much is really left?)
 - Physical logistics (containers, weighing, mess)
@@ -45,6 +48,7 @@ Do not launch as a public city-wide marketplace. Start contained. Expand when th
 
 Trading food between individuals carries implicit safety responsibility.
 Mitigations for MVP:
+
 - Sealed items only (original packaging reduces contamination risk)
 - Listing must include purchase date and expiry date (visible from packaging)
 - Clear disclaimer: "Items are shared as-is. Verify packaging integrity before accepting."
@@ -53,12 +57,14 @@ Mitigations for MVP:
 ## How it works (MVP: give-away flow)
 
 ### Listing an item
+
 - Giver taps "List for give-away" (accessible from item detail in manage-perishables, or standalone)
 - System pre-fills from inventory if item exists: name, expiry date, photo
 - Giver confirms or adds: item condition (sealed — required), pickup notes (optional)
 - Item listed to their community/building
 
 ### Finding and claiming
+
 - Receiver opens trade feed — shows items listed in their community
 - Feed shows: photo, item name, expiry date, distance/location hint (building/area, not exact address)
 - Receiver taps "I'll take it" → giver gets a notification
@@ -66,6 +72,7 @@ Mitigations for MVP:
 - Item marked as claimed, removed from feed
 
 ### After pickup
+
 - Receiver marks "Picked up" → item archived
 - Optional: receiver can leave a brief note ("Thanks! Great condition")
 - No rating system in MVP — trust comes from community context, not scores
@@ -82,6 +89,7 @@ Mitigations for MVP:
 ## Cold start strategy
 
 Before launch:
+
 1. Identify a specific community willing to pilot (e.g., Jeremy's building, a cooking group)
 2. Seed with real listings from the primary user
 3. Measure: do any items get claimed? How long before claim?
@@ -91,4 +99,4 @@ Before launch:
 
 ---
 
-*Last updated: 2026-04-17*
+_Last updated: 2026-04-17_

@@ -6,22 +6,22 @@ Developer reference for running, configuring, and deploying Asian Auntie.
 
 ## Tech Stack
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Web framework | Flask 3.x | Python, one process, no build step |
-| Web auth | Flask-Login 0.6.x + Flask-Bcrypt 1.0.x | Session cookies for browser |
-| API auth | flask-jwt-extended 4.x | JWT tokens for mobile/API clients |
-| API security | flask-limiter 3.x + flask-cors 4.x | Rate limiting + CORS |
-| Input validation | marshmallow 3.x | API routes only (WTForms for web) |
-| Database ORM | SQLAlchemy 2.x + Flask-SQLAlchemy | Works with SQLite and PostgreSQL |
-| Migrations | Alembic (via Flask-Migrate) | Schema versioning |
-| DB (local) | SQLite | Zero config, single file |
-| DB (cloud) | PostgreSQL | Render free tier |
-| Frontend | HTMX 2.x + Pico CSS 2.x | Both via CDN, no build step |
-| Logging | structlog 24.x | JSON in prod, pretty in dev |
-| Image processing | Pillow | Resize before Vision API calls |
-| AI (future) | openai >= 1.x | GPT-4o Vision for recognition |
-| Production server | Gunicorn | Render deploy |
+| Layer             | Choice                                 | Notes                              |
+| ----------------- | -------------------------------------- | ---------------------------------- |
+| Web framework     | Flask 3.x                              | Python, one process, no build step |
+| Web auth          | Flask-Login 0.6.x + Flask-Bcrypt 1.0.x | Session cookies for browser        |
+| API auth          | flask-jwt-extended 4.x                 | JWT tokens for mobile/API clients  |
+| API security      | flask-limiter 3.x + flask-cors 4.x     | Rate limiting + CORS               |
+| Input validation  | marshmallow 3.x                        | API routes only (WTForms for web)  |
+| Database ORM      | SQLAlchemy 2.x + Flask-SQLAlchemy      | Works with SQLite and PostgreSQL   |
+| Migrations        | Alembic (via Flask-Migrate)            | Schema versioning                  |
+| DB (local)        | SQLite                                 | Zero config, single file           |
+| DB (cloud)        | PostgreSQL                             | Render free tier                   |
+| Frontend          | HTMX 2.x + Pico CSS 2.x                | Both via CDN, no build step        |
+| Logging           | structlog 24.x                         | JSON in prod, pretty in dev        |
+| Image processing  | Pillow                                 | Resize before Vision API calls     |
+| AI (future)       | openai >= 1.x                          | GPT-4o Vision for recognition      |
+| Production server | Gunicorn                               | Render deploy                      |
 
 ---
 
@@ -31,6 +31,7 @@ Developer reference for running, configuring, and deploying Asian Auntie.
 - [`uv`](https://docs.astral.sh/uv/) — fast Python package manager (replaces pip + venv)
 
 Install `uv` (one-time, system-wide):
+
 ```bash
 brew install uv          # macOS
 # or: curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -66,15 +67,15 @@ Or just run `make setup` which does steps 2–4 in one command.
 
 All variables live in `.env` (gitignored). See `.env.example` for the template.
 
-| Variable | Required | Description |
-|---|---|---|
-| `FLASK_SECRET_KEY` | Yes | Signs session cookies. Must be random and secret. |
-| `JWT_SECRET_KEY` | Yes | Signs JWT tokens. Must be different from `FLASK_SECRET_KEY`. |
-| `DATABASE_URL` | No | Defaults to `sqlite:///app.db` for local dev. Set to Postgres URL in prod. |
-| `OPENAI_API_KEY` | No | Leave blank to use stub mode (app works without it). |
-| `LOG_LEVEL` | No | Defaults to `INFO`. Set to `DEBUG` for verbose output. |
-| `FLASK_ENV` | No | `development` locally, `production` on Render. |
-| `ALLOWED_ORIGINS` | No | Comma-separated CORS origins. Defaults to `http://localhost:5000`. |
+| Variable           | Required | Description                                                                |
+| ------------------ | -------- | -------------------------------------------------------------------------- |
+| `FLASK_SECRET_KEY` | Yes      | Signs session cookies. Must be random and secret.                          |
+| `JWT_SECRET_KEY`   | Yes      | Signs JWT tokens. Must be different from `FLASK_SECRET_KEY`.               |
+| `DATABASE_URL`     | No       | Defaults to `sqlite:///app.db` for local dev. Set to Postgres URL in prod. |
+| `OPENAI_API_KEY`   | No       | Leave blank to use stub mode (app works without it).                       |
+| `LOG_LEVEL`        | No       | Defaults to `INFO`. Set to `DEBUG` for verbose output.                     |
+| `FLASK_ENV`        | No       | `development` locally, `production` on Render.                             |
+| `ALLOWED_ORIGINS`  | No       | Comma-separated CORS origins. Defaults to `http://localhost:5000`.         |
 
 ### Generating secret keys
 
@@ -115,11 +116,13 @@ ipconfig getifaddr en0
 The app ships with a `manifest.json` and viewport meta tag, so it behaves like a native app when bookmarked.
 
 **iOS (Safari)**:
+
 1. Open `http://<ip>:5000` in Safari
 2. Tap the Share button → "Add to Home Screen"
 3. Tap "Add" — the app icon appears on your home screen
 
 **Android (Chrome)**:
+
 1. Open `http://<ip>:5000` in Chrome
 2. Tap the menu (⋮) → "Add to Home screen"
 3. Tap "Add"
@@ -148,6 +151,7 @@ The SQLite database file is `instance/app.db` (gitignored). Delete it and re-run
 If `OPENAI_API_KEY` is not set, the recognition service returns a zero-confidence result, which routes the user to the manual entry form. The full app works without an API key — you just won't get image recognition.
 
 To test recognition locally, add your key to `.env`:
+
 ```
 OPENAI_API_KEY=sk-...
 ```
@@ -205,13 +209,13 @@ asian-auntie/
 
 Two parallel auth systems share one `users` table:
 
-| | Web (browser) | API (mobile/API clients) |
-|---|---|---|
-| Mechanism | Session cookie (Flask-Login) | JWT Bearer token (flask-jwt-extended) |
-| Login endpoint | `POST /login` | `POST /api/v1/auth/login` |
-| Token lifetime | Browser session + remember_me | Access: 15 min / Refresh: 30 days |
-| Logout | Clears cookie | Revokes refresh token in DB |
-| Route guard | `@login_required` | `@jwt_required()` |
+|                | Web (browser)                 | API (mobile/API clients)              |
+| -------------- | ----------------------------- | ------------------------------------- |
+| Mechanism      | Session cookie (Flask-Login)  | JWT Bearer token (flask-jwt-extended) |
+| Login endpoint | `POST /login`                 | `POST /api/v1/auth/login`             |
+| Token lifetime | Browser session + remember_me | Access: 15 min / Refresh: 30 days     |
+| Logout         | Clears cookie                 | Revokes refresh token in DB           |
+| Route guard    | `@login_required`             | `@jwt_required()`                     |
 
 See [docs/auth/flows.yaml](../auth/flows.yaml) for full flow details including edge cases and decision points.
 

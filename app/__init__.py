@@ -32,7 +32,9 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     limiter.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": app.config["ALLOWED_ORIGINS"]}})
+    cors.init_app(
+        app, resources={r"/api/*": {"origins": app.config["ALLOWED_ORIGINS"]}}
+    )
     migrate.init_app(app, db)
     csrf.init_app(app)
 
@@ -44,6 +46,7 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         from app.models import User
+
         return db.session.get(User, int(user_id))
 
     # JWT token revocation check
@@ -54,6 +57,7 @@ def create_app():
         if jwt_payload.get("type") != "refresh":
             return False
         from app.models import RefreshToken
+
         jti = jwt_payload.get("jti")
         token = db.session.query(RefreshToken).filter_by(token_jti=jti).first()
         if token is None:

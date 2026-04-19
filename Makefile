@@ -5,6 +5,7 @@ dev:
 
 setup:
 	uv sync
+	uv run pre-commit install
 	cp -n .env.example .env || true
 	uv run flask --app wsgi db upgrade
 

@@ -1,10 +1,10 @@
 from datetime import date, datetime, timezone
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import Schema, fields, validate, validates, ValidationError
 
 from app.extensions import db
-from app.models import Item, ItemPhoto, User
+from app.models import Item, User
 from app.recognition.service import recognize_item
 from app.logging_config import get_logger
 
@@ -12,8 +12,17 @@ api_items_bp = Blueprint("api_items", __name__)
 logger = get_logger(__name__)
 
 VALID_ITEM_TYPES = {
-    "sauce", "oil", "spice", "condiment", "produce",
-    "dried", "tofu", "seafood", "dairy", "other", "unknown",
+    "sauce",
+    "oil",
+    "spice",
+    "condiment",
+    "produce",
+    "dried",
+    "tofu",
+    "seafood",
+    "dairy",
+    "other",
+    "unknown",
 }
 
 
@@ -25,7 +34,9 @@ class ItemCreateSchema(Schema):
     @validates("item_type")
     def validate_item_type(self, value):
         if value not in VALID_ITEM_TYPES:
-            raise ValidationError(f"item_type must be one of: {', '.join(sorted(VALID_ITEM_TYPES))}")
+            raise ValidationError(
+                f"item_type must be one of: {', '.join(sorted(VALID_ITEM_TYPES))}"
+            )
 
     @validates("expiry_date")
     def validate_expiry_date(self, value):
@@ -34,7 +45,9 @@ class ItemCreateSchema(Schema):
             raise ValidationError("Expiry date cannot be in the past.")
         max_date = today.replace(year=today.year + 2)
         if value > max_date:
-            raise ValidationError("Expiry date cannot be more than 2 years in the future.")
+            raise ValidationError(
+                "Expiry date cannot be more than 2 years in the future."
+            )
 
 
 class ItemUpdateSchema(Schema):
@@ -45,7 +58,9 @@ class ItemUpdateSchema(Schema):
     @validates("item_type")
     def validate_item_type(self, value):
         if value not in VALID_ITEM_TYPES:
-            raise ValidationError(f"item_type must be one of: {', '.join(sorted(VALID_ITEM_TYPES))}")
+            raise ValidationError(
+                f"item_type must be one of: {', '.join(sorted(VALID_ITEM_TYPES))}"
+            )
 
 
 item_create_schema = ItemCreateSchema()
@@ -79,8 +94,7 @@ def _get_current_user() -> User:
 def list_items():
     user = _get_current_user()
     items = (
-        Item.query
-        .filter_by(user_id=user.id)
+        Item.query.filter_by(user_id=user.id)
         .filter(Item.removed_at.is_(None))
         .order_by(Item.expiry_date.asc())
         .all()
@@ -107,7 +121,9 @@ def create_item():
     db.session.add(item)
     db.session.commit()
 
-    logger.info("api_item_created", user_id=user.id, item_id=item.id, item_name=item.name)
+    logger.info(
+        "api_item_created", user_id=user.id, item_id=item.id, item_name=item.name
+    )
     return jsonify(_item_to_dict(item)), 201
 
 
@@ -115,7 +131,11 @@ def create_item():
 @jwt_required()
 def get_item(item_id):
     user = _get_current_user()
-    item = Item.query.filter_by(id=item_id, user_id=user.id).filter(Item.removed_at.is_(None)).first()
+    item = (
+        Item.query.filter_by(id=item_id, user_id=user.id)
+        .filter(Item.removed_at.is_(None))
+        .first()
+    )
     if not item:
         return jsonify({"error": "Not found."}), 404
     return jsonify(_item_to_dict(item)), 200
@@ -125,7 +145,11 @@ def get_item(item_id):
 @jwt_required()
 def update_item(item_id):
     user = _get_current_user()
-    item = Item.query.filter_by(id=item_id, user_id=user.id).filter(Item.removed_at.is_(None)).first()
+    item = (
+        Item.query.filter_by(id=item_id, user_id=user.id)
+        .filter(Item.removed_at.is_(None))
+        .first()
+    )
     if not item:
         return jsonify({"error": "Not found."}), 404
 
@@ -150,15 +174,25 @@ def update_item(item_id):
 @jwt_required()
 def delete_item(item_id):
     user = _get_current_user()
-    item = Item.query.filter_by(id=item_id, user_id=user.id).filter(Item.removed_at.is_(None)).first()
+    item = (
+        Item.query.filter_by(id=item_id, user_id=user.id)
+        .filter(Item.removed_at.is_(None))
+        .first()
+    )
     if not item:
         return jsonify({"error": "Not found."}), 404
 
     item.removed_at = datetime.now(timezone.utc)
-    item.removal_reason = request.get_json(silent=True, force=True).get("reason", "used") if request.data else "used"
+    item.removal_reason = (
+        request.get_json(silent=True, force=True).get("reason", "used")
+        if request.data
+        else "used"
+    )
     db.session.commit()
 
-    logger.info("api_item_deleted", user_id=user.id, item_id=item.id, reason=item.removal_reason)
+    logger.info(
+        "api_item_deleted", user_id=user.id, item_id=item.id, reason=item.removal_reason
+    )
     return jsonify({"message": "Item removed."}), 200
 
 
@@ -181,11 +215,20 @@ def recognize():
         cache_hit=result.cache_hit,
         item_name=result.name,
     )
-    return jsonify({
-        "name": result.name,
-        "item_type": result.item_type,
-        "confidence": result.confidence,
-        "shelf_life_days": result.shelf_life_days,
-        "printed_expiry_date": result.printed_expiry_date.isoformat() if result.printed_expiry_date else None,
-        "cache_hit": result.cache_hit,
-    }), 200
+    return (
+        jsonify(
+            {
+                "name": result.name,
+                "item_type": result.item_type,
+                "confidence": result.confidence,
+                "shelf_life_days": result.shelf_life_days,
+                "printed_expiry_date": (
+                    result.printed_expiry_date.isoformat()
+                    if result.printed_expiry_date
+                    else None
+                ),
+                "cache_hit": result.cache_hit,
+            }
+        ),
+        200,
+    )

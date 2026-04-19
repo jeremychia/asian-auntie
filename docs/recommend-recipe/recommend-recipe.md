@@ -10,7 +10,7 @@ and culturally grounded, not invented by an LLM.
 
 1. **Inventory-first**: primary ingredient source is the user's manage-perishables inventory — not manual typing
 2. **Source-grounded**: every suggestion links to a real recipe with its source shown
-3. **Partial matching is fine**: show recipes you can *almost* make, with clear gap information
+3. **Partial matching is fine**: show recipes you can _almost_ make, with clear gap information
 4. **Narrow and honest**: Phase 1 covers Malaysian and Southeast Asian recipes — this is stated upfront
 
 ## How it works
@@ -30,6 +30,7 @@ System searches the recipe corpus against available ingredients.
 Results are ranked by ingredient match percentage — not filtered to exact matches only.
 
 Each result shows:
+
 - Recipe name
 - Source (e.g., "Rasa Malaysia", "Woks of Life")
 - Ingredient match: "6 of 8 ingredients" with the gap listed ("Missing: palm sugar, galangal")
@@ -40,24 +41,28 @@ This lets the user decide: "I can get galangal — let me make this" vs. "too ma
 ### Step 3: Feedback
 
 After viewing a recipe, user can mark:
+
 - "Made this" (positive signal — recipe surfaced again for similar ingredient sets)
 - Optional structured reason if skipping: "Too complex", "Missing key ingredient", "Not my taste"
 
-Binary like/dislike is avoided — it gives no signal on *why*, which makes improvement impossible.
+Binary like/dislike is avoided — it gives no signal on _why_, which makes improvement impossible.
 
 ## Recipe corpus
 
 ### Phase 1: Curated Malaysian and Southeast Asian sources
+
 - Rasa Malaysia (primary seed source)
 - Additional SE Asian sources to be identified
 - Recipes stored in a structured format: name, source URL, ingredients list, cuisine tag
 
 Scope is narrow and honest. The onboarding and empty states explicitly say:
-*"We focus on Malaysian and Southeast Asian recipes to start."*
+_"We focus on Malaysian and Southeast Asian recipes to start."_
 This prevents disappointment from users with Japanese or Korean pantries.
 
 ### Phase 2: Expand to other Asian cuisines
+
 Priority order based on common pantry types:
+
 1. Chinese (Cantonese, Sichuan)
 2. Japanese
 3. Korean
@@ -67,6 +72,7 @@ Each added cuisine requires a trusted source — not AI-generated recipes.
 Candidate sources: Woks of Life (Chinese), Just One Cookbook (Japanese), Maangchi (Korean).
 
 ### Phase 3 (not before Phase 2 is stable): Dynamic search
+
 Automatically discover recipes from pre-vetted sources.
 Must maintain source transparency — no AI-generated content surfaced without clear labeling.
 
@@ -79,4 +85,4 @@ Must maintain source transparency — no AI-generated content surfaced without c
 
 ---
 
-*Last updated: 2026-04-17*
+_Last updated: 2026-04-17_

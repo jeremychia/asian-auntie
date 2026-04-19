@@ -22,18 +22,21 @@ When you cook niche cuisines or live alone, supermarket quantities are often too
 ### Primary User Persona 1: Single/Small Household Cook
 
 **Demographics**:
+
 - Lives alone or with 1-2 others
 - Cooks niche cuisines (Asian, Middle Eastern, etc.) occasionally
 - Budget-conscious but values variety
 - Tech-savvy
 
 **Pain Points**:
+
 - Buys large quantities of specialty ingredients, only uses fraction
 - Ingredients expire before next use
 - Wastes money on food thrown away
 - Frustrated with lack of options
 
 **Goals**:
+
 - Find others to split bulk purchases with
 - Give away excess before it expires
 - Reduce food waste and spending
@@ -42,15 +45,18 @@ When you cook niche cuisines or live alone, supermarket quantities are often too
 ### Secondary User Persona 2: Bulk Buyer
 
 **Demographics**:
+
 - Cooks frequently, buys in bulk to save money
 - Has excess that could be shared
 - Willing to help neighbors reduce waste
 
 **Pain Points**:
+
 - Excess ingredients they don't need immediately
 - Would like to offset costs by sharing
 
 **Goals**:
+
 - Share excess with others
 - Build community
 - Feel good about reducing waste
@@ -80,4 +86,4 @@ When you cook niche cuisines or live alone, supermarket quantities are often too
 
 ---
 
-*Last updated: 2026-04-17*
+_Last updated: 2026-04-17_

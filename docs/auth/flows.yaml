@@ -27,7 +27,7 @@ flows:
   LOGIN:
     name: Login
     goal: Authenticate an existing user and start a session or obtain tokens
-    happy_path:
+    happy_path: |
       - Web: user submits /login form with username + password
         - System looks up user by username, verifies bcrypt hash
         - Flask-Login calls login_user(user, remember=True)

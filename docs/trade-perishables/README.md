@@ -12,13 +12,13 @@ A marketplace to trade or share perishable items with others in your community, 
 
 ## At a Glance
 
-| Aspect | Status |
-|--------|--------|
+| Aspect       | Status                                               |
+| ------------ | ---------------------------------------------------- |
 | Primary User | Single/small household cooks with excess ingredients |
-| Scope | Local marketplace to trade or share perishables |
-| Trade Models | Give away, trade 1:1, or group buy together |
-| MVP Focus | List excess items, browse local offerings |
-| Phase | Design & specification |
+| Scope        | Local marketplace to trade or share perishables      |
+| Trade Models | Give away, trade 1:1, or group buy together          |
+| MVP Focus    | List excess items, browse local offerings            |
+| Phase        | Design & specification                               |
 
 ## How to Use This Documentation
 
@@ -31,4 +31,4 @@ A marketplace to trade or share perishable items with others in your community, 
 
 ---
 
-*Last updated: 2026-04-16*
+_Last updated: 2026-04-16_

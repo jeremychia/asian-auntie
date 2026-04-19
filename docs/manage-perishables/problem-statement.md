@@ -19,18 +19,21 @@ Users struggle to keep track of perishable items in their homes. Items expire wi
 **Name**: Jeremy (You)
 
 **Demographics**:
+
 - Individual living situation (no household sharing concerns for MVP)
 - Shops in bulk or from international sources
 - Wants to minimize food waste
 - Tech-savvy, willing to adopt new tools
 
 **Pain Points**:
+
 - Forgetful about what's in the fridge/pantry
 - Buys items in bulk and loses track of quantity
 - Wastes food regularly due to forgotten items
 - Wants to be more intentional about cooking
 
 **Goals**:
+
 - Know what's about to expire before it's too late
 - Make faster cooking decisions based on available ingredients
 - Reduce food waste and money spent on expired items
@@ -45,4 +48,4 @@ Users struggle to keep track of perishable items in their homes. Items expire wi
 
 ---
 
-*Last updated: 2026-04-16*
+_Last updated: 2026-04-16_

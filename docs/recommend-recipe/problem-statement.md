@@ -22,18 +22,21 @@ Users have leftover or available ingredients at home and want to know what Asian
 ### Primary User Persona 1: Home Cook
 
 **Demographics**:
+
 - Home cook interested in Asian cuisine
 - Has leftover/available ingredients
 - Wants to minimize food waste
 - Skeptical of AI-generated recipes
 
 **Pain Points**:
+
 - Struggles to find recipes matching exact ingredients
 - Wastes food because they don't know what to cook
 - Frustrated by LLM hallucinations or inaccurate recipes
 - Wants culturally authentic recipes, not adaptations
 
 **Goals**:
+
 - Quick recipe recommendations based on what they have
 - Trust in recipe sources
 - Discover new Asian recipes
@@ -42,15 +45,18 @@ Users have leftover or available ingredients at home and want to know what Asian
 ### Secondary User Persona: Curious Eater
 
 **Demographics**:
+
 - Exploring Asian cuisines
 - Wants to learn about authentic recipes and techniques
 - Values knowing the source of recipes
 
 **Pain Points**:
+
 - Hard to find curated, authentic Asian recipes
 - Overwhelmed by recipe variations online
 
 **Goals**:
+
 - Discover authentic Asian recipes
 - Understand recipe origins and sources
 
@@ -74,4 +80,4 @@ Users have leftover or available ingredients at home and want to know what Asian
 
 ---
 
-*Last updated: 2026-04-17*
+_Last updated: 2026-04-17_

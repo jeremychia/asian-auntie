@@ -1,20 +1,22 @@
-{% extends "base.html" %}
-{% block title %}{{ item.name }} — Asian Auntie{% endblock %}
-
-{% block content %}
-{% set days_left = (item.expiry_date - today).days %}
+{% extends "base.html" %} {% block title %}{{ item.name }} — Asian Auntie{%
+endblock %} {% block content %} {% set days_left = (item.expiry_date -
+today).days %}
 
 <div class="content">
-  <a href="{{ url_for('perishables.dashboard') }}" class="back-link">← Pantry</a>
+  <a href="{{ url_for('perishables.dashboard') }}" class="back-link"
+    >← Pantry</a
+  >
 
   <div class="detail-header">
     <h1>{{ item.name }}</h1>
     {% if days_left == 0 %}
-      <span class="badge badge--today">Today</span>
+    <span class="badge badge--today">Today</span>
     {% elif days_left < 0 %}
-      <span class="badge badge--expired">Expired</span>
+    <span class="badge badge--expired">Expired</span>
     {% elif days_left <= 2 %}
-      <span class="badge badge--soon">{{ days_left }} day{{ "s" if days_left != 1 }}</span>
+    <span class="badge badge--soon"
+      >{{ days_left }} day{{ "s" if days_left != 1 }}</span
+    >
     {% endif %}
   </div>
 
@@ -22,11 +24,15 @@
   <div class="item-photos">
     {% for photo in item.photos %}
     <figure class="item-photo-figure">
-      <img src="{{ url_for('uploaded_file', filename=photo.photo_path) }}"
-           alt="{{ photo.photo_type | capitalize }} photo of {{ item.name }}"
-           class="item-photo">
+      <img
+        src="{{ url_for('uploaded_file', filename=photo.photo_path) }}"
+        alt="{{ photo.photo_type | capitalize }} photo of {{ item.name }}"
+        class="item-photo"
+      />
       {% if item.photos | length > 1 %}
-      <figcaption class="item-photo-caption">{{ photo.photo_type | capitalize }}</figcaption>
+      <figcaption class="item-photo-caption">
+        {{ photo.photo_type | capitalize }}
+      </figcaption>
       {% endif %}
     </figure>
     {% endfor %}
@@ -40,32 +46,57 @@
     </div>
     <div class="meta-row">
       <span class="meta-label">Expires</span>
-      <span class="meta-value">{{ item.expiry_date.strftime("%-d %b %Y") }}</span>
+      <span class="meta-value"
+        >{{ item.expiry_date.strftime("%-d %b %Y") }}</span
+      >
     </div>
     <div class="meta-row">
       <span class="meta-label">Added</span>
-      <span class="meta-value">{{ item.date_added.strftime("%-d %b %Y") }}</span>
+      <span class="meta-value"
+        >{{ item.date_added.strftime("%-d %b %Y") }}</span
+      >
     </div>
   </div>
 
   <div class="item-actions">
-    <form method="post" action="{{ url_for('perishables.mark_used', item_id=item.id) }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-primary btn-full">Mark as used</button>
+    <form
+      method="post"
+      action="{{ url_for('perishables.mark_used', item_id=item.id) }}"
+    >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-primary btn-full">
+        Mark as used
+      </button>
     </form>
 
     <details class="remove-panel">
       <summary>Remove from pantry</summary>
       <div class="remove-options">
-        <form method="post" action="{{ url_for('perishables.remove_item', item_id=item.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" name="reason" value="discarded" class="btn btn-danger btn-sm">
+        <form
+          method="post"
+          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            name="reason"
+            value="discarded"
+            class="btn btn-danger btn-sm"
+          >
             Threw it away
           </button>
         </form>
-        <form method="post" action="{{ url_for('perishables.remove_item', item_id=item.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" name="reason" value="unwanted" class="btn btn-secondary btn-sm">
+        <form
+          method="post"
+          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            name="reason"
+            value="unwanted"
+            class="btn btn-secondary btn-sm"
+          >
             Don't want it
           </button>
         </form>

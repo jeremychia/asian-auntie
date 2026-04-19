@@ -23,8 +23,17 @@ from app.logging_config import get_logger
 logger = get_logger(__name__)
 
 VALID_ITEM_TYPES = {
-    "sauce", "oil", "spice", "condiment", "produce",
-    "dried", "tofu", "seafood", "dairy", "other", "unknown",
+    "sauce",
+    "oil",
+    "spice",
+    "condiment",
+    "produce",
+    "dried",
+    "tofu",
+    "seafood",
+    "dairy",
+    "other",
+    "unknown",
 }
 
 RECOGNITION_PROMPT = """
@@ -123,7 +132,9 @@ def recognize_item(image_bytes: bytes) -> RecognitionResult:
         return _stub_result()
 
 
-def _call_openai_vision(api_key: str, image_bytes: bytes, image_hash: str) -> RecognitionResult:
+def _call_openai_vision(
+    api_key: str, image_bytes: bytes, image_hash: str
+) -> RecognitionResult:
     import base64
     import time
     from openai import OpenAI
@@ -144,7 +155,10 @@ def _call_openai_vision(api_key: str, image_bytes: bytes, image_hash: str) -> Re
                     {"type": "text", "text": RECOGNITION_PROMPT},
                     {
                         "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{b64_image}", "detail": "low"},
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{b64_image}",
+                            "detail": "low",
+                        },
                     },
                 ],
             }
@@ -206,7 +220,6 @@ def _resize_image(image_bytes: bytes, max_size: int = 512) -> bytes:
 def _get_cached_result(image_hash: str) -> Optional[RecognitionResult]:
     """Check DB cache for a previous recognition result for this image."""
     try:
-        from app.extensions import db
         from app.models import RecognitionCache
 
         record = RecognitionCache.query.filter_by(image_hash=image_hash).first()
@@ -237,13 +250,19 @@ def _save_to_cache(image_hash: str, result: RecognitionResult):
         from app.extensions import db
         from app.models import RecognitionCache
 
-        payload = json.dumps({
-            "name": result.name,
-            "item_type": result.item_type,
-            "confidence": result.confidence,
-            "shelf_life_days": result.shelf_life_days,
-            "printed_expiry_date": result.printed_expiry_date.isoformat() if result.printed_expiry_date else None,
-        })
+        payload = json.dumps(
+            {
+                "name": result.name,
+                "item_type": result.item_type,
+                "confidence": result.confidence,
+                "shelf_life_days": result.shelf_life_days,
+                "printed_expiry_date": (
+                    result.printed_expiry_date.isoformat()
+                    if result.printed_expiry_date
+                    else None
+                ),
+            }
+        )
         record = RecognitionCache(image_hash=image_hash, result_json=payload)
         db.session.add(record)
         db.session.commit()

@@ -1,6 +1,6 @@
 # Legal Compliance & Risk Assessment
 
-**Date**: April 2026  
+**Date**: April 2026
 **Scope**: Legal risks for Asian Auntie features across 6 countries
 
 ---
@@ -8,6 +8,7 @@
 ## Overview
 
 Asian Auntie implements three core features:
+
 1. **Manage Perishables**: Track expiry dates of food items, quantity, purchase history
 2. **Recommend Recipes**: Provide recipe suggestions based on available ingredients
 3. **Trade Perishables**: Peer-to-peer marketplace for sharing/trading excess ingredients
@@ -21,20 +22,23 @@ This document identifies legal risks and required compliance actions for each fe
 ### 1.1 France
 
 #### Applicable Laws
+
 - **CNIL (Commission Nationale de l'Informatique et des Libertés)** regulations under **French Data Protection Act (Loi Informatique et Libertés)**
 - **GDPR** (EU General Data Protection Regulation 2016/679) - applies to all EU member states
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Data storage of personal information** | Storing purchase dates, item quantities, and expiry information constitutes personal data | GDPR Article 4 |
-| **Lack of legal basis** | Must have explicit lawful basis (consent, contract, legal obligation, vital interests, public task, legitimate interests) for processing personal data | GDPR Article 6 |
-| **Profiling from purchase history** | Analyzing buying patterns and waste patterns could constitute automated profiling | GDPR Article 22 |
-| **Cookies/tracking without consent** | Analytics or tracking pixels require explicit prior consent (cookie banner) | French Directive 2002/58/EC, CNIL Guidelines |
+| Risk                                     | Description                                                                                                                                            | Jurisdiction                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| **Data storage of personal information** | Storing purchase dates, item quantities, and expiry information constitutes personal data                                                              | GDPR Article 4                               |
+| **Lack of legal basis**                  | Must have explicit lawful basis (consent, contract, legal obligation, vital interests, public task, legitimate interests) for processing personal data | GDPR Article 6                               |
+| **Profiling from purchase history**      | Analyzing buying patterns and waste patterns could constitute automated profiling                                                                      | GDPR Article 22                              |
+| **Cookies/tracking without consent**     | Analytics or tracking pixels require explicit prior consent (cookie banner)                                                                            | French Directive 2002/58/EC, CNIL Guidelines |
 
 #### Required Actions
+
 ✅ **Implement GDPR compliance**:
+
 - [ ] Create a privacy policy in French (mandatory for French users) and English
 - [ ] Obtain explicit opt-in consent for personal data collection (not pre-checked boxes)
 - [ ] Include legal basis statement: e.g., "We process your data based on your consent to provide this service"
@@ -44,11 +48,13 @@ This document identifies legal risks and required compliance actions for each fe
 - [ ] Register with CNIL if processing personal data at scale
 
 ✅ **Cookie compliance**:
-- [ ] Add cookie banner asking for explicit consent *before* any tracking
+
+- [ ] Add cookie banner asking for explicit consent _before_ any tracking
 - [ ] Separate consent for analytics, functional cookies, and marketing cookies
 - [ ] Document cookie usage in privacy policy
 
 ✅ **Contact Information**:
+
 - [ ] Publish a Data Protection Officer (DPO) contact or privacy contact email
 
 ---
@@ -56,6 +62,7 @@ This document identifies legal risks and required compliance actions for each fe
 ### 1.2 Germany
 
 #### Applicable Laws
+
 - **GDPR** (Regulation 2016/679)
 - **Bundesdatenschutzgesetz (BDSG)** - German Data Protection Act (complementary to GDPR)
 - **Telemediengesetz (TMG)** - Telemedia Act (German law for online services)
@@ -65,14 +72,16 @@ This document identifies legal risks and required compliance actions for each fe
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Missing Impressum** | All online services must provide legal/business information | TMG §7 |
-| **GDPR violations** | Personal data processing without explicit consent | GDPR |
-| **Age verification** | No clear mechanism to prevent minors from accessing if handling sensitive data | TMG §7, GDPR |
+| Risk                  | Description                                                                    | Jurisdiction |
+| --------------------- | ------------------------------------------------------------------------------ | ------------ |
+| **Missing Impressum** | All online services must provide legal/business information                    | TMG §7       |
+| **GDPR violations**   | Personal data processing without explicit consent                              | GDPR         |
+| **Age verification**  | No clear mechanism to prevent minors from accessing if handling sensitive data | TMG §7, GDPR |
 
 #### Required Actions
+
 ✅ **Implement Impressum (legal notice)**:
+
 - [ ] Create an "Impressum" page (German requirement, not optional)
 - [ ] Include:
   - Name of service provider (individual or company name)
@@ -84,15 +93,18 @@ This document identifies legal risks and required compliance actions for each fe
   - Responsible editor/person (for editorial content)
 
 ✅ **GDPR compliance** (same as France, plus):
+
 - [ ] Privacy Policy must be in German
 - [ ] Implement DPA (Data Processing Agreement) if using third-party processors (e.g., cloud providers, analytics)
 - [ ] Must be able to prove lawful basis for data processing
 
 ✅ **User data safety**:
+
 - [ ] Implement encryption for data at rest and in transit (SSL/TLS)
 - [ ] Document data security measures in privacy policy
 
 **Example Impressum Structure**:
+
 ```
 Betreiber und Verantwortlicher:
 [Name]
@@ -113,6 +125,7 @@ Handelsregister: [Registration if applicable]
 ### 1.3 United Kingdom
 
 #### Applicable Laws
+
 - **GDPR** (still applies post-Brexit under UK-GDPR)
 - **Data Protection Act 2018**
 - **Privacy and Electronic Communications Regulations 2003 (PECR)**
@@ -121,16 +134,18 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **No lawful basis for data processing** | Must document why you process personal data (consent, contract, legal obligation, vital interests, public task, legitimate interests) | UK-GDPR Article 6 |
-| **Marketing emails without consent** | Sending marketing emails to individuals requires prior explicit consent under PECR | PECR Regulation 22 |
-| **Inadequate transparency** | Users must know exactly what data is collected and why | UK-GDPR Articles 13-14 |
-| **No data subject rights implementation** | Users have right to access, rectify, erase, restrict processing, data portability | UK-GDPR Chapter 3 |
+| Risk                                      | Description                                                                                                                           | Jurisdiction           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **No lawful basis for data processing**   | Must document why you process personal data (consent, contract, legal obligation, vital interests, public task, legitimate interests) | UK-GDPR Article 6      |
+| **Marketing emails without consent**      | Sending marketing emails to individuals requires prior explicit consent under PECR                                                    | PECR Regulation 22     |
+| **Inadequate transparency**               | Users must know exactly what data is collected and why                                                                                | UK-GDPR Articles 13-14 |
+| **No data subject rights implementation** | Users have right to access, rectify, erase, restrict processing, data portability                                                     | UK-GDPR Chapter 3      |
 
 #### Required Actions
+
 ✅ **UK-GDPR compliance**:
-- [ ] Privacy Notice: Provide clear, accessible privacy information *at point of collection*
+
+- [ ] Privacy Notice: Provide clear, accessible privacy information _at point of collection_
 - [ ] Lawful Basis: Document and display which lawful basis applies (e.g., "You have consented to data processing")
 - [ ] Data Subject Rights: Implement mechanisms to:
   - Request data access (SAR - Subject Access Request)
@@ -140,11 +155,13 @@ Handelsregister: [Registration if applicable]
 - [ ] Document retention policy (e.g., "We retain purchase history for 12 months after last account activity")
 
 ✅ **PECR compliance** (for marketing):
+
 - [ ] If planning to send marketing emails/SMS: Obtain explicit opt-in consent first
 - [ ] Include unsubscribe link in every marketing message
 - [ ] Do not use soft opt-in (pre-checked boxes) for marketing consent
 
 ✅ **Contact with ICO**:
+
 - [ ] Consider registering with ICO if processing personal data
 - [ ] Display privacy contact email clearly
 
@@ -153,21 +170,24 @@ Handelsregister: [Registration if applicable]
 ### 1.4 Singapore
 
 #### Applicable Laws
+
 - **Personal Data Protection Act (PDPA)** - Singapore's primary data protection statute
 - **PDPA Schedule 2** - Deemed consent opt-out model (differs from GDPR's opt-in)
 - **Sale of Food Act (Cap. 283)** + **Singapore Food Agency (SFA) Act 2019** - if the app surfaces expiry or food safety guidance, this framework may apply
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Collecting personal data without consent** | PDPA requires consent, but allows "deemed consent" for direct marketing | PDPA Section 14 |
-| **No Privacy Policy** | Must provide clear, understandable collection statement at or before collection | PDPA Schedule 2, Paragraph 1 |
-| **International data transfer** | Personal data of Singapore residents cannot be transferred to countries without "adequate personal data protection" | PDPA Section 26 |
-| **No data subject rights** | Users have rights to access, correct, and request erasure of personal data | PDPA Sections 19-21 |
+| Risk                                         | Description                                                                                                         | Jurisdiction                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Collecting personal data without consent** | PDPA requires consent, but allows "deemed consent" for direct marketing                                             | PDPA Section 14              |
+| **No Privacy Policy**                        | Must provide clear, understandable collection statement at or before collection                                     | PDPA Schedule 2, Paragraph 1 |
+| **International data transfer**              | Personal data of Singapore residents cannot be transferred to countries without "adequate personal data protection" | PDPA Section 26              |
+| **No data subject rights**                   | Users have rights to access, correct, and request erasure of personal data                                          | PDPA Sections 19-21          |
 
 #### Required Actions
+
 ✅ **PDPA compliance**:
+
 - [ ] Create Privacy Policy (required by law)
 - [ ] Obtain consent for personal data collection:
   - Affirmative consent for sensitive purposes (health, financial, government ID)
@@ -177,6 +197,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Collect personal data only for legitimate purposes and disclose purpose clearly
 
 ✅ **Data Subject Rights**:
+
 - [ ] Implement mechanism for users to:
   - Access their personal data (free first request, nominal fee for subsequent)
   - Correct inaccurate data
@@ -184,6 +205,7 @@ Handelsregister: [Registration if applicable]
   - Withdraw consent
 
 ✅ **Cross-border data transfer**:
+
 - [ ] If user data is stored or transferred outside Singapore:
   - Conduct adequacy assessment: Does destination country have adequate data protection?
   - France, Germany, UK, US: Adequate protections
@@ -192,6 +214,7 @@ Handelsregister: [Registration if applicable]
   - Document transfer arrangements
 
 ✅ **Personal Data Protection Officer**:
+
 - [ ] Designate or notify PDPC of data protection officer contact details
 - [ ] Publish contact for data subject inquiries
 
@@ -200,6 +223,7 @@ Handelsregister: [Registration if applicable]
 ### 1.5 United States
 
 #### Applicable Laws
+
 - **No federal omnibus data protection law** (unlike GDPR)
 - **State-level laws** (California, Virginia, Colorado, Connecticut, Utah, Montana, Delaware, Indiana, Missouri):
   - **California Consumer Privacy Act (CCPA)** / **California Privacy Rights Act (CPRA)**
@@ -212,15 +236,17 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **CCPA/CPRA violations (California)** | If users are in California: collect personal information but fail to implement consumer rights | CCPA §1798.100 et seq. |
-| **Deceptive privacy practices** | Claiming privacy protections but not implementing them | FTC Act §5 |
-| **Food safety claims without substantiation** | If implying app helps with food safety, could be deceptive | FTC Act §5, FDA regulations |
-| **No consumer rights (non-CCPA states)** | Outside CCPA/CPRA/similar states, no legal requirement for consumer rights, but best practice | N/A |
+| Risk                                          | Description                                                                                    | Jurisdiction                |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------- |
+| **CCPA/CPRA violations (California)**         | If users are in California: collect personal information but fail to implement consumer rights | CCPA §1798.100 et seq.      |
+| **Deceptive privacy practices**               | Claiming privacy protections but not implementing them                                         | FTC Act §5                  |
+| **Food safety claims without substantiation** | If implying app helps with food safety, could be deceptive                                     | FTC Act §5, FDA regulations |
+| **No consumer rights (non-CCPA states)**      | Outside CCPA/CPRA/similar states, no legal requirement for consumer rights, but best practice  | N/A                         |
 
 #### Required Actions
+
 ✅ **If operating in California or other CCPA-equivalent states**:
+
 - [ ] Create Privacy Policy disclosing:
   - Categories of personal information collected
   - Source of personal information
@@ -238,6 +264,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Disclose financial incentives if offering opt-in rewards
 
 ✅ **If operating nationally (recommended best practice)**:
+
 - [ ] Treat all users as if under CCPA to minimize compliance burden:
   - Universal privacy policy
   - Offer consumer rights to all users
@@ -248,6 +275,7 @@ Handelsregister: [Registration if applicable]
   - Document data security practices
 
 ✅ **Food Safety Claims**:
+
 - [ ] If marketing app as helping with food safety (expiry dates), ensure claims are:
   - Truthful and substantiated
   - Not misleading about what app actually does
@@ -259,6 +287,7 @@ Handelsregister: [Registration if applicable]
 ### 1.6 Canada
 
 #### Applicable Laws
+
 - **Personal Information Protection and Electronic Documents Act (PIPEDA)** - Federal privacy law
 - **Quebec Law 25 (Bill 64)** - Modernized Quebec privacy law (coming into force gradually, some provisions effective 2024+)
 - **Provincial privacy laws** (Alberta, BC: also have PIPEDA-like laws)
@@ -267,15 +296,17 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **PIPEDA violations** | Collecting personal data without meaningful consent (not just pre-checked boxes) | PIPEDA Part 2, Schedule 1 |
-| **No Privacy Policy** | Must provide clear notice of practices at or before collection | PIPEDA Section 4.2 |
-| **Unsolicited marketing messages** | Sending marketing emails/texts without prior express consent illegal | CASL Section 6(1) |
-| **Quebec Law 25 compliance** | Quebec has stricter requirements than PIPEDA (consent-focused, expanded rights) | Quebec Law 25 |
+| Risk                               | Description                                                                      | Jurisdiction              |
+| ---------------------------------- | -------------------------------------------------------------------------------- | ------------------------- |
+| **PIPEDA violations**              | Collecting personal data without meaningful consent (not just pre-checked boxes) | PIPEDA Part 2, Schedule 1 |
+| **No Privacy Policy**              | Must provide clear notice of practices at or before collection                   | PIPEDA Section 4.2        |
+| **Unsolicited marketing messages** | Sending marketing emails/texts without prior express consent illegal             | CASL Section 6(1)         |
+| **Quebec Law 25 compliance**       | Quebec has stricter requirements than PIPEDA (consent-focused, expanded rights)  | Quebec Law 25             |
 
 #### Required Actions
+
 ✅ **PIPEDA/Quebec Law 25 compliance**:
+
 - [ ] Create Privacy Policy in both English and French (mandatory for Quebec market)
   - Quebec Law 25 requires French as co-official language
 - [ ] Obtain meaningful consent:
@@ -290,6 +321,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Appoint Privacy Officer contact and publish details
 
 ✅ **CASL compliance** (critical):
+
 - [ ] For marketing emails/SMS:
   - [ ] Obtain **express** prior consent (opt-in, not soft opt-in)
   - [ ] Consent must be affirmative (checked boxes, explicit agreement)
@@ -302,6 +334,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Do NOT use pre-checked boxes for marketing consent (violates CASL)
 
 ✅ **Quebec-specific requirements (Law 25)**:
+
 - [ ] Privacy Policy in French and English
 - [ ] Stricter consent requirements than PIPEDA (more explicit)
 - [ ] Right to request explanation of decisions based on automated profiling
@@ -314,6 +347,7 @@ Handelsregister: [Registration if applicable]
 ### 2.1 France
 
 #### Applicable Laws
+
 - **GDPR** (ingredient matching is personal data processing)
 - **French Law on Freedom of Communication (Loi Liberté de Communication)** - content responsibility
 - **French Copyright Law (Code de la Propriété Intellectuelle)** - recipe sourcing/attribution
@@ -321,21 +355,24 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Processing ingredient preferences** | Storing and analyzing ingredient preferences constitutes personal data | GDPR Article 4 |
-| **Recipe copyright infringement** | Reproducing recipe text/images without license | French Copyright Law, GDPR-adjacent |
-| **Missing attribution** | If sourcing recipes from third parties, must credit source | French Copyright Law, Berne Convention |
-| **LLM-generated content responsibility** | If using LLM to generate recommendations, app is responsible for accuracy/legality | French Law on Freedom of Communication |
-| **Accessibility requirement** | RGAA (General Reference Accessibility Rules) requires digital accessibility for public services | RGAA 4.1 |
+| Risk                                     | Description                                                                                     | Jurisdiction                           |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------- |
+| **Processing ingredient preferences**    | Storing and analyzing ingredient preferences constitutes personal data                          | GDPR Article 4                         |
+| **Recipe copyright infringement**        | Reproducing recipe text/images without license                                                  | French Copyright Law, GDPR-adjacent    |
+| **Missing attribution**                  | If sourcing recipes from third parties, must credit source                                      | French Copyright Law, Berne Convention |
+| **LLM-generated content responsibility** | If using LLM to generate recommendations, app is responsible for accuracy/legality              | French Law on Freedom of Communication |
+| **Accessibility requirement**            | RGAA (General Reference Accessibility Rules) requires digital accessibility for public services | RGAA 4.1                               |
 
 #### Required Actions
+
 ✅ **GDPR compliance** (same as Manage Perishables):
+
 - [ ] Privacy policy explaining ingredient preference collection
 - [ ] Obtain consent for profiling based on ingredient data
 - [ ] Implement DPIA for automated recipe recommendation system
 
 ✅ **Recipe sourcing and copyright**:
+
 - [ ] If sourcing recipes from external sources:
   - [ ] Obtain explicit license to reproduce (contact recipe creator/publisher)
   - [ ] Always attribute source (e.g., "Recipe from [Name] via [Source]")
@@ -349,6 +386,7 @@ Handelsregister: [Registration if applicable]
   - [ ] Maintain license attribution metadata
 
 ✅ **Content responsibility**:
+
 - [ ] Disclaimer: "Recipes are for informational purposes. Follow standard food safety practices."
 - [ ] Don't make health claims without substantiation (e.g., "This recipe is gluten-free" is fact, "cures allergies" is not)
 - [ ] Implement user reporting mechanism for flagging illegal/harmful content
@@ -358,6 +396,7 @@ Handelsregister: [Registration if applicable]
 ### 2.2 Germany
 
 #### Applicable Laws
+
 - **GDPR** (profiling for recipe recommendations)
 - **TMG** (Impressum still required)
 - **German Copyright Law (Urheberrechtsgesetz)** - recipe copyright protection
@@ -366,15 +405,17 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Recipe copyright** | Recipes can be copyrighted if they express creativity (not just ingredient lists) | German Copyright Law §2, BGH Urteil I ZR 112/86 |
-| **No Impressum** | Still required even with recommendation feature | TMG §7 |
-| **Ingredient profiling without consent** | Systematic profiling of cooking preferences requires explicit GDPR consent | GDPR Article 6, 9 |
-| **AI accountability** | If using LLM for recommendations, must disclose AI involvement | German AI Act (awaiting final provisions) |
+| Risk                                     | Description                                                                       | Jurisdiction                                    |
+| ---------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **Recipe copyright**                     | Recipes can be copyrighted if they express creativity (not just ingredient lists) | German Copyright Law §2, BGH Urteil I ZR 112/86 |
+| **No Impressum**                         | Still required even with recommendation feature                                   | TMG §7                                          |
+| **Ingredient profiling without consent** | Systematic profiling of cooking preferences requires explicit GDPR consent        | GDPR Article 6, 9                               |
+| **AI accountability**                    | If using LLM for recommendations, must disclose AI involvement                    | German AI Act (awaiting final provisions)       |
 
 #### Required Actions
+
 ✅ **Recipe copyright protection**:
+
 - [ ] Audit all recipes in database:
   - [ ] Obtain explicit licenses from copyright holders (email recipe creators, publishers)
   - [ ] Use only CC-licensed recipes (CC0, CC-BY, CC-BY-SA) if not obtaining licenses
@@ -387,12 +428,14 @@ Handelsregister: [Registration if applicable]
 - [ ] Create "Attribution" page linking to all original sources
 
 ✅ **AI transparency** (future compliance):
+
 - [ ] If using AI to generate recommendations:
   - [ ] Disclose in privacy policy: "We use machine learning to recommend recipes"
   - [ ] Allow users to opt-out of AI-based recommendations
   - [ ] Document how AI decisions are made (transparency)
 
 ✅ **Impressum** (same as above):
+
 - [ ] Include on every page
 
 ---
@@ -400,6 +443,7 @@ Handelsregister: [Registration if applicable]
 ### 2.3 United Kingdom
 
 #### Applicable Laws
+
 - **UK-GDPR** (ingredient profiling)
 - **Copyright, Designs and Patents Act 1988** - recipe copyright
 - **Consumer Rights Act 2015** - recipe accuracy/misleading claims
@@ -408,15 +452,17 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Recipe copyright infringement** | Recipes with creative expression are copyright-protected | CDPA 1988 §1 |
-| **No source attribution** | Moral right to attribution (reputation) | CDPA 1988 §77 |
-| **Misleading recipe claims** | "Authentic," "traditional," "approved by chef" without substantiation | Consumer Rights Act 2015 §5 |
-| **Ingredient accuracy** | If recommending recipes based on user ingredients, must ensure accuracy | Consumer Rights Act 2015 |
+| Risk                              | Description                                                             | Jurisdiction                |
+| --------------------------------- | ----------------------------------------------------------------------- | --------------------------- |
+| **Recipe copyright infringement** | Recipes with creative expression are copyright-protected                | CDPA 1988 §1                |
+| **No source attribution**         | Moral right to attribution (reputation)                                 | CDPA 1988 §77               |
+| **Misleading recipe claims**      | "Authentic," "traditional," "approved by chef" without substantiation   | Consumer Rights Act 2015 §5 |
+| **Ingredient accuracy**           | If recommending recipes based on user ingredients, must ensure accuracy | Consumer Rights Act 2015    |
 
 #### Required Actions
+
 ✅ **Recipe sourcing and copyright**:
+
 - [ ] Obtain licenses for all recipes:
   - [ ] Contact recipe creators/publishers directly for permission
   - [ ] Use only CC-licensed recipes
@@ -427,6 +473,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Copyright notice: "Recipe © [Year] [Author/Publisher]. Used with permission."
 
 ✅ **Claims substantiation**:
+
 - [ ] Never claim recipe is "authentic" unless:
   - [ ] Attributed to a recognized source (cookbook, chef, cultural authority)
   - [ ] Recipe creator confirms authenticity
@@ -441,6 +488,7 @@ Handelsregister: [Registration if applicable]
 ### 2.4 Singapore
 
 #### Applicable Laws
+
 - **PDPA** (ingredient profiling)
 - **Copyright Act** - recipe copyright protection
 - **Consumer Protection (Fair Trading) Act (CPFTA)** - misleading claims
@@ -448,15 +496,17 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Ingredient data profiling** | Tracking ingredient preferences and making inferences requires PDPA consent | PDPA Section 14 |
-| **Recipe copyright** | Recipes with original expression are copyright-protected | Copyright Act §2, 31 |
-| **Misleading claims** | Claiming recipes are "authentic" or "chef-approved" without substantiation | CPFTA Part II |
-| **No source attribution** | Failure to credit original recipe creator | Copyright Act, Moral Rights §82 |
+| Risk                          | Description                                                                 | Jurisdiction                    |
+| ----------------------------- | --------------------------------------------------------------------------- | ------------------------------- |
+| **Ingredient data profiling** | Tracking ingredient preferences and making inferences requires PDPA consent | PDPA Section 14                 |
+| **Recipe copyright**          | Recipes with original expression are copyright-protected                    | Copyright Act §2, 31            |
+| **Misleading claims**         | Claiming recipes are "authentic" or "chef-approved" without substantiation  | CPFTA Part II                   |
+| **No source attribution**     | Failure to credit original recipe creator                                   | Copyright Act, Moral Rights §82 |
 
 #### Required Actions
+
 ✅ **PDPA compliance** (ingredient profiling):
+
 - [ ] Obtain consent for:
   - [ ] Collection of ingredient preferences
   - [ ] Analysis/profiling of cooking patterns
@@ -465,6 +515,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Implement opt-out mechanism
 
 ✅ **Recipe copyright**:
+
 - [ ] Obtain licenses for all recipes
 - [ ] Always credit original source with:
   - [ ] Recipe creator name
@@ -473,6 +524,7 @@ Handelsregister: [Registration if applicable]
   - [ ] Link to original source
 
 ✅ **Claims accuracy** (CPFTA):
+
 - [ ] Substantiate any claims about recipes:
   - [ ] ✅ "Recipe from [specific source]"
   - [ ] ✅ "Based on [cookbook]"
@@ -485,6 +537,7 @@ Handelsregister: [Registration if applicable]
 ### 2.5 United States
 
 #### Applicable Laws
+
 - **Copyright Law (17 U.S.C.)** - recipe copyright for creative works
 - **FTC Act Section 5** - deceptive claims about recipes
 - **Fair Use Doctrine** (17 U.S.C. §107) - limited recipe reproduction
@@ -493,16 +546,18 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Recipe copyright infringement** | Reproducing copyrighted recipe text/images without permission | 17 U.S.C. §106 |
-| **Fair Use boundary** | Simple ingredient lists are not copyrightable, but formatted recipes may be | 17 U.S.C. §102, Harper & Row v. Nation (1985) |
-| **Deceptive "authentic" claims** | Claiming recipe is "authentic Asian recipe" without substantiation | FTC Act §5 |
-| **Attribution/plagiarism** | Reproducing recipe without crediting source may violate state laws, common law | State laws vary |
-| **No copyright notice** | Should display copyright information even if not legally required | 17 U.S.C. §401 (best practice) |
+| Risk                              | Description                                                                    | Jurisdiction                                  |
+| --------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------- |
+| **Recipe copyright infringement** | Reproducing copyrighted recipe text/images without permission                  | 17 U.S.C. §106                                |
+| **Fair Use boundary**             | Simple ingredient lists are not copyrightable, but formatted recipes may be    | 17 U.S.C. §102, Harper & Row v. Nation (1985) |
+| **Deceptive "authentic" claims**  | Claiming recipe is "authentic Asian recipe" without substantiation             | FTC Act §5                                    |
+| **Attribution/plagiarism**        | Reproducing recipe without crediting source may violate state laws, common law | State laws vary                               |
+| **No copyright notice**           | Should display copyright information even if not legally required              | 17 U.S.C. §401 (best practice)                |
 
 #### Required Actions
+
 ✅ **Recipe copyright compliance**:
+
 - [ ] For each recipe, obtain one of:
   - [ ] Explicit written license from copyright holder
   - [ ] Use recipes under CC-BY, CC-BY-SA, or CC0 licenses
@@ -522,6 +577,7 @@ Handelsregister: [Registration if applicable]
   - [ ] Original publication date
 
 ✅ **Claims substantiation** (FTC):
+
 - [ ] Never claim recipe is:
   - ❌ "Authentic Asian recipe" unless sourced from verified cultural/culinary authority
   - ❌ "Chef-approved" unless actually approved
@@ -537,6 +593,7 @@ Handelsregister: [Registration if applicable]
 ### 2.6 Canada
 
 #### Applicable Laws
+
 - **Copyright Act (R.S.C., 1985, c. C-42)** - recipe copyright
 - **PIPEDA/Quebec Law 25** (ingredient profiling is personal data)
 - **Competition Act** - deceptive marketing claims
@@ -545,15 +602,17 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Recipe copyright** | Creative recipes are copyright-protected; ingredient lists are not | Copyright Act Part I §5 |
-| **Ingredient profiling** | Analyzing cooking preferences requires PIPEDA/Quebec consent | PIPEDA §4.2, Quebec Law 25 |
-| **Deceptive marketing** | Claiming recipe is "authentic" or "approved" without basis | Competition Act §36 |
-| **No French attribution** | Must provide recipe attribution in French (if Quebec market) | Copyright Act §37, PIPEDA |
+| Risk                      | Description                                                        | Jurisdiction               |
+| ------------------------- | ------------------------------------------------------------------ | -------------------------- |
+| **Recipe copyright**      | Creative recipes are copyright-protected; ingredient lists are not | Copyright Act Part I §5    |
+| **Ingredient profiling**  | Analyzing cooking preferences requires PIPEDA/Quebec consent       | PIPEDA §4.2, Quebec Law 25 |
+| **Deceptive marketing**   | Claiming recipe is "authentic" or "approved" without basis         | Competition Act §36        |
+| **No French attribution** | Must provide recipe attribution in French (if Quebec market)       | Copyright Act §37, PIPEDA  |
 
 #### Required Actions
+
 ✅ **Recipe sourcing and copyright**:
+
 - [ ] Obtain licenses for all recipes:
   - [ ] Contact recipe creators for permission
   - [ ] Use CC-licensed recipes (CC-BY, CC-BY-SA)
@@ -565,6 +624,7 @@ Handelsregister: [Registration if applicable]
   - [ ] Translation to French if serving Quebec market
 
 ✅ **PIPEDA/Quebec Law 25 consent** (ingredient profiling):
+
 - [ ] Obtain explicit consent for:
   - [ ] Collecting ingredient preferences
   - [ ] Analyzing preferences to recommend recipes
@@ -572,6 +632,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Provide notice in English and French (if Quebec market)
 
 ✅ **Competition Act compliance** (deceptive claims):
+
 - [ ] Substantiate all recipe claims:
   - [ ] ✅ "Recipe from [specific, verifiable source]"
   - [ ] ❌ "Authentic Asian" (without cultural authority source)
@@ -585,6 +646,7 @@ Handelsregister: [Registration if applicable]
 ### 3.1 France
 
 #### Applicable Laws
+
 - **GDPR** (user profiles, transaction history, messaging)
 - **French Civil Code (Code Civil)** - contract/liability for traded items
 - **French Food Code (Code Alimentaire / Code Rural et de la Pêche Maritime)** - national food safety and trading
@@ -596,16 +658,18 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Food safety liability** | Platform may be liable if traded food causes illness/harm | French Civil Code Article 1240, Food Code |
-| **No terms of service** | Must have clear ToS defining liability limits and user responsibilities | Consumer Protection Code Article L121-1 |
-| **Personal data in messaging** | User messages may contain personal data (addresses, names) requiring GDPR safeguards | GDPR Articles 6, 9 |
-| **Platform content liability** | If platform facilitates illegal trades (spoiled food, undeclared allergens), platform is liable | Platform Directive Article 4 |
-| **B2C vs. C2C status** | If platform is facilitating business sales (not just consumer-to-consumer), additional regulations apply | Consumer Protection Code |
+| Risk                           | Description                                                                                              | Jurisdiction                              |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Food safety liability**      | Platform may be liable if traded food causes illness/harm                                                | French Civil Code Article 1240, Food Code |
+| **No terms of service**        | Must have clear ToS defining liability limits and user responsibilities                                  | Consumer Protection Code Article L121-1   |
+| **Personal data in messaging** | User messages may contain personal data (addresses, names) requiring GDPR safeguards                     | GDPR Articles 6, 9                        |
+| **Platform content liability** | If platform facilitates illegal trades (spoiled food, undeclared allergens), platform is liable          | Platform Directive Article 4              |
+| **B2C vs. C2C status**         | If platform is facilitating business sales (not just consumer-to-consumer), additional regulations apply | Consumer Protection Code                  |
 
 #### Required Actions
+
 ✅ **Terms of Service**:
+
 - [ ] Create comprehensive ToS in French defining:
   - [ ] Liability limits: "Platform is not liable for food quality, safety, or authenticity of traded items"
   - [ ] User responsibility: "Users are solely responsible for ensuring items are safe to trade and comply with food safety regulations"
@@ -615,11 +679,13 @@ Handelsregister: [Registration if applicable]
 - [ ] Make ToS mandatory to accept before trading
 
 ✅ **Food safety disclaimer**:
+
 - [ ] Add to app and ToS:
   - "IMPORTANT: Food items must comply with French food safety standards. Only trade non-perishable items or items that have been properly stored. Users assume full responsibility for food safety. Platform does not verify item safety or condition."
 - [ ] Recommend users avoid trading perishables that require refrigeration or have short shelf lives
 
 ✅ **User data protection**:
+
 - [ ] Implement GDPR safeguards for messaging/transaction data:
   - [ ] Privacy policy: "We collect minimal data to facilitate trades (names, contact info)"
   - [ ] Data retention: "Contact info is deleted after trade is complete (30 days retention)"
@@ -627,6 +693,7 @@ Handelsregister: [Registration if applicable]
   - [ ] User can request data deletion
 
 ✅ **Reporting and moderation**:
+
 - [ ] Implement mechanism to report suspicious trades (spoiled food, illegal items)
 - [ ] Respond to reports within 48 hours
 - [ ] Document moderation actions (removals, bans) for compliance
@@ -636,6 +703,7 @@ Handelsregister: [Registration if applicable]
 ### 3.2 Germany
 
 #### Applicable Laws
+
 - **GDPR** (user data, messaging)
 - **Impressum** still required (TMG §7)
 - **German Civil Code (BGB)** - contract liability, seller responsibility
@@ -649,20 +717,23 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Food safety liability** | If platform facilitates trade of unsafe food, platform and seller both liable | BGB §823, LFGB |
-| **Missing Impressum** | Still required (as service provider) | TMG §7 |
-| **No clear AGB (ToS)** | Must provide German-language terms and conditions | BGB §305 et seq. |
-| **Unlicensed food business** | If users are operating as food businesses without licenses, platform may be liable | LFGB §4 |
-| **No liability limits** | If platform doesn't clearly limit liability, may be liable for user damage | BGB §823 |
-| **Inadequate content moderation** | Platform must remove illegal content within legal timeframes | NetzDG §3, §4 |
+| Risk                              | Description                                                                        | Jurisdiction     |
+| --------------------------------- | ---------------------------------------------------------------------------------- | ---------------- |
+| **Food safety liability**         | If platform facilitates trade of unsafe food, platform and seller both liable      | BGB §823, LFGB   |
+| **Missing Impressum**             | Still required (as service provider)                                               | TMG §7           |
+| **No clear AGB (ToS)**            | Must provide German-language terms and conditions                                  | BGB §305 et seq. |
+| **Unlicensed food business**      | If users are operating as food businesses without licenses, platform may be liable | LFGB §4          |
+| **No liability limits**           | If platform doesn't clearly limit liability, may be liable for user damage         | BGB §823         |
+| **Inadequate content moderation** | Platform must remove illegal content within legal timeframes                       | NetzDG §3, §4    |
 
 #### Required Actions
+
 ✅ **Impressum** (still required):
+
 - [ ] See section 1.2 above for Impressum requirements
 
 ✅ **AGB (Terms & Conditions)** - in German:
+
 - [ ] Create detailed AGB including:
   - [ ] **Liability disclaimer**: "Nutzer haften allein für Sicherheit und Qualität gehandelter Lebensmittel" (Users alone are liable for safety and quality of traded foods)
   - [ ] **Food safety obligation**: "Lebensmittel müssen den deutschen Lebensmittel- und Futtermittelgesetzbuch-Standards entsprechen" (Foods must comply with LFGB standards)
@@ -673,13 +744,15 @@ Handelsregister: [Registration if applicable]
 - [ ] Make acceptance mandatory before use
 
 ✅ **Food safety compliance**:
+
 - [ ] Prominent disclaimer:
-  "WARNUNG: Plattform ist nicht verantwortlich für die Lebensmittelsicherheit. Nutzer müssen alle Lebensmittelgesetze einhalten. Handeln Sie nur mit sicheren, richtig gelagerten Lebensmitteln."
-  (WARNING: Platform is not responsible for food safety. Users must comply with all food laws. Only trade safe, properly stored foods.)
+      "WARNUNG: Plattform ist nicht verantwortlich für die Lebensmittelsicherheit. Nutzer müssen alle Lebensmittelgesetze einhalten. Handeln Sie nur mit sicheren, richtig gelagerten Lebensmitteln."
+      (WARNING: Platform is not responsible for food safety. Users must comply with all food laws. Only trade safe, properly stored foods.)
 - [ ] Educate users: Link to LFGB requirements and BfR (Federal Institute for Risk Assessment) guidelines
 - [ ] Avoid trading of potentially dangerous items (raw meat, unpasteurized dairy, unlabeled items)
 
 ✅ **Content moderation** (NetzDG):
+
 - [ ] Implement rapid removal of:
   - [ ] Illegal food trades (spoiled food, contaminated items)
   - [ ] Unlicensed food business operations
@@ -688,6 +761,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Provide user right to appeal removal
 
 ✅ **User data protection** (GDPR + BDSG):
+
 - [ ] Privacy Policy in German and English
 - [ ] Consent for storing contact info for trades
 - [ ] Delete contact info after trade complete (30-day retention)
@@ -698,6 +772,7 @@ Handelsregister: [Registration if applicable]
 ### 3.3 United Kingdom
 
 #### Applicable Laws
+
 - **UK-GDPR** (user data)
 - **Consumer Rights Act 2015** - seller responsibility for goods
 - **Food Safety Act 1990** - food safety standards; selling unsafe food is a criminal offense under §8
@@ -709,16 +784,18 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Seller liability for defects** | Seller is liable if food is not fit for purpose or safe | Consumer Rights Act 2015 §9 |
-| **Platform knowledge of unsafe food** | If platform knows or should know traded item is unsafe, platform is liable | Consumer Rights Act 2015 §62 |
-| **No terms limiting liability** | If ToS doesn't clearly limit platform liability, platform may be fully liable | Consumer Rights Act 2015 §62 |
-| **Food safety failure** | Selling unsafe food is criminal offense | Food Safety Act 1990 §8 |
-| **No clear contractual basis** | Users may claim trades were unfair if ToS not clear | Consumer Rights Act 2015 §62 |
+| Risk                                  | Description                                                                   | Jurisdiction                 |
+| ------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------- |
+| **Seller liability for defects**      | Seller is liable if food is not fit for purpose or safe                       | Consumer Rights Act 2015 §9  |
+| **Platform knowledge of unsafe food** | If platform knows or should know traded item is unsafe, platform is liable    | Consumer Rights Act 2015 §62 |
+| **No terms limiting liability**       | If ToS doesn't clearly limit platform liability, platform may be fully liable | Consumer Rights Act 2015 §62 |
+| **Food safety failure**               | Selling unsafe food is criminal offense                                       | Food Safety Act 1990 §8      |
+| **No clear contractual basis**        | Users may claim trades were unfair if ToS not clear                           | Consumer Rights Act 2015 §62 |
 
 #### Required Actions
+
 ✅ **Terms of Service**:
+
 - [ ] Create comprehensive ToS including:
   - [ ] **Food safety responsibility**: "Sellers warrant that food items are safe, properly stored, and comply with UK food safety standards"
   - [ ] **Platform limitation of liability**: "Platform is not liable for food quality, safety, or fitness for purpose. Sellers are solely responsible."
@@ -730,12 +807,14 @@ Handelsregister: [Registration if applicable]
 - [ ] Require affirmative acceptance
 
 ✅ **Food safety compliance**:
+
 - [ ] Prominent notice:
-  "IMPORTANT: Only trade food items that are safe and comply with UK food safety standards (Food Safety Act 1990). You are responsible for food safety and must follow proper storage and hygiene practices. Non-perishable or shelf-stable items are safer to trade."
+      "IMPORTANT: Only trade food items that are safe and comply with UK food safety standards (Food Safety Act 1990). You are responsible for food safety and must follow proper storage and hygiene practices. Non-perishable or shelf-stable items are safer to trade."
 - [ ] Link to FSA (Food Standards Agency) guidance
 - [ ] Provide list of prohibited items (allergen-undeclared items, expired items, etc.)
 
 ✅ **Content moderation**:
+
 - [ ] Remove or suspend trades involving:
   - [ ] Items without allergen labeling
   - [ ] Expired items
@@ -745,10 +824,12 @@ Handelsregister: [Registration if applicable]
 - [ ] Document removal decisions
 
 ✅ **Insurance**:
+
 - [ ] Consider obtaining public liability insurance in case of food-related claims
 - [ ] Document insurance coverage in ToS
 
 ✅ **Data protection**:
+
 - [ ] UK-GDPR compliance for user data
 - [ ] Messaging encryption
 - [ ] Delete contact info after trade (30-day retention)
@@ -758,6 +839,7 @@ Handelsregister: [Registration if applicable]
 ### 3.4 Singapore
 
 #### Applicable Laws
+
 - **PDPA** (user data, messaging)
 - **Sale of Goods Act (Cap. 393)** - seller responsibility for goods quality
 - **Consumer Protection (Fair Trading) Act (CPFTA)** - unfair trades, misrepresentation
@@ -769,16 +851,18 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Seller liability for defects** | Goods must be of merchantable quality and fit for purpose | Sale of Goods Act §14 |
-| **Misrepresentation in trades** | If item is misrepresented (e.g., "fresh" when spoiled), seller is liable | CPFTA §4 |
-| **Food safety violations** | Trading unsafe food is criminal offense; platform may be liable if facilitating | FSSA §59 |
-| **Allergen non-disclosure** | Failing to disclose allergens is offense | FSSA §53, EPHA §125 |
-| **No terms of service** | Absence of clear ToS may render platform fully liable | Sale of Goods Act, CPFTA |
+| Risk                             | Description                                                                     | Jurisdiction             |
+| -------------------------------- | ------------------------------------------------------------------------------- | ------------------------ |
+| **Seller liability for defects** | Goods must be of merchantable quality and fit for purpose                       | Sale of Goods Act §14    |
+| **Misrepresentation in trades**  | If item is misrepresented (e.g., "fresh" when spoiled), seller is liable        | CPFTA §4                 |
+| **Food safety violations**       | Trading unsafe food is criminal offense; platform may be liable if facilitating | FSSA §59                 |
+| **Allergen non-disclosure**      | Failing to disclose allergens is offense                                        | FSSA §53, EPHA §125      |
+| **No terms of service**          | Absence of clear ToS may render platform fully liable                           | Sale of Goods Act, CPFTA |
 
 #### Required Actions
+
 ✅ **Terms of Service**:
+
 - [ ] Create ToS in English (and Chinese, Malay if targeting broader audience) including:
   - [ ] **Seller responsibility**: "Sellers warrant items are safe, properly stored, and comply with Singapore food safety standards (FSSA, EPHA)"
   - [ ] **Platform disclaimer**: "Platform does not verify food safety or quality. Sellers are solely responsible for food safety."
@@ -789,8 +873,9 @@ Handelsregister: [Registration if applicable]
 - [ ] Require affirmative acceptance
 
 ✅ **Food safety and labeling**:
+
 - [ ] Important notice:
-  "SAFETY WARNING: Food items must comply with Singapore FSSA and EPHA standards. Sellers must disclose allergens and storage instructions. Platform does not verify food safety. You are responsible for following food safety practices. Non-perishable items recommended for safer trading."
+      "SAFETY WARNING: Food items must comply with Singapore FSSA and EPHA standards. Sellers must disclose allergens and storage instructions. Platform does not verify food safety. You are responsible for following food safety practices. Non-perishable items recommended for safer trading."
 - [ ] Educate users: Link to NEA (National Environment Agency) food safety guidelines
 - [ ] Require disclosure of:
   - [ ] Allergens
@@ -799,6 +884,7 @@ Handelsregister: [Registration if applicable]
   - [ ] Preparation method (if relevant)
 
 ✅ **Content moderation**:
+
 - [ ] Monitor and remove trades involving:
   - [ ] Items without allergen disclosure
   - [ ] Raw or potentially unsafe items
@@ -809,6 +895,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Escalate reports to NEA if necessary
 
 ✅ **User data protection** (PDPA):
+
 - [ ] Obtain consent for storing contact info
 - [ ] Encrypt messaging and data in transit
 - [ ] Delete contact info after trade (30-day retention max)
@@ -819,6 +906,7 @@ Handelsregister: [Registration if applicable]
 ### 3.5 United States
 
 #### Applicable Laws
+
 - **No federal marketplace liability law** (platforms generally not liable under Section 230, 47 U.S.C. §230)
 - **Food Safety Modernization Act (FSMA, 21 U.S.C. §2201)** - primary federal food safety law; establishes FDA authority over food safety practices; platforms facilitating food distribution should be aware of traceability and safety obligations
 - **Food Allergen Labeling and Consumer Protection Act (FALCPA, 21 U.S.C. §343(w))** - requires declaration of 9 major allergens; if the platform facilitates food trade, sellers must disclose allergens; platform should enforce this requirement
@@ -831,17 +919,19 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **No liability protection** | Section 230 may not apply to platforms facilitating dangerous food trades | 47 U.S.C. §230 |
-| **Tort liability** | If platform knows or should know of danger and fails to prevent, liable | Common law |
-| **Food safety claims** | Deceptive claims about food safety/quality | FTC Act §5 |
-| **State variations** | Food laws vary by state; some states have stricter requirements | State laws vary |
-| **Allergen non-disclosure** | Failing to disclose allergens could lead to injury liability | Tort law, FDA regulations |
-| **No clear disclaimers** | If ToS doesn't clearly disclaim liability, platform is fully liable | Tort law, UCC |
+| Risk                        | Description                                                               | Jurisdiction              |
+| --------------------------- | ------------------------------------------------------------------------- | ------------------------- |
+| **No liability protection** | Section 230 may not apply to platforms facilitating dangerous food trades | 47 U.S.C. §230            |
+| **Tort liability**          | If platform knows or should know of danger and fails to prevent, liable   | Common law                |
+| **Food safety claims**      | Deceptive claims about food safety/quality                                | FTC Act §5                |
+| **State variations**        | Food laws vary by state; some states have stricter requirements           | State laws vary           |
+| **Allergen non-disclosure** | Failing to disclose allergens could lead to injury liability              | Tort law, FDA regulations |
+| **No clear disclaimers**    | If ToS doesn't clearly disclaim liability, platform is fully liable       | Tort law, UCC             |
 
 #### Required Actions
+
 ✅ **Terms of Service** (comprehensive):
+
 - [ ] Create detailed ToS including:
   - [ ] **User responsibility**: "You are solely responsible for food safety, quality, and legality of trades"
   - [ ] **Seller warranty**: "Sellers warrant items are safe and comply with FDA and local food safety standards"
@@ -852,11 +942,11 @@ Handelsregister: [Registration if applicable]
     - Items without labels/allergen info
     - Expired items
     - Items with signs of contamination
-  - [ ] **Liability disclaimer**: 
+  - [ ] **Liability disclaimer**:
     ```
-    DISCLAIMER: PLATFORM IS NOT RESPONSIBLE FOR FOOD SAFETY, QUALITY, OR 
-    COMPLIANCE WITH FOOD SAFETY LAWS. USERS ASSUME FULL RESPONSIBILITY FOR 
-    VERIFYING FOOD SAFETY. PLATFORM DOES NOT GUARANTEE ITEMS ARE FIT FOR 
+    DISCLAIMER: PLATFORM IS NOT RESPONSIBLE FOR FOOD SAFETY, QUALITY, OR
+    COMPLIANCE WITH FOOD SAFETY LAWS. USERS ASSUME FULL RESPONSIBILITY FOR
+    VERIFYING FOOD SAFETY. PLATFORM DOES NOT GUARANTEE ITEMS ARE FIT FOR
     CONSUMPTION.
     ```
   - [ ] **Limitation of liability**: "Platform's liability limited to [amount or refund amount]"
@@ -866,8 +956,9 @@ Handelsregister: [Registration if applicable]
 - [ ] Update ToS every 12 months as laws evolve
 
 ✅ **Food safety education**:
+
 - [ ] Add prominent disclaimers in app:
-  "IMPORTANT: This is a peer-to-peer marketplace. Food safety is the responsibility of the seller and buyer. Before trading for food:\n
+      "IMPORTANT: This is a peer-to-peer marketplace. Food safety is the responsibility of the seller and buyer. Before trading for food:\n
   - Only trade non-perishable items or items that are clearly safe\n
   - Verify items are properly labeled and stored\n
   - Disclose any allergies or dietary restrictions\n
@@ -876,6 +967,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Consider restricting trades to non-perishable items only
 
 ✅ **Content moderation**:
+
 - [ ] Monitor and suspend trades involving:
   - [ ] Raw or undercooked meat
   - [ ] Unpasteurized dairy
@@ -888,6 +980,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Consider escalating to state health departments if serious violations
 
 ✅ **Insurance and legal protection**:
+
 - [ ] Obtain general liability insurance
 - [ ] Consider food safety/product liability insurance
 - [ ] Document platform's safety policies and moderation efforts
@@ -898,6 +991,7 @@ Handelsregister: [Registration if applicable]
 ### 3.6 Canada
 
 #### Applicable Laws
+
 - **PIPEDA/Quebec Law 25** (user data, messaging)
 - **CASL** (marketing/notification messaging)
 - **Safe Food for Canadians Act (SFCA, S.C. 2012, c. 24)** - primary federal food safety statute; replaced much of the Food and Drugs Act for food safety; governs food handling, labeling, traceability, and import/export
@@ -909,26 +1003,28 @@ Handelsregister: [Registration if applicable]
 
 #### Legal Risks
 
-| Risk | Description | Jurisdiction |
-|------|-------------|---------------|
-| **Food safety violations** | Trading unsafe food violates Food and Drugs Act; criminal offense | Food and Drugs Act §4, §5 |
-| **Allergen non-disclosure** | Undeclared allergens can cause injury and violation of labeling requirements | Food and Drugs Act §6, CFIA regulations |
-| **Seller liability** | Sellers liable for defects; platform may be liable if facilitating unsafe trade | Sale of Goods Act (provincial), Common law |
-| **No clear terms** | Absence of clear ToS may render platform fully liable | Consumer Protection Act (provincial) |
-| **CASL violations** | If sending trade notifications/reminders, could violate CASL | CASL §6 |
-| **Messaging privacy** | User contact info in messaging requires PIPEDA/Quebec consent | PIPEDA §4.2, Quebec Law 25 |
+| Risk                        | Description                                                                     | Jurisdiction                               |
+| --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Food safety violations**  | Trading unsafe food violates Food and Drugs Act; criminal offense               | Food and Drugs Act §4, §5                  |
+| **Allergen non-disclosure** | Undeclared allergens can cause injury and violation of labeling requirements    | Food and Drugs Act §6, CFIA regulations    |
+| **Seller liability**        | Sellers liable for defects; platform may be liable if facilitating unsafe trade | Sale of Goods Act (provincial), Common law |
+| **No clear terms**          | Absence of clear ToS may render platform fully liable                           | Consumer Protection Act (provincial)       |
+| **CASL violations**         | If sending trade notifications/reminders, could violate CASL                    | CASL §6                                    |
+| **Messaging privacy**       | User contact info in messaging requires PIPEDA/Quebec consent                   | PIPEDA §4.2, Quebec Law 25                 |
 
 #### Required Actions
+
 ✅ **Terms of Service** (in English and French):
+
 - [ ] Create comprehensive ToS in English and French (mandatory for Quebec market) including:
   - [ ] **User responsibility**: "You are solely responsible for food safety and compliance with Canadian Food and Drugs Act and provincial regulations"
   - [ ] **Seller warranty**: "Sellers warrant items are safe, properly labeled, comply with CFIA standards, and all allergens are disclosed"
   - [ ] **Allergen disclosure**: "CRITICAL: Sellers must disclose ALL known allergens. Non-disclosure is prohibited and may result in criminal charges."
   - [ ] **Prohibited items**: List prohibited items (raw meat unless packaged, unpasteurized dairy, items without proper labeling, expired items, items with unknown ingredients)
-  - [ ] **Liability disclaimer**: 
+  - [ ] **Liability disclaimer**:
     ```
-    IMPORTANT: This platform facilitates peer-to-peer food trading. We do NOT verify food safety or quality. 
-    SELLERS AND BUYERS ARE SOLELY RESPONSIBLE FOR FOOD SAFETY. Follow Health Canada and CFIA guidelines. 
+    IMPORTANT: This platform facilitates peer-to-peer food trading. We do NOT verify food safety or quality.
+    SELLERS AND BUYERS ARE SOLELY RESPONSIBLE FOR FOOD SAFETY. Follow Health Canada and CFIA guidelines.
     Platform has NO LIABILITY for illness, injury, or harm caused by food items.
     ```
   - [ ] **Liability limitation**: "Platform's liability is limited to [amount]. Users indemnify platform."
@@ -937,17 +1033,20 @@ Handelsregister: [Registration if applicable]
 - [ ] Update annually to reflect regulatory changes
 
 ✅ **Food safety compliance**:
+
 - [ ] Prominent safety warning:
+
   ```
   AVERTISSEMENT DE SÉCURITÉ / FOOD SAFETY WARNING:
-  Ce marché est un service peer-to-peer. La sécurité des aliments est la responsabilité 
-  exclusive du vendeur et de l'acheteur. Seuls les articles non périssables ou clairement sûrs 
+  Ce marché est un service peer-to-peer. La sécurité des aliments est la responsabilité
+  exclusive du vendeur et de l'acheteur. Seuls les articles non périssables ou clairement sûrs
   doivent être échangés. Consultez les directives de Santé Canada et de l'ACIA.
-  
-  This marketplace is a peer-to-peer service. Food safety is the sole responsibility of the 
-  seller and buyer. Only non-perishable or clearly safe items should be traded. Consult Health 
+
+  This marketplace is a peer-to-peer service. Food safety is the sole responsibility of the
+  seller and buyer. Only non-perishable or clearly safe items should be traded. Consult Health
   Canada and CFIA guidelines.
   ```
+
 - [ ] Link to:
   - [ ] Health Canada food safety: www.canada.ca/health-food-safety
   - [ ] CFIA (Canadian Food Inspection Agency): www.inspection.canada.ca
@@ -961,6 +1060,7 @@ Handelsregister: [Registration if applicable]
   - [ ] Any recalls or safety concerns
 
 ✅ **Content moderation**:
+
 - [ ] Remove or suspend trades involving:
   - [ ] Raw or potentially unsafe meat
   - [ ] Unpasteurized dairy
@@ -973,6 +1073,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Escalate serious violations to provincial health authorities if necessary
 
 ✅ **PIPEDA/Quebec Law 25 compliance** (user data):
+
 - [ ] Obtain explicit consent for:
   - [ ] Collecting contact info (name, phone, address)
   - [ ] Storing contact info for trade transactions
@@ -983,6 +1084,7 @@ Handelsregister: [Registration if applicable]
 - [ ] Implement PIPEDA data subject rights (access, correction, deletion)
 
 ✅ **CASL compliance** (notifications/messaging):
+
 - [ ] If sending trade notifications (trade matched, buyer ready, etc.):
   - [ ] Obtain prior express consent (opt-in)
   - [ ] Do NOT use pre-checked boxes
@@ -999,36 +1101,36 @@ Handelsregister: [Registration if applicable]
 
 ### Manage Perishables
 
-| Jurisdiction | Key Requirements |
-|---|---|
-| **France** | ✅ GDPR compliance, Privacy Policy (French), DPIA for profiling, Cookie banner with explicit consent |
-| **Germany** | ✅ Impressum (legal notice), GDPR compliance, Privacy Policy (German), DPA with processors, Encryption |
-| **UK** | ✅ UK-GDPR compliance, Privacy Notice, Consumer Rights, PECR (no marketing emails without consent), SAR mechanism |
-| **Singapore** | ✅ PDPA Privacy Policy, Consent (mostly can be deemed), Cross-border transfer assessment, Data subject rights |
-| **US** | ✅ CCPA (if California users), Privacy Policy, Consumer rights, FTC compliance, Food safety disclaimers |
-| **Canada** | ✅ PIPEDA/Quebec Law 25 compliance, Privacy Policy (French + English for Quebec), CASL compliance (no marketing), Consent |
+| Jurisdiction  | Key Requirements                                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **France**    | ✅ GDPR compliance, Privacy Policy (French), DPIA for profiling, Cookie banner with explicit consent                      |
+| **Germany**   | ✅ Impressum (legal notice), GDPR compliance, Privacy Policy (German), DPA with processors, Encryption                    |
+| **UK**        | ✅ UK-GDPR compliance, Privacy Notice, Consumer Rights, PECR (no marketing emails without consent), SAR mechanism         |
+| **Singapore** | ✅ PDPA Privacy Policy, Consent (mostly can be deemed), Cross-border transfer assessment, Data subject rights             |
+| **US**        | ✅ CCPA (if California users), Privacy Policy, Consumer rights, FTC compliance, Food safety disclaimers                   |
+| **Canada**    | ✅ PIPEDA/Quebec Law 25 compliance, Privacy Policy (French + English for Quebec), CASL compliance (no marketing), Consent |
 
 ### Recommend Recipes
 
-| Jurisdiction | Key Requirements |
-|---|---|
-| **France** | ✅ GDPR (ingredient profiling), Privacy Policy, Recipe copyright licenses, Attribution, Disclaimer |
-| **Germany** | ✅ Impressum, GDPR, Copyright compliance, Recipe licenses, AI transparency (future), Attribution |
-| **UK** | ✅ UK-GDPR, Copyright licenses, Attribution, Claims substantiation (Consumer Rights Act), Avoid misleading claims |
-| **Singapore** | ✅ PDPA consent for profiling, Copyright compliance, Attribution, CPFTA claims substantiation |
-| **US** | ✅ Copyright licenses or Fair Use analysis, Attribution, FTC compliance (no deceptive claims), Food safety disclaimers |
-| **Canada** | ✅ PIPEDA/Quebec Law 25 (profiling consent), Copyright compliance, Attribution, Competition Act (substantiate claims) |
+| Jurisdiction  | Key Requirements                                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **France**    | ✅ GDPR (ingredient profiling), Privacy Policy, Recipe copyright licenses, Attribution, Disclaimer                     |
+| **Germany**   | ✅ Impressum, GDPR, Copyright compliance, Recipe licenses, AI transparency (future), Attribution                       |
+| **UK**        | ✅ UK-GDPR, Copyright licenses, Attribution, Claims substantiation (Consumer Rights Act), Avoid misleading claims      |
+| **Singapore** | ✅ PDPA consent for profiling, Copyright compliance, Attribution, CPFTA claims substantiation                          |
+| **US**        | ✅ Copyright licenses or Fair Use analysis, Attribution, FTC compliance (no deceptive claims), Food safety disclaimers |
+| **Canada**    | ✅ PIPEDA/Quebec Law 25 (profiling consent), Copyright compliance, Attribution, Competition Act (substantiate claims)  |
 
 ### Trade Perishables
 
-| Jurisdiction | Key Requirements |
-|---|---|
-| **France** | ✅ ToS (French), Liability limits, Food safety disclaimer, GDPR (messaging data), Content moderation |
-| **Germany** | ✅ Impressum, AGB (German), Food safety (LFGB), Liability limits, Content moderation, NetzDK compliance |
-| **UK** | ✅ ToS, Consumer Rights Act compliance, Food Safety Act warnings, Seller liability, Public liability insurance |
-| **Singapore** | ✅ ToS, FSSA/EPHA food safety, Allergen disclosure requirement, Sale of Goods Act, PDPA (messaging) |
-| **US** | ✅ ToS (detailed), Food safety education (FDA), Liability disclaimers, Content moderation, Insurance |
-| **Canada** | ✅ ToS (English + French), Food and Drugs Act compliance, CFIA guidelines, CASL (notifications), PIPEDA |
+| Jurisdiction  | Key Requirements                                                                                               |
+| ------------- | -------------------------------------------------------------------------------------------------------------- |
+| **France**    | ✅ ToS (French), Liability limits, Food safety disclaimer, GDPR (messaging data), Content moderation           |
+| **Germany**   | ✅ Impressum, AGB (German), Food safety (LFGB), Liability limits, Content moderation, NetzDK compliance        |
+| **UK**        | ✅ ToS, Consumer Rights Act compliance, Food Safety Act warnings, Seller liability, Public liability insurance |
+| **Singapore** | ✅ ToS, FSSA/EPHA food safety, Allergen disclosure requirement, Sale of Goods Act, PDPA (messaging)            |
+| **US**        | ✅ ToS (detailed), Food safety education (FDA), Liability disclaimers, Content moderation, Insurance           |
+| **Canada**    | ✅ ToS (English + French), Food and Drugs Act compliance, CFIA guidelines, CASL (notifications), PIPEDA        |
 
 ---
 
@@ -1037,6 +1139,7 @@ Handelsregister: [Registration if applicable]
 ### Immediate Actions (All Jurisdictions)
 
 1. **Create Privacy Policy** covering all three features
+
    - [ ] Specify data collected
    - [ ] Specify purposes
    - [ ] Specify lawful basis
@@ -1045,6 +1148,7 @@ Handelsregister: [Registration if applicable]
    - [ ] Include consumer rights
 
 2. **Create Terms of Service / Acceptable Use Policy**
+
    - [ ] Define user responsibilities
    - [ ] Limit platform liability
    - [ ] Clarify prohibited content/trades
@@ -1052,6 +1156,7 @@ Handelsregister: [Registration if applicable]
    - [ ] Specify dispute resolution
 
 3. **Implement Consent Management**
+
    - [ ] Explicit opt-in (not pre-checked boxes)
    - [ ] Separate consents (marketing, analytics, data processing)
    - [ ] Easy withdrawal mechanism
@@ -1068,6 +1173,7 @@ Handelsregister: [Registration if applicable]
 ### Medium-Term Actions (Next 3-6 months)
 
 1. **Implement Data Subject Rights**
+
    - [ ] Access (download data in machine-readable format)
    - [ ] Correction (update inaccurate data)
    - [ ] Erasure (delete data)
@@ -1075,6 +1181,7 @@ Handelsregister: [Registration if applicable]
    - [ ] Opt-out of profiling/analytics
 
 2. **Security & Encryption**
+
    - [ ] SSL/TLS for all data in transit
    - [ ] Encryption for sensitive data at rest
    - [ ] Secure password hashing
@@ -1082,6 +1189,7 @@ Handelsregister: [Registration if applicable]
    - [ ] Audit logging for admin actions
 
 3. **Content Moderation**
+
    - [ ] Implement flagging/reporting mechanism
    - [ ] Response SLAs (24-48 hours)
    - [ ] Moderation logs/audit trail
@@ -1098,12 +1206,14 @@ Handelsregister: [Registration if applicable]
 ### Long-Term Actions (6-12 months)
 
 1. **Specialized Legal Advice**
+
    - [ ] Consult local lawyer in each jurisdiction
    - [ ] Conduct DPIA (France, Germany, UK, Singapore)
    - [ ] Review insurance needs (especially for Trade feature)
    - [ ] Establish vendor agreements with third-party processors
 
 2. **Emerging Regulations**
+
    - [ ] Monitor AI regulation developments (Germany, EU, US)
    - [ ] Watch for platform regulation changes
    - [ ] Track food safety standard updates
@@ -1144,11 +1254,13 @@ Handelsregister: [Registration if applicable]
 ## Next Steps
 
 1. **Rank actions by jurisdiction where app will launch first**
+
    - If US-focused: CCPA, Food safety, liability disclaimers first
    - If EU-focused: GDPR, Impressum, privacy policy first
    - If Singapore-focused: PDPA, food safety (FSSA), ToS first
 
 2. **Allocate resources**
+
    - Legal review (local lawyers)
    - Engineering (consent implementation, data deletion, encryption)
    - Product (disclaimer design, content moderation)
@@ -1159,7 +1271,7 @@ Handelsregister: [Registration if applicable]
 
 ---
 
-**Document Status**: Draft  
-**Last Updated**: April 2026  
-**Reviewed By**: [Your name/team]  
+**Document Status**: Draft
+**Last Updated**: April 2026
+**Reviewed By**: [Your name/team]
 **Next Review**: July 2026 (quarterly review recommended)

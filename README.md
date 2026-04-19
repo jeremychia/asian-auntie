@@ -1,4 +1,5 @@
 # asian-auntie
+
 Asian pantry management for cooking inspiration and perishables tracking.
 
 ## Overview
@@ -68,7 +69,7 @@ Key environment variables:
 ## Development Commands
 
 - `make dev` — run the development server
-- `make setup` — install dependencies and run migrations
+- `make setup` — install dependencies, install Git hooks, and run migrations
 - `make migrate msg="Your message"` — create and apply a new migration
 
 ## Repository Layout
