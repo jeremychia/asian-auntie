@@ -2,6 +2,9 @@
 {% block title %}Pantry — Asian Auntie{% endblock %}
 {% block content %}
 
+{% set undo_id = request.args.get('undo') %}
+{% set undo_name = request.args.get('undo_name') %}
+
 {% if items %}
 <div class="toolbar">
   <input
@@ -82,6 +85,12 @@
           <span class="item-card__badge">{{ urgency_label }}</span>
           {% endif %}
         </a>
+        <button
+          class="swipe-reveal-btn"
+          data-item-id="{{ item.id }}"
+          data-item-name="{{ item.name }}"
+          aria-label="Mark {{ item.name }} as used"
+        >Used</button>
       </div>
     {% endfor %}
   </div>
@@ -96,6 +105,30 @@
   </div>
   {% endif %}
 </div>
+
+<!-- Confirmation dialog (used by swipe gesture) -->
+<dialog id="use-confirm-dialog" class="confirm-dialog">
+  <p class="confirm-dialog__question">Done with <strong id="dialog-item-name"></strong>?</p>
+  <div class="confirm-dialog__actions">
+    <form id="dialog-use-form" method="post" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-primary">Yes, used it</button>
+    </form>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('use-confirm-dialog').close()">Not yet</button>
+  </div>
+</dialog>
+
+<!-- Undo toast -->
+{% if undo_id and undo_name %}
+<div id="undo-toast" class="undo-toast" role="status" aria-live="polite">
+  <span class="undo-toast__msg">Removed {{ undo_name }}</span>
+  <form method="post" action="{{ url_for('perishables.undo_use', item_id=undo_id) }}" style="margin:0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="undo-toast__btn">Undo</button>
+  </form>
+  <span class="undo-toast__timer" id="undo-countdown" aria-hidden="true">5</span>
+</div>
+{% endif %}
 
 <script>
 (function () {
@@ -151,6 +184,90 @@
       sortGrid(saved);
     }
     sortSelect.addEventListener('change', () => applySort(sortSelect.value));
+  }
+
+  // ── Undo toast ──────────────────────────────────────────────────────────
+  const toast = document.getElementById('undo-toast');
+  const countdown = document.getElementById('undo-countdown');
+
+  if (toast && countdown) {
+    let secs = 5;
+    const interval = setInterval(() => {
+      secs--;
+      countdown.textContent = secs;
+      if (secs <= 0) {
+        clearInterval(interval);
+        toast.classList.add('undo-toast--dismissed');
+        setTimeout(() => toast.remove(), 300);
+      }
+    }, 1000);
+
+    // Stop dismissal if user hovers / focuses (gives them time to act)
+    toast.addEventListener('mouseenter', () => clearInterval(interval));
+    toast.addEventListener('focusin', () => clearInterval(interval));
+  }
+
+  // ── Swipe-to-use ────────────────────────────────────────────────────────
+  const dialog = document.getElementById('use-confirm-dialog');
+  const dialogNameEl = document.getElementById('dialog-item-name');
+  const dialogForm = document.getElementById('dialog-use-form');
+
+  let touchStartX = 0;
+  let touchWrap = null;
+  let activeSwipedCard = null;
+
+  function closeActiveSwipe() {
+    if (activeSwipedCard) {
+      activeSwipedCard.classList.remove('is-swiped');
+      activeSwipedCard = null;
+    }
+  }
+
+  document.addEventListener('touchstart', e => {
+    const wrap = e.target.closest('.card-wrap');
+    touchWrap = wrap;
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (!touchWrap) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const card = touchWrap.querySelector('.item-card');
+    if (!card) { touchWrap = null; return; }
+
+    if (dx < -50) {
+      // Swipe left — reveal
+      if (activeSwipedCard && activeSwipedCard !== card) closeActiveSwipe();
+      card.classList.add('is-swiped');
+      activeSwipedCard = card;
+    } else if (dx > 20 && activeSwipedCard === card) {
+      closeActiveSwipe();
+    } else if (Math.abs(dx) < 8 && activeSwipedCard && activeSwipedCard !== card) {
+      // Tap outside swiped card — close it
+      closeActiveSwipe();
+    }
+    touchWrap = null;
+  }, { passive: true });
+
+  // Swipe reveal button opens the confirmation dialog
+  document.querySelectorAll('.swipe-reveal-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const itemId = btn.dataset.itemId;
+      const itemName = btn.dataset.itemName;
+      if (!dialog || !dialogNameEl || !dialogForm) return;
+      dialogNameEl.textContent = itemName;
+      dialogForm.action = `/items/${itemId}/use`;
+      closeActiveSwipe();
+      dialog.showModal();
+    });
+  });
+
+  // Close dialog on backdrop click
+  if (dialog) {
+    dialog.addEventListener('click', e => {
+      if (e.target === dialog) dialog.close();
+    });
   }
 })();
 </script>

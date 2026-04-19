@@ -278,6 +278,7 @@ def mark_used(item_id):
         .filter(Item.removed_at.is_(None))
         .first_or_404()
     )
+    item_name = item.name
     item.removed_at = datetime.now(timezone.utc)
     item.removal_reason = "used"
     db.session.commit()
@@ -285,9 +286,29 @@ def mark_used(item_id):
         "item_marked_used",
         user_id=current_user.id,
         item_id=item.id,
+        item_name=item_name,
+    )
+    return redirect(url_for("perishables.dashboard", undo=item.id, undo_name=item_name))
+
+
+@perishables_bp.route("/items/<int:item_id>/undo", methods=["POST"])
+@login_required
+def undo_use(item_id):
+    item = (
+        Item.query.filter_by(id=item_id, user_id=current_user.id)
+        .filter(Item.removed_at.isnot(None))
+        .first_or_404()
+    )
+    item.removed_at = None
+    item.removal_reason = None
+    db.session.commit()
+    logger.info(
+        "item_use_undone",
+        user_id=current_user.id,
+        item_id=item.id,
         item_name=item.name,
     )
-    flash(f'"{item.name}" marked as used.', "success")
+    flash(f'"{item.name}" restored to your pantry.', "success")
     return redirect(url_for("perishables.dashboard"))
 
 

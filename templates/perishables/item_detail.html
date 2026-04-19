@@ -59,15 +59,35 @@ today).days %}
   </div>
 
   <div class="item-actions">
-    <form
-      method="post"
-      action="{{ url_for('perishables.mark_used', item_id=item.id) }}"
+    <button
+      type="button"
+      class="btn btn-primary btn-full"
+      onclick="document.getElementById('use-confirm-dialog').showModal()"
     >
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <button type="submit" class="btn btn-primary btn-full">
-        Mark as used
-      </button>
-    </form>
+      Mark as used
+    </button>
+
+    <dialog id="use-confirm-dialog" class="confirm-dialog">
+      <p class="confirm-dialog__question">
+        Done with <strong>{{ item.name }}</strong>?
+      </p>
+      <div class="confirm-dialog__actions">
+        <form
+          method="post"
+          action="{{ url_for('perishables.mark_used', item_id=item.id) }}"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button type="submit" class="btn btn-primary">Yes, used it</button>
+        </form>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="document.getElementById('use-confirm-dialog').close()"
+        >
+          Not yet
+        </button>
+      </div>
+    </dialog>
 
     <details class="remove-panel">
       <summary>Remove from pantry</summary>
