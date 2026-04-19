@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% block title %}Find a Recipe — Asian Auntie{% endblock %}
+{% block content %}
+
+<div class="content">
+  <div class="page-header">
+    <h1 class="page-title">Find a recipe</h1>
+  </div>
+
+  <p class="recipes-scope-note">Malaysian and Southeast Asian recipes to start.</p>
+
+  <!-- ── Ingredient source ─────────────────────────────────────── -->
+  <div class="ingredient-section">
+
+    {% if pantry_items %}
+    <!-- Primary CTA: use pantry -->
+    <div id="pantry-cta" class="pantry-cta">
+      <button type="button" class="btn btn-primary btn-full btn-lg" id="load-pantry-btn">
+        Use my pantry
+        <span class="pantry-cta__count">{{ pantry_items | length }} item{{ 's' if pantry_items | length != 1 }}</span>
+      </button>
+    </div>
+    {% else %}
+    <!-- No pantry items -->
+    <div class="hint" id="no-pantry-hint">
+      Add items to your pantry to use this faster next time.
+      <a href="{{ url_for('perishables.add_item') }}">Add items</a>
+    </div>
+    {% endif %}
+
+    <!-- Chip list (hidden until pantry loaded or manual add) -->
+    <div id="chip-area" class="chip-area" hidden>
+      <div id="chip-list" class="chip-list" aria-label="Selected ingredients" role="list"></div>
+    </div>
+
+    <!-- Manual ingredient input -->
+    <div id="manual-area" class="manual-area">
+      <div class="manual-input-row">
+        <div class="manual-input-wrap">
+          <input
+            type="text"
+            id="manual-input"
+            class="manual-input"
+            placeholder="Add an ingredient…"
+            autocomplete="off"
+            aria-label="Add ingredient"
+            aria-autocomplete="list"
+            aria-controls="autocomplete-list"
+          />
+          <ul id="autocomplete-list" class="autocomplete-list" role="listbox" hidden></ul>
+        </div>
+        <button type="button" class="btn btn-secondary" id="add-manual-btn">Add</button>
+      </div>
+    </div>
+
+    <!-- Empty chip warning -->
+    <p id="no-ingredients-msg" class="no-ingredients-msg" hidden>
+      Add at least one ingredient to find recipes.
+    </p>
+
+  </div>
+
+  <!-- ── Results ───────────────────────────────────────────────── -->
+  <div id="results-area" class="results-area" hidden>
+    <div class="results-header">
+      <h2 class="results-title" id="results-title">Recipes</h2>
+    </div>
+    <div id="recipe-list" class="recipe-list"></div>
+    <p id="no-recipes-msg" class="no-results" hidden>
+      No matches found. Try removing an ingredient.
+    </p>
+  </div>
+
+</div>
+
+<!-- ── Recipe detail sheet ───────────────────────────────────── -->
+<dialog id="recipe-dialog" class="recipe-dialog">
+  <button type="button" class="recipe-dialog__close" id="dialog-close" aria-label="Close">✕</button>
+  <div id="recipe-dialog-content"></div>
+</dialog>
+
+<script>
+(function () {
+  // ── Autocomplete ingredient list ────────────────────────────
+  // (Same ingredient vocabulary as manage-perishables.)
+  const INGREDIENTS = [
+    "anchovies","aubergine","bak choy","bamboo shoots","banana blossom",
+    "bean sprouts","belacan","bok choy","chicken","chilli flakes","chilli paste",
+    "chillies","chinese sausage","chives","coconut milk","coriander",
+    "cucumber","dark soy sauce","doubanjiang","dried chillies","dried shrimp",
+    "eggs","fish","fish cake","fish sauce","five spice","flat rice noodles",
+    "galangal","garlic","ginger","kaffir lime leaves","lemongrass",
+    "lap cheong","light soy sauce","lime juice","minced pork","mushrooms",
+    "noodles","oil","oyster sauce","palm sugar","pandan leaves","peanuts",
+    "pork","prawns","rice","rice noodles","sambal","sesame oil","shallots",
+    "soy sauce","spring onions","tamarind","tempeh","tofu","tomatoes",
+    "turmeric","vinegar","white pepper","yellow noodles",
+  ].sort();
+
+  // ── Pantry data from server ─────────────────────────────────
+  const PANTRY = [
+    {% for item in pantry_items %}
+    {{ item.name | tojson }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  // ── State ───────────────────────────────────────────────────
+  // Each ingredient: { label: string, active: boolean, source: "pantry"|"manual" }
+  let ingredients = [];
+  let pantryLoaded = false;
+
+  // ── DOM refs ────────────────────────────────────────────────
+  const loadPantryBtn   = document.getElementById('load-pantry-btn');
+  const pantryCtaEl     = document.getElementById('pantry-cta');
+  const chipArea        = document.getElementById('chip-area');
+  const chipList        = document.getElementById('chip-list');
+  const manualInput     = document.getElementById('manual-input');
+  const addManualBtn    = document.getElementById('add-manual-btn');
+  const acList          = document.getElementById('autocomplete-list');
+  const resultsArea     = document.getElementById('results-area');
+  const recipeList      = document.getElementById('recipe-list');
+  const noRecipesMsg    = document.getElementById('no-recipes-msg');
+  const noIngredientsMsg= document.getElementById('no-ingredients-msg');
+  const resultsTitle    = document.getElementById('results-title');
+  const dialog          = document.getElementById('recipe-dialog');
+  const dialogContent   = document.getElementById('recipe-dialog-content');
+  const dialogClose     = document.getElementById('dialog-close');
+
+  // ── Load pantry ─────────────────────────────────────────────
+  if (loadPantryBtn) {
+    loadPantryBtn.addEventListener('click', () => {
+      if (pantryLoaded) return;
+      PANTRY.forEach(name => {
+        if (!ingredients.find(i => norm(i.label) === norm(name))) {
+          ingredients.push({ label: name, active: true, source: 'pantry' });
+        }
+      });
+      pantryLoaded = true;
+      pantryCtaEl.hidden = true;
+      renderChips();
+      search();
+    });
+  }
+
+  // ── Chips ────────────────────────────────────────────────────
+  function renderChips() {
+    chipList.innerHTML = '';
+    chipArea.hidden = ingredients.length === 0;
+
+    ingredients.forEach((ing, idx) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (ing.active ? ' chip--active' : '');
+      chip.setAttribute('role', 'listitem');
+      chip.setAttribute('aria-pressed', ing.active ? 'true' : 'false');
+      chip.dataset.idx = idx;
+
+      const label = document.createElement('span');
+      label.textContent = ing.label;
+      chip.appendChild(label);
+
+      const remove = document.createElement('span');
+      remove.className = 'chip__remove';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', 'Remove ' + ing.label);
+      chip.appendChild(remove);
+
+      chip.addEventListener('click', e => {
+        if (e.target === remove || e.target.classList.contains('chip__remove')) {
+          ingredients.splice(idx, 1);
+          renderChips();
+          search();
+        } else {
+          ingredients[idx].active = !ingredients[idx].active;
+          renderChips();
+          search();
+        }
+      });
+
+      chipList.appendChild(chip);
+    });
+
+    // Show/hide "add at least one" message
+    const anyActive = ingredients.some(i => i.active);
+    noIngredientsMsg.hidden = ingredients.length === 0 || anyActive;
+  }
+
+  // ── Manual input ─────────────────────────────────────────────
+  function addIngredient(name) {
+    name = name.trim();
+    if (!name) return;
+    if (ingredients.find(i => norm(i.label) === norm(name))) {
+      manualInput.value = '';
+      closeAC();
+      return;
+    }
+    ingredients.push({ label: name, active: true, source: 'manual' });
+    manualInput.value = '';
+    closeAC();
+    renderChips();
+    search();
+  }
+
+  addManualBtn.addEventListener('click', () => addIngredient(manualInput.value));
+  manualInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addIngredient(manualInput.value); }
+    if (e.key === 'Escape') closeAC();
+  });
+
+  // ── Autocomplete ─────────────────────────────────────────────
+  manualInput.addEventListener('input', () => {
+    const q = manualInput.value.trim().toLowerCase();
+    if (!q) { closeAC(); return; }
+    const matches = INGREDIENTS.filter(i => i.includes(q)).slice(0, 8);
+    if (!matches.length) { closeAC(); return; }
+    acList.innerHTML = '';
+    matches.forEach(m => {
+      const li = document.createElement('li');
+      li.role = 'option';
+      li.className = 'autocomplete-item';
+      li.textContent = m;
+      li.addEventListener('mousedown', e => { e.preventDefault(); addIngredient(m); });
+      acList.appendChild(li);
+    });
+    acList.hidden = false;
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.manual-input-wrap')) closeAC();
+  });
+
+  function closeAC() { acList.hidden = true; acList.innerHTML = ''; }
+
+  // ── Search ───────────────────────────────────────────────────
+  let searchTimer = null;
+
+  function search() {
+    const active = ingredients.filter(i => i.active).map(i => i.label);
+    if (!active.length) {
+      resultsArea.hidden = true;
+      return;
+    }
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => _doSearch(active), 120);
+  }
+
+  async function _doSearch(active) {
+    try {
+      const resp = await fetch('/recipes/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrf(),
+        },
+        body: JSON.stringify({ ingredients: active }),
+      });
+      if (!resp.ok) return;
+      const { results } = await resp.json();
+      renderResults(results);
+    } catch (_) {}
+  }
+
+  function renderResults(results) {
+    resultsArea.hidden = false;
+    recipeList.innerHTML = '';
+    noRecipesMsg.hidden = results.length > 0;
+    resultsTitle.textContent = results.length
+      ? `${results.length} recipe${results.length !== 1 ? 's' : ''} found`
+      : 'Recipes';
+
+    results.forEach(r => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'recipe-card';
+      card.setAttribute('aria-label', `View ${r.name}`);
+
+      const matchClass = r.match_pct >= 80 ? 'match--high'
+                       : r.match_pct >= 50 ? 'match--mid'
+                                           : 'match--low';
+
+      card.innerHTML = `
+        <div class="recipe-card__header">
+          <div class="recipe-card__title-row">
+            <span class="recipe-card__name">${esc(r.name)}</span>
+            <span class="recipe-card__match ${matchClass}">${r.match_pct}%</span>
+          </div>
+          <div class="recipe-card__meta">
+            <span class="recipe-card__source">${esc(r.source)}</span>
+            <span class="recipe-card__dot">·</span>
+            <span class="recipe-card__cuisine">${esc(r.cuisine)}</span>
+            ${r.cook_time ? `<span class="recipe-card__dot">·</span><span class="recipe-card__time">${esc(r.cook_time)}</span>` : ''}
+          </div>
+        </div>
+        <div class="recipe-card__summary">
+          You have <strong>${r.matched_count} of ${r.total_count}</strong> ingredients
+          ${r.missing.length ? `· Missing: <span class="recipe-card__missing">${r.missing.slice(0,3).map(esc).join(', ')}${r.missing.length > 3 ? ` +${r.missing.length - 3} more` : ''}</span>` : ''}
+        </div>
+      `;
+
+      card.addEventListener('click', () => openRecipe(r));
+      recipeList.appendChild(card);
+    });
+  }
+
+  // ── Recipe detail dialog ─────────────────────────────────────
+  function openRecipe(r) {
+    const matchClass = r.match_pct >= 80 ? 'match--high'
+                     : r.match_pct >= 50 ? 'match--mid'
+                                         : 'match--low';
+
+    const ingredientRows = r.ingredients.map(ing => {
+      const have = r.matched.includes(ing);
+      return `<li class="ing-row${have ? ' ing-row--have' : ' ing-row--need'}">
+        <span class="ing-row__dot">${have ? '✓' : '·'}</span>
+        <span class="ing-row__name">${esc(ing)}</span>
+        <span class="ing-row__status">${have ? 'you have it' : "you'll need this"}</span>
+      </li>`;
+    }).join('');
+
+    dialogContent.innerHTML = `
+      <div class="recipe-detail">
+        <div class="recipe-detail__header">
+          <h2 class="recipe-detail__title">${esc(r.name)}</h2>
+          <div class="recipe-detail__meta">
+            <span class="recipe-card__source">${esc(r.source)}</span>
+            <span class="recipe-card__dot">·</span>
+            <span class="recipe-card__cuisine">${esc(r.cuisine)}</span>
+            ${r.cook_time ? `<span class="recipe-card__dot">·</span><span class="recipe-card__time">${esc(r.cook_time)}</span>` : ''}
+            ${r.difficulty ? `<span class="recipe-card__dot">·</span><span>${esc(r.difficulty)}</span>` : ''}
+          </div>
+          <div class="recipe-detail__match-row">
+            <span class="recipe-card__match ${matchClass} recipe-card__match--lg">${r.match_pct}% match</span>
+            <span class="recipe-detail__summary">
+              ${r.matched_count} of ${r.total_count} ingredients
+              ${r.missing.length === 0 ? '— you have everything!' : `· Missing: ${r.missing.map(esc).join(', ')}`}
+            </span>
+          </div>
+        </div>
+        <ul class="ing-list">${ingredientRows}</ul>
+        <a href="${esc(r.source_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full recipe-detail__cta">
+          View full recipe on ${esc(r.source)} ↗
+        </a>
+      </div>
+    `;
+
+    dialog.showModal();
+  }
+
+  if (dialogClose) dialogClose.addEventListener('click', () => dialog.close());
+  if (dialog) dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+
+  // ── Helpers ─────────────────────────────────────────────────
+  function norm(s) { return s.toLowerCase().trim(); }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function getCsrf() {
+    const el = document.querySelector('input[name="csrf_token"]');
+    if (el) return el.value;
+    // Fallback: read from cookie
+    const m = document.cookie.match(/csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+})();
+</script>
+
+<!-- CSRF token for JS fetch calls -->
+<input type="hidden" id="csrf-token" name="csrf_token" value="{{ csrf_token() }}" style="display:none">
+
+{% endblock %}

@@ -98,11 +98,13 @@ def create_app():
     # Register blueprints
     from app.auth.routes import auth_bp
     from app.perishables.routes import perishables_bp
+    from app.recipes.routes import recipes_bp
     from app.api.auth import api_auth_bp
     from app.api.items import api_items_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(perishables_bp)
+    app.register_blueprint(recipes_bp)
     app.register_blueprint(api_auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(api_items_bp, url_prefix="/api/v1")
 
