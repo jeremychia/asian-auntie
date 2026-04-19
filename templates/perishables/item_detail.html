@@ -92,6 +92,8 @@ today).days %}
     <details class="remove-panel">
       <summary>Remove from pantry</summary>
       <div class="remove-options">
+        {% if days_left < 0 %}
+        {# Expired: recommend "Threw it away" #}
         <form
           method="post"
           action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
@@ -120,6 +122,37 @@ today).days %}
             Don't want it
           </button>
         </form>
+        {% else %}
+        {# Not expired: recommend "Don't want it" #}
+        <form
+          method="post"
+          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            name="reason"
+            value="unwanted"
+            class="btn btn-primary btn-sm"
+          >
+            Don't want it
+          </button>
+        </form>
+        <form
+          method="post"
+          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            name="reason"
+            value="discarded"
+            class="btn btn-secondary btn-sm"
+          >
+            Threw it away
+          </button>
+        </form>
+        {% endif %}
       </div>
     </details>
   </div>

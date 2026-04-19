@@ -323,12 +323,23 @@ def remove_item(item_id):
     reason = request.form.get("reason", "unwanted")
     if reason not in ("discarded", "unwanted"):
         reason = "unwanted"
+    item_name = item.name
+    today = date.today()
+    days_overdue = (today - item.expiry_date).days if item.expiry_date < today else None
     item.removed_at = datetime.now(timezone.utc)
     item.removal_reason = reason
     db.session.commit()
-    logger.info("item_removed", user_id=current_user.id, item_id=item.id, reason=reason)
-    flash(f'"{item.name}" removed from your pantry.', "success")
-    return redirect(url_for("perishables.dashboard"))
+    logger.info(
+        "item_removed",
+        user_id=current_user.id,
+        item_id=item.id,
+        item_name=item_name,
+        item_type=item.item_type,
+        expiry_date=item.expiry_date.isoformat(),
+        days_overdue=days_overdue,
+        reason=reason,
+    )
+    return redirect(url_for("perishables.dashboard", undo=item.id, undo_name=item_name))
 
 
 @perishables_bp.route("/items/remove-expired", methods=["POST"])
