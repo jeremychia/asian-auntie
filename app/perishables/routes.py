@@ -77,7 +77,10 @@ def dashboard():
         .all()
     )
     today = date.today()
-    return render_template("perishables/dashboard.html", items=items, today=today)
+    all_expired = bool(items) and all(item.expiry_date < today for item in items)
+    return render_template(
+        "perishables/dashboard.html", items=items, today=today, all_expired=all_expired
+    )
 
 
 @perishables_bp.route("/items/add", methods=["GET", "POST"])
@@ -304,4 +307,24 @@ def remove_item(item_id):
     db.session.commit()
     logger.info("item_removed", user_id=current_user.id, item_id=item.id, reason=reason)
     flash(f'"{item.name}" removed from your pantry.', "success")
+    return redirect(url_for("perishables.dashboard"))
+
+
+@perishables_bp.route("/items/remove-expired", methods=["POST"])
+@login_required
+def remove_expired():
+    today = date.today()
+    expired = (
+        Item.query.filter_by(user_id=current_user.id)
+        .filter(Item.removed_at.is_(None))
+        .filter(Item.expiry_date < today)
+        .all()
+    )
+    count = len(expired)
+    for item in expired:
+        item.removed_at = datetime.now(timezone.utc)
+        item.removal_reason = "discarded"
+    db.session.commit()
+    logger.info("bulk_remove_expired", user_id=current_user.id, count=count)
+    flash(f"Removed {count} expired item{'s' if count != 1 else ''}.", "success")
     return redirect(url_for("perishables.dashboard"))

@@ -1,47 +1,157 @@
-{% extends "base.html" %} {% block title %}Pantry — Asian Auntie{% endblock %}
+{% extends "base.html" %}
+{% block title %}Pantry — Asian Auntie{% endblock %}
 {% block content %}
+
+{% if items %}
+<div class="toolbar">
+  <input
+    id="search-input"
+    type="search"
+    placeholder="Search items…"
+    class="search-input"
+    autocomplete="off"
+    aria-label="Search pantry items"
+  />
+  <select id="sort-select" class="sort-select" aria-label="Sort order">
+    <option value="expiry">Expiry</option>
+    <option value="recent">Recently added</option>
+    <option value="alpha">A–Z</option>
+  </select>
+</div>
+{% endif %}
+
 <div class="content">
   <div class="page-header">
     <h1 class="page-title">
-      Your pantry {% if items %}<small
-        >{{ items | length }} item{{ 's' if items | length != 1 }}</small
-      >{% endif %}
+      Your pantry
+      {% if items %}<small>{{ items | length }} item{{ 's' if items | length != 1 }}</small>{% endif %}
     </h1>
   </div>
 
-  {% if items %}
-  <div class="item-grid">
-    {% for item in items %} {% set days_left = (item.expiry_date - today).days
-    %} {% if days_left <= 0 %} {% set urgency = "today" %} {% set urgency_label
-    = "TODAY" %} {% elif days_left <= 2 %} {% set urgency = "soon" %} {% set
-    urgency_label = days_left ~ " day" ~ ("s" if days_left != 1 else "") %} {%
-    else %} {% set urgency = "ok" %} {% set urgency_label =
-    item.expiry_date.strftime("%-d %b %Y") %} {% endif %}
+  {% if all_expired %}
+  <div class="warning-banner">
+    <p class="warning-banner__text">Everything here has expired.</p>
+    <form method="post" action="{{ url_for('perishables.remove_expired') }}" style="margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-danger btn-sm">Remove all expired</button>
+    </form>
+  </div>
+  {% endif %}
 
-    <a
-      href="{{ url_for('perishables.item_detail', item_id=item.id) }}"
-      class="item-card item-card--{{ urgency }}"
-    >
-      <div class="item-card__top">
-        <span class="item-card__name">{{ item.name }}</span>
-        <span class="item-card__type">{{ item.item_type | capitalize }}</span>
+  {% if items %}
+  <div class="item-grid" id="item-grid">
+    {% for item in items %}
+      {% set days_left = (item.expiry_date - today).days %}
+      {% if days_left < 0 %}
+        {% set urgency = "today" %}
+        {% set urgency_label = "EXPIRED" %}
+      {% elif days_left == 0 %}
+        {% set urgency = "today" %}
+        {% set urgency_label = "TODAY" %}
+      {% elif days_left <= 2 %}
+        {% set urgency = "soon" %}
+        {% set urgency_label = days_left ~ " DAY" ~ ("S" if days_left != 1 else "") %}
+      {% else %}
+        {% set urgency = "ok" %}
+        {% set urgency_label = item.expiry_date.strftime("%-d %b %Y") %}
+      {% endif %}
+      {% set photo = item.display_photo %}
+
+      <div class="card-wrap"
+           data-name="{{ item.name | lower }}"
+           data-expiry="{{ item.expiry_date.isoformat() }}"
+           data-added="{{ item.date_added.isoformat() }}"
+           data-alpha="{{ item.name | lower }}"
+           data-urgency="{{ urgency }}">
+        <a
+          href="{{ url_for('perishables.item_detail', item_id=item.id) }}"
+          class="item-card item-card--{{ urgency }}{% if photo %} item-card--has-photo{% else %} item-card--type-{{ item.item_type }}{% endif %}"
+        >
+          {% if photo %}
+          <img
+            src="{{ url_for('uploaded_file', filename=photo.photo_path) }}"
+            alt="{{ item.name }}"
+            class="item-card__photo"
+          />
+          <div class="item-card__overlay">
+            <span class="item-card__name item-card__name--overlay">{{ item.name }}</span>
+            <span class="item-card__badge item-card__badge--overlay">{{ urgency_label }}</span>
+          </div>
+          {% else %}
+          <span class="item-card__name">{{ item.name }}</span>
+          <span class="item-card__badge">{{ urgency_label }}</span>
+          {% endif %}
+        </a>
       </div>
-      <span class="item-card__badge">{{ urgency_label }}</span>
-    </a>
     {% endfor %}
   </div>
+  <p id="no-results" class="no-results" hidden>No items match your search.</p>
 
   {% else %}
   <div class="empty-state">
     <span class="empty-state__icon">🥡</span>
     <p class="empty-state__title">Your pantry is empty</p>
-    <p class="empty-state__body">
-      Add items to track expiry dates and cut down on waste.
-    </p>
-    <a href="{{ url_for('perishables.add_item') }}" class="btn btn-primary"
-      >Add your first item</a
-    >
+    <p class="empty-state__body">Add items to track expiry dates and cut down on waste.</p>
+    <a href="{{ url_for('perishables.add_item') }}" class="btn btn-primary">Add your first item</a>
   </div>
   {% endif %}
 </div>
+
+<script>
+(function () {
+  // ── Search ──────────────────────────────────────────────────────────────
+  const searchInput = document.getElementById('search-input');
+  const grid = document.getElementById('item-grid');
+  const noResults = document.getElementById('no-results');
+  const wraps = grid ? Array.from(grid.querySelectorAll('.card-wrap')) : [];
+
+  function applySearch() {
+    const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    let visible = 0;
+    wraps.forEach(w => {
+      const name = w.dataset.name || '';
+      const show = !q || name.includes(q);
+      w.hidden = !show;
+      if (show) visible++;
+    });
+    if (noResults) noResults.hidden = visible > 0;
+  }
+
+  if (searchInput) searchInput.addEventListener('input', applySearch);
+
+  // ── Sort ────────────────────────────────────────────────────────────────
+  const sortSelect = document.getElementById('sort-select');
+  const SORT_KEY = 'pantry-sort';
+
+  function sortGrid(mode) {
+    if (!grid) return;
+    const sorted = [...wraps].sort((a, b) => {
+      // TODAY/EXPIRED items always float to top, regardless of sort mode
+      const aUrgent = a.dataset.urgency === 'today' ? 0 : 1;
+      const bUrgent = b.dataset.urgency === 'today' ? 0 : 1;
+      if (aUrgent !== bUrgent) return aUrgent - bUrgent;
+      // Within the same urgency tier, apply the chosen sort
+      if (mode === 'expiry') return a.dataset.expiry.localeCompare(b.dataset.expiry);
+      if (mode === 'recent') return b.dataset.added.localeCompare(a.dataset.added);
+      if (mode === 'alpha')  return a.dataset.alpha.localeCompare(b.dataset.alpha);
+      return 0;
+    });
+    sorted.forEach(w => grid.appendChild(w));
+  }
+
+  function applySort(mode) {
+    sortGrid(mode);
+    try { localStorage.setItem(SORT_KEY, mode); } catch (_) {}
+  }
+
+  if (sortSelect) {
+    const saved = (() => { try { return localStorage.getItem(SORT_KEY); } catch (_) { return null; } })();
+    if (saved && ['expiry', 'recent', 'alpha'].includes(saved)) {
+      sortSelect.value = saved;
+      sortGrid(saved);
+    }
+    sortSelect.addEventListener('change', () => applySort(sortSelect.value));
+  }
+})();
+</script>
 {% endblock %}
