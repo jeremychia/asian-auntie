@@ -13,6 +13,12 @@ class User(UserMixin, db.Model):
         db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
 
+    # Notification preferences
+    # cooking_days: JSON list of weekday ints (0=Mon … 6=Sun), null = use 3-day fallback
+    cooking_days = db.Column(db.Text, nullable=True)
+    push_subscription = db.Column(db.Text, nullable=True)  # Web Push subscription JSON
+    notifications_enabled = db.Column(db.Boolean, nullable=False, default=False)
+
     items = db.relationship("Item", back_populates="user", lazy="dynamic")
     refresh_tokens = db.relationship(
         "RefreshToken", back_populates="user", lazy="dynamic"
