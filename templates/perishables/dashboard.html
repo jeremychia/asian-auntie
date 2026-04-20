@@ -5,6 +5,88 @@
 {% set undo_id = request.args.get('undo') %}
 {% set undo_name = request.args.get('undo_name') %}
 
+{% if current_user.cooking_days is none %}
+<div class="onboarding-overlay" id="onboarding-overlay">
+  <div class="onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+    <h2 class="onboarding-modal__title" id="onboarding-title">Get expiry reminders</h2>
+    <p class="onboarding-modal__desc">
+      We'll remind you the evening before you cook when something is about to
+      expire — so you can use it, not bin it.
+    </p>
+    <p class="settings-label">What days do you usually cook?</p>
+    <div class="day-picker" id="onboarding-day-picker">
+      {% set day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] %}
+      {% for i in range(7) %}
+      <label class="day-chip" data-day="{{ i }}">
+        <input type="checkbox" value="{{ i }}">
+        {{ day_names[i] }}
+      </label>
+      {% endfor %}
+    </div>
+    <div class="onboarding-modal__actions">
+      <button class="btn btn-primary" id="onboarding-save">Enable notifications</button>
+      <button class="btn btn-secondary" id="onboarding-skip">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function csrfHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')?.content || "",
+  };
+}
+function urlBase64ToUint8Array(b64) {
+  const padding = "=".repeat((4 - b64.length % 4) % 4);
+  const base64 = (b64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  return Uint8Array.from([...atob(base64)].map(c => c.charCodeAt(0)));
+}
+
+document.querySelectorAll('#onboarding-day-picker .day-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const cb = chip.querySelector('input');
+    cb.checked = !cb.checked;
+    chip.classList.toggle('day-chip--active', cb.checked);
+  });
+});
+
+document.getElementById('onboarding-save').addEventListener('click', async () => {
+  const days = [...document.querySelectorAll('#onboarding-day-picker input:checked')].map(el => +el.value);
+  await fetch('/settings/cooking-days', {
+    method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ cooking_days: days }),
+  });
+  if ('Notification' in window && 'serviceWorker' in navigator) {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array("{{ vapid_public_key }}"),
+          });
+        }
+        await fetch('/notifications/subscribe', {
+          method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ subscription: sub.toJSON() }),
+        });
+      } catch {}
+    }
+  }
+  document.getElementById('onboarding-overlay').remove();
+});
+
+document.getElementById('onboarding-skip').addEventListener('click', async () => {
+  // Empty list = explicitly skipped; won't show onboarding again, uses 3-day fallback
+  await fetch('/settings/cooking-days', {
+    method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ cooking_days: [] }),
+  });
+  document.getElementById('onboarding-overlay').remove();
+});
+</script>
+{% endif %}
+
 {% if items %}
 <div class="toolbar">
   <input

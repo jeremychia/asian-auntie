@@ -50,6 +50,11 @@
             class="nav-link nav-link--primary"
             >+ Add item</a
           >
+          <a
+            href="{{ url_for('notifications.settings') }}"
+            class="nav-link{% if request.path == '/settings' %} nav-link--active{% endif %}"
+            >Settings</a
+          >
           <form
             method="post"
             action="{{ url_for('auth.logout') }}"

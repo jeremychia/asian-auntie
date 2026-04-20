@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Settings — Asian Auntie{% endblock %}
+{% block content %}
+<div class="content">
+  <h1 class="page-title">Settings</h1>
+
+  <section class="settings-section">
+    <h2 class="settings-section__title">Expiry notifications</h2>
+    <p class="settings-section__desc">
+      Asian Auntie can remind you the evening before you cook when something is
+      about to expire — so you can actually use it, not throw it away.
+    </p>
+
+    <div class="cooking-days-form" id="cooking-days-form">
+      <p class="settings-label">What days do you usually cook?</p>
+      <div class="day-picker" id="day-picker">
+        {% set day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] %}
+        {% for i in range(7) %}
+        <label class="day-chip {% if cooking_days is not none and i in cooking_days %}day-chip--active{% endif %}"
+               data-day="{{ i }}">
+          <input type="checkbox" value="{{ i }}"
+                 {% if cooking_days is not none and i in cooking_days %}checked{% endif %}>
+          {{ day_names[i] }}
+        </label>
+        {% endfor %}
+      </div>
+      <p class="settings-hint">
+        We'll notify you the evening before your nearest cooking day when an
+        item is due to expire. Skip this and we'll use a 3-day window instead.
+      </p>
+
+      <div id="notif-status" class="settings-notif-status">
+        {% if notifications_enabled %}
+        <span class="notif-badge notif-badge--on">Notifications on</span>
+        {% else %}
+        <span class="notif-badge notif-badge--off">Notifications off</span>
+        {% endif %}
+      </div>
+
+      <div class="settings-actions">
+        <button class="btn btn-primary" id="save-btn">Save &amp; enable notifications</button>
+        <button class="btn btn-secondary" id="disable-btn"
+          {% if not notifications_enabled %}style="display:none"{% endif %}>
+          Turn off notifications
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+
+function urlBase64ToUint8Array(b64) {
+  const padding = "=".repeat((4 - b64.length % 4) % 4);
+  const base64 = (b64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  return Uint8Array.from([...atob(base64)].map(c => c.charCodeAt(0)));
+}
+
+function csrfHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')?.content || "",
+  };
+}
+
+function selectedDays() {
+  return [...document.querySelectorAll('.day-chip input:checked')].map(el => +el.value);
+}
+
+// Day chip toggle
+document.querySelectorAll('.day-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const cb = chip.querySelector('input');
+    cb.checked = !cb.checked;
+    chip.classList.toggle('day-chip--active', cb.checked);
+  });
+});
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const days = selectedDays();
+
+  // Save cooking days
+  await fetch('/settings/cooking-days', {
+    method: 'POST',
+    headers: csrfHeaders(),
+    body: JSON.stringify({ cooking_days: days }),
+  });
+
+  // Request push permission and subscribe
+  if (!('Notification' in window)) {
+    updateStatus(true);
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    updateStatus(false);
+    return;
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    await fetch('/notifications/subscribe', {
+      method: 'POST',
+      headers: csrfHeaders(),
+      body: JSON.stringify({ subscription: sub.toJSON() }),
+    });
+    updateStatus(true);
+  } catch {
+    updateStatus(false);
+  }
+});
+
+document.getElementById('disable-btn').addEventListener('click', async () => {
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  if (sub) await sub.unsubscribe();
+  await fetch('/notifications/subscribe', { method: 'DELETE', headers: csrfHeaders() });
+  updateStatus(false);
+});
+
+function updateStatus(enabled) {
+  const statusEl = document.getElementById('notif-status');
+  const disableBtn = document.getElementById('disable-btn');
+  statusEl.innerHTML = enabled
+    ? '<span class="notif-badge notif-badge--on">Notifications on</span>'
+    : '<span class="notif-badge notif-badge--off">Notifications off</span>';
+  disableBtn.style.display = enabled ? '' : 'none';
+}
+</script>
+{% endblock %}
