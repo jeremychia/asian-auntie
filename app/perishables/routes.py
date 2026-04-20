@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 
 # Default shelf life by item type (days), used when recognition has no printed date
 _SHELF_LIFE_DEFAULTS = {
-    "produce": 7,
+    "produce": 5,
     "tofu": 7,
     "seafood": 7,
     "dairy": 7,

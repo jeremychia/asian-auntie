@@ -30,7 +30,7 @@
   /* Shape */
   --r-sm: 6px;
   --r-md: 10px;
-  --r-lg: 14px;
+  --r-lg: 12px;
   --r-xl: 20px;
   --r-full: 9999px;
 
@@ -389,7 +389,6 @@ nav.container {
 }
 .item-card.is-swiped {
   transform: translateX(-72px);
-  box-shadow: var(--shadow-md);
 }
 
 .item-card::before {
@@ -413,7 +412,6 @@ nav.container {
 }
 
 .item-card:hover {
-  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 

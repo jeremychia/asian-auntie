@@ -51,7 +51,7 @@
       {% elif days_left == 0 %}
         {% set urgency = "today" %}
         {% set urgency_label = "TODAY" %}
-      {% elif days_left <= 2 %}
+      {% elif days_left <= 3 %}
         {% set urgency = "soon" %}
         {% set urgency_label = days_left ~ " DAY" ~ ("S" if days_left != 1 else "") %}
       {% else %}
