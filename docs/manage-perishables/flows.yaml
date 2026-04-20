@@ -136,7 +136,7 @@ flows:
         — deliberately styled, not a broken placeholder
       - Urgency communicated by BOTH color AND text label (never color alone):
         - "TODAY" label + red background/overlay
-        - "2 DAYS" label + orange background/overlay
+        - "2 DAYS" / "3 DAYS" label + orange background/overlay
         - Expiry date shown as text for items 4+ days out (no urgency color)
       - Search bar pinned at top — always visible, searches by item name
       - User can tap "Sort" to change order: Expiry (default), Recently added, Alphabetical
