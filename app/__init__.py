@@ -114,6 +114,12 @@ def create_app():
     def inject_vapid_public_key():
         return {"vapid_public_key": app.config.get("VAPID_PUBLIC_KEY", "")}
 
+    # Start notification scheduler (skip in testing / flask db commands)
+    if not app.config.get("TESTING") and os.environ.get("FLASK_RUN_MAIN") != "false":
+        from app.notifications.scheduler import start_scheduler
+
+        start_scheduler(app)
+
     return app
 
 
