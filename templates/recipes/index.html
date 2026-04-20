@@ -58,6 +58,16 @@
       Add at least one ingredient to find recipes.
     </p>
 
+    <!-- Generic ingredient warning -->
+    <p id="generic-ingredient-msg" class="hint hint--warn" hidden>
+      Some ingredients match broadly — add more specific ones for better results.
+    </p>
+
+    <!-- Refresh results button (shown when ingredients change after first search) -->
+    <button type="button" class="btn btn-secondary btn-full" id="refresh-btn" hidden>
+      Refresh results
+    </button>
+
   </div>
 
   <!-- ── Results ───────────────────────────────────────────────── -->
@@ -104,27 +114,44 @@
     {% endfor %}
   ];
 
+  // ── Skipped recipe IDs (user previously marked "not for me") ─
+  const SKIPPED = new Set([
+    {% for rid in skipped_ids %}
+    {{ rid | tojson }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]);
+
+  // Ingredients that match too broadly to be useful on their own
+  const GENERIC_INGREDIENTS = new Set([
+    'oil','water','salt','sugar','flour','stock','broth','sauce','paste',
+  ]);
+
   // ── State ───────────────────────────────────────────────────
   // Each ingredient: { label: string, active: boolean, source: "pantry"|"manual" }
   let ingredients = [];
   let pantryLoaded = false;
+  let hasSearchedOnce = false;   // true after first auto-search (pantry load)
+  // Track which recipes got feedback this session (to avoid re-prompting)
+  const sessionFeedback = new Set();
 
   // ── DOM refs ────────────────────────────────────────────────
-  const loadPantryBtn   = document.getElementById('load-pantry-btn');
-  const pantryCtaEl     = document.getElementById('pantry-cta');
-  const chipArea        = document.getElementById('chip-area');
-  const chipList        = document.getElementById('chip-list');
-  const manualInput     = document.getElementById('manual-input');
-  const addManualBtn    = document.getElementById('add-manual-btn');
-  const acList          = document.getElementById('autocomplete-list');
-  const resultsArea     = document.getElementById('results-area');
-  const recipeList      = document.getElementById('recipe-list');
-  const noRecipesMsg    = document.getElementById('no-recipes-msg');
-  const noIngredientsMsg= document.getElementById('no-ingredients-msg');
-  const resultsTitle    = document.getElementById('results-title');
-  const dialog          = document.getElementById('recipe-dialog');
-  const dialogContent   = document.getElementById('recipe-dialog-content');
-  const dialogClose     = document.getElementById('dialog-close');
+  const loadPantryBtn      = document.getElementById('load-pantry-btn');
+  const pantryCtaEl        = document.getElementById('pantry-cta');
+  const chipArea           = document.getElementById('chip-area');
+  const chipList           = document.getElementById('chip-list');
+  const manualInput        = document.getElementById('manual-input');
+  const addManualBtn       = document.getElementById('add-manual-btn');
+  const acList             = document.getElementById('autocomplete-list');
+  const resultsArea        = document.getElementById('results-area');
+  const recipeList         = document.getElementById('recipe-list');
+  const noRecipesMsg       = document.getElementById('no-recipes-msg');
+  const noIngredientsMsg   = document.getElementById('no-ingredients-msg');
+  const genericIngMsg      = document.getElementById('generic-ingredient-msg');
+  const refreshBtn         = document.getElementById('refresh-btn');
+  const resultsTitle       = document.getElementById('results-title');
+  const dialog             = document.getElementById('recipe-dialog');
+  const dialogContent      = document.getElementById('recipe-dialog-content');
+  const dialogClose        = document.getElementById('dialog-close');
 
   // ── Load pantry ─────────────────────────────────────────────
   if (loadPantryBtn) {
@@ -138,9 +165,16 @@
       pantryLoaded = true;
       pantryCtaEl.hidden = true;
       renderChips();
+      // Auto-search immediately on pantry load — the "Use my pantry" tap is the trigger
       search();
     });
   }
+
+  // ── Refresh button ───────────────────────────────────────────
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.hidden = true;
+    search();
+  });
 
   // ── Chips ────────────────────────────────────────────────────
   function renderChips() {
@@ -169,11 +203,11 @@
         if (e.target === remove || e.target.classList.contains('chip__remove')) {
           ingredients.splice(idx, 1);
           renderChips();
-          search();
+          markDirty();
         } else {
           ingredients[idx].active = !ingredients[idx].active;
           renderChips();
-          search();
+          markDirty();
         }
       });
 
@@ -183,6 +217,12 @@
     // Show/hide "add at least one" message
     const anyActive = ingredients.some(i => i.active);
     noIngredientsMsg.hidden = ingredients.length === 0 || anyActive;
+
+    // Generic ingredient warning — shown when any active chip is a generic term
+    const hasGeneric = ingredients.some(
+      i => i.active && GENERIC_INGREDIENTS.has(i.label.toLowerCase().trim())
+    );
+    genericIngMsg.hidden = !hasGeneric;
   }
 
   // ── Manual input ─────────────────────────────────────────────
@@ -198,7 +238,7 @@
     manualInput.value = '';
     closeAC();
     renderChips();
-    search();
+    markDirty();
   }
 
   addManualBtn.addEventListener('click', () => addIngredient(manualInput.value));
@@ -232,19 +272,37 @@
   function closeAC() { acList.hidden = true; acList.innerHTML = ''; }
 
   // ── Search ───────────────────────────────────────────────────
-  let searchTimer = null;
+
+  // Mark results as stale — show "Refresh results" button instead of auto-searching.
+  // Only show the button if a search has already run once (pantry load was the trigger).
+  function markDirty() {
+    const anyActive = ingredients.some(i => i.active);
+    if (!anyActive) {
+      resultsArea.hidden = true;
+      refreshBtn.hidden = true;
+      return;
+    }
+    if (hasSearchedOnce) {
+      refreshBtn.hidden = false;
+    } else {
+      // No results shown yet — auto-search so the first manual ingredient triggers results
+      search();
+    }
+  }
 
   function search() {
     const active = ingredients.filter(i => i.active).map(i => i.label);
     if (!active.length) {
       resultsArea.hidden = true;
+      refreshBtn.hidden = true;
       return;
     }
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => _doSearch(active), 120);
+    refreshBtn.hidden = true;
+    _doSearch(active);
   }
 
   async function _doSearch(active) {
+    hasSearchedOnce = true;
     try {
       const resp = await fetch('/recipes/search', {
         method: 'POST',
@@ -278,6 +336,10 @@
                        : r.match_pct >= 50 ? 'match--mid'
                                            : 'match--low';
 
+      const skippedBadge = SKIPPED.has(r.id)
+        ? `<span class="recipe-card__skipped">You skipped this before</span>`
+        : '';
+
       card.innerHTML = `
         <div class="recipe-card__header">
           <div class="recipe-card__title-row">
@@ -290,6 +352,7 @@
             <span class="recipe-card__cuisine">${esc(r.cuisine)}</span>
             ${r.cook_time ? `<span class="recipe-card__dot">·</span><span class="recipe-card__time">${esc(r.cook_time)}</span>` : ''}
           </div>
+          ${skippedBadge}
         </div>
         <div class="recipe-card__summary">
           You have <strong>${r.matched_count} of ${r.total_count}</strong> ingredients
@@ -307,6 +370,10 @@
     const matchClass = r.match_pct >= 80 ? 'match--high'
                      : r.match_pct >= 50 ? 'match--mid'
                                          : 'match--low';
+
+    const matchNote = r.match_pct >= 80
+      ? `<span class="recipe-detail__match-note">You have most of what you need.</span>`
+      : '';
 
     const ingredientRows = r.ingredients.map(ing => {
       const have = r.matched.includes(ing);
@@ -335,15 +402,109 @@
               ${r.missing.length === 0 ? '— you have everything!' : `· Missing: ${r.missing.map(esc).join(', ')}`}
             </span>
           </div>
+          ${matchNote}
         </div>
         <ul class="ing-list">${ingredientRows}</ul>
-        <a href="${esc(r.source_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full recipe-detail__cta">
-          View full recipe on ${esc(r.source)} ↗
-        </a>
+        ${r.source_url
+          ? `<a
+              href="${esc(r.source_url)}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-primary btn-full recipe-detail__cta"
+              id="view-recipe-link"
+              data-recipe-id="${esc(r.id)}"
+              data-recipe-name="${esc(r.name)}"
+            >View full recipe on ${esc(r.source)} ↗</a>`
+          : `<p class="source-unavailable">Source currently unavailable — ingredient list shown above.</p>`
+        }
+        <div id="feedback-section" class="feedback-section" hidden></div>
       </div>
     `;
 
+    // Attach feedback trigger on "View full recipe" click
+    const viewLink = dialogContent.querySelector('#view-recipe-link');
+    if (viewLink) {
+      viewLink.addEventListener('click', () => {
+        const recipeId = viewLink.dataset.recipeId;
+        if (!sessionFeedback.has(recipeId)) {
+          setTimeout(() => showFeedback(recipeId, r.name), 800);
+        }
+      });
+    }
+
     dialog.showModal();
+  }
+
+  // ── Feedback prompt ──────────────────────────────────────────
+  function showFeedback(recipeId, recipeName) {
+    const section = dialogContent.querySelector('#feedback-section');
+    if (!section || sessionFeedback.has(recipeId)) return;
+
+    section.hidden = false;
+    section.innerHTML = `
+      <div class="feedback-prompt">
+        <p class="feedback-prompt__question">Did you make this?</p>
+        <div class="feedback-prompt__actions">
+          <button type="button" class="btn feedback-btn feedback-btn--yes" data-value="yes_made">
+            Yes, I made it!
+          </button>
+          <button type="button" class="btn feedback-btn feedback-btn--no" data-value="not_for_me">
+            Not for me
+          </button>
+        </div>
+      </div>
+    `;
+
+    section.querySelector('.feedback-btn--yes').addEventListener('click', () => {
+      submitFeedback(recipeId, 'yes_made', null, section);
+    });
+
+    section.querySelector('.feedback-btn--no').addEventListener('click', () => {
+      showSkipReasons(recipeId, section);
+    });
+  }
+
+  function showSkipReasons(recipeId, section) {
+    section.innerHTML = `
+      <div class="feedback-prompt">
+        <p class="feedback-prompt__question">What put you off?</p>
+        <div class="feedback-prompt__reasons">
+          <button type="button" class="btn feedback-reason-btn" data-reason="too_complex">Too complex</button>
+          <button type="button" class="btn feedback-reason-btn" data-reason="missing_key_ingredient">Missing key ingredient</button>
+          <button type="button" class="btn feedback-reason-btn" data-reason="not_my_taste">Not my taste</button>
+          <button type="button" class="btn feedback-reason-btn feedback-reason-btn--skip" data-reason="">Skip</button>
+        </div>
+      </div>
+    `;
+
+    section.querySelectorAll('.feedback-reason-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const reason = btn.dataset.reason || null;
+        submitFeedback(recipeId, 'not_for_me', reason, section);
+      });
+    });
+  }
+
+  async function submitFeedback(recipeId, feedback, skipReason, section) {
+    sessionFeedback.add(recipeId);
+    if (feedback === 'not_for_me') {
+      SKIPPED.add(recipeId);
+    }
+
+    section.innerHTML = `<p class="feedback-thanks">${
+      feedback === 'yes_made' ? 'Great! Enjoy your meal.' : 'Got it. We won\'t push this one.'
+    }</p>`;
+
+    try {
+      await fetch(`/recipes/${encodeURIComponent(recipeId)}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrf(),
+        },
+        body: JSON.stringify({ feedback, skip_reason: skipReason }),
+      });
+    } catch (_) {}
   }
 
   if (dialogClose) dialogClose.addEventListener('click', () => dialog.close());
@@ -363,7 +524,6 @@
   function getCsrf() {
     const el = document.querySelector('input[name="csrf_token"]');
     if (el) return el.value;
-    // Fallback: read from cookie
     const m = document.cookie.match(/csrf_token=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : '';
   }

@@ -119,6 +119,34 @@ class RecognitionCache(db.Model):
         return f"<RecognitionCache {self.image_hash[:16]}>"
 
 
+class RecipeEngagement(db.Model):
+    __tablename__ = "recipe_engagements"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False, index=True
+    )
+    recipe_id = db.Column(db.String(64), nullable=False, index=True)
+    feedback = db.Column(db.String(32), nullable=True)  # "yes_made", "not_for_me"
+    skip_reason = db.Column(
+        db.String(64), nullable=True
+    )  # "too_complex", "missing_key_ingredient", "not_my_taste"
+    engaged_at = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+
+    user = db.relationship(
+        "User", backref=db.backref("recipe_engagements", lazy="dynamic")
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "recipe_id", name="uq_recipe_engagement"),
+    )
+
+    def __repr__(self):
+        return f"<RecipeEngagement user={self.user_id} recipe={self.recipe_id} feedback={self.feedback}>"
+
+
 class RefreshToken(db.Model):
     __tablename__ = "refresh_tokens"
 
