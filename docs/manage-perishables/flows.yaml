@@ -7,11 +7,12 @@ flows:
     happy_path:
       - User taps "+" button
       - System opens camera immediately (no intermediate screen)
-      - User snaps photo of item (or selects from gallery) — can add multiple photos (e.g., item appearance, label)
+      - User snaps photo of item (or selects from gallery) — can add multiple photos (e.g., barcode, item appearance, label)
       - After each photo, system shows thumbnail strip and "Add another photo" option alongside "Done"
-      - System sends all photos to image recognition API (checks cache first):
-          - Returns: item name, item type, estimated shelf life
-          - If multiple photos, system uses the highest-confidence result
+      - System sends all photos to recognition pipeline (checks cache first):
+          - Barcode photo: decoded via barcode/QR scanner for exact product lookup
+          - Other photos: sent to image recognition API for visual identification
+          - If multiple signals available, system merges results (barcode result takes priority over visual)
       - Regardless of confidence: system shows a brief confirmation card ("Fish sauce — expires June 2026")
         with a single "Looks good ✓" button and an "Edit" link — never auto-saves without user seeing result
       - If confidence ≥85%: card pre-filled, user confirms with one tap
@@ -35,7 +36,7 @@ flows:
       - Confidence 60–85%: pre-filled card, expiry field highlighted for verification
       - Confidence <60%: empty form (name + expiry required)
       - Item without photos: text-only card on dashboard (styled deliberately, not a broken photo card)
-      - Multiple photos provided: system picks the best visual photo for the dashboard card (prefer appearance over label)
+      - Multiple photos provided: system picks the best visual photo for the dashboard card (prefer appearance over barcode)
       - Date picker: never default to today (too easy to accidentally save wrong date)
       - Validate expiry date: must be within 2 years from today; warn if >18 months (unusual)
       - Validate expiry date: if date is in the past, block save with "That date has already passed"
@@ -44,7 +45,7 @@ flows:
       - One photo is blurry/unclear but another is usable: system uses the usable one silently
       - All photos are blurry/unclear: system shows "Hard to read — try again or enter manually"
       - User skips photos entirely: go directly to fallback form — not penalised, no reminder
-      - User adds redundant photos (e.g., same angle twice): deduplicate silently, show one result
+      - User adds redundant photos (e.g., two barcodes): deduplicate silently, show one result
       - User navigates away mid-capture: discard (no draft save)
       - Duplicate item names: allow (user might have multiple jars of same item)
       - Cache hit (e.g., "soy sauce"): use cached recognition, instant confirm card
@@ -52,16 +53,17 @@ flows:
     data_collected:
       - Item name (required)
       - Expiry date (required, ISO format)
-      - Photos (optional, JPEG, up to N per item)
+      - Photos (optional, JPEG, up to N per item — at least barcode and appearance distinguished by type tag)
       - Item type (auto-detected: sauce, oil, spice, condiment, produce, dried, tofu, seafood, dairy, other, unknown)
       - Recognition confidence score (for debugging/quality monitoring)
       - Timestamp added
       - Cache hit flag
       - Has photo flag (for monitoring photo adoption rate)
       - Photo count per item
-      - Photo types present (appearance, label, other)
+      - Photo types present (barcode, appearance, label, other)
     open_questions:
       - Which image recognition API? (Google Vision, OpenAI Vision, custom?)
+      - Which barcode lookup API/database for product identification from barcodes?
       - What is the max number of photos per item? (cap needed for storage)
       - Should autocomplete list be curated manually or seeded from recognition logs?
       - Should we log low-confidence recognitions for future model improvement?

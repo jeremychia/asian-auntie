@@ -47,7 +47,6 @@ excluded_from_mvp:
   - "Analytics / waste insights (v2)"
   - "Web dashboard (v2+)"
   - "Supermarket integration (v2+)"
-  - "Barcode scanning (v2)"
   - "Trade perishables integration (only after trade feature reaches critical mass)"
   - "Cross-device sync (v2)"
 
