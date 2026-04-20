@@ -25,8 +25,12 @@ flows:
       - If image recognition fails or user skips photos
       - System shows minimal form: Item name (required), Expiry date (required), photos optional
       - Item name uses fuzzy autocomplete from known Asian pantry items (top ~100 items)
-      - Date picker defaults to +1 week for produce-type items, +6 months for pantry items
-        (based on item type if detected, otherwise +3 months as neutral default)
+      - Date picker defaults based on detected item type (per MANAGE-002):
+          - Produce / fresh herbs: +5 days
+          - Dairy / tofu: +7 days
+          - Opened sauces / condiments: +6 months
+          - Unopened pantry items (sauces, oils, dried): +12 months
+          - Unknown type: +3 months (neutral default)
       - User taps "Save" → item saved → dashboard updates
     decision_points:
       - Confidence ≥85%: one-tap confirm (pre-filled card)
