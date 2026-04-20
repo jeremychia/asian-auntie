@@ -175,9 +175,12 @@ window.addEventListener('DOMContentLoaded', function() {
     {% if mid_conf %}<span class="hint">Check the expiry date looks right.</span>{% endif %}
   {% endif %}
 
-    <label for="name">Item name</label>
-    {{ form.name(id="name", list="pantry-items", placeholder="e.g. Fish sauce") }}
-    {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    <div class="autocomplete-wrap">
+      <label for="name">Item name</label>
+      {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce") }}
+      <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
+      {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    </div>
 
     <label for="item_type">Type</label>
     {{ form.item_type(id="item_type") }}
@@ -207,9 +210,12 @@ window.addEventListener('DOMContentLoaded', function() {
   {{ form.hidden_tag() }}
   <input type="hidden" name="step" value="manual">
 
-  <label for="name">Item name</label>
-  {{ form.name(id="name", list="pantry-items", placeholder="e.g. Fish sauce", autofocus=true) }}
-  {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+  <div class="autocomplete-wrap">
+    <label for="name">Item name</label>
+    {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce", autofocus=true) }}
+    <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
+    {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+  </div>
 
   <label for="item_type">Type</label>
   {{ form.item_type(id="item_type") }}
@@ -232,39 +238,106 @@ window.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
-{# ── Autocomplete list ──────────────────────────────────────────── #}
-<datalist id="pantry-items">
-  <option value="Fish sauce"><option value="Light soy sauce"><option value="Dark soy sauce">
-  <option value="Oyster sauce"><option value="Hoisin sauce"><option value="Sweet soy sauce">
-  <option value="Sesame oil"><option value="Chilli oil"><option value="Coconut milk">
-  <option value="Coconut cream"><option value="Rice vinegar"><option value="Black vinegar">
-  <option value="Mirin"><option value="Sake"><option value="Shaoxing wine">
-  <option value="Miso paste"><option value="Gochujang"><option value="Doenjang">
-  <option value="Sambal oelek"><option value="Sriracha"><option value="XO sauce">
-  <option value="Doubanjiang"><option value="Black bean sauce"><option value="Char siu sauce">
-  <option value="Plum sauce"><option value="Sweet chilli sauce"><option value="Teriyaki sauce">
-  <option value="Ponzu"><option value="Maggi seasoning"><option value="Shrimp paste">
-  <option value="Tamarind paste"><option value="Coconut sugar"><option value="Palm sugar">
-  <option value="Rock sugar"><option value="Condensed milk"><option value="Evaporated milk">
-  <option value="Gochugaru"><option value="Five spice powder"><option value="Curry powder">
-  <option value="Turmeric powder"><option value="White pepper"><option value="Sichuan peppercorn">
-  <option value="Star anise"><option value="Dried chillies"><option value="Chilli flakes">
-  <option value="Lemongrass paste"><option value="Galangal powder">
-  <option value="Jasmine rice"><option value="Glutinous rice"><option value="Brown rice">
-  <option value="Rice flour"><option value="Tapioca starch"><option value="Cornstarch">
-  <option value="Potato starch"><option value="Panko breadcrumbs">
-  <option value="Rice noodles"><option value="Glass noodles"><option value="Egg noodles">
-  <option value="Udon noodles"><option value="Soba noodles"><option value="Instant noodles">
-  <option value="Wonton wrappers"><option value="Spring roll wrappers"><option value="Dumpling wrappers">
-  <option value="Silken tofu"><option value="Firm tofu"><option value="Tofu puffs">
-  <option value="Dried shiitake mushrooms"><option value="Wood ear mushrooms"><option value="Dried shrimp">
-  <option value="Dried scallops"><option value="Fermented black beans"><option value="Lily buds">
-  <option value="Bean curd skin"><option value="Kombu"><option value="Nori">
-  <option value="Wakame"><option value="Bonito flakes"><option value="Dashi stock">
-  <option value="Fish balls"><option value="Fish cakes"><option value="Lap cheong">
-  <option value="Water chestnuts"><option value="Bamboo shoots"><option value="Baby corn">
-  <option value="Sesame seeds"><option value="Black sesame seeds">
-</datalist>
+{# ── Fuzzy autocomplete ─────────────────────────────────────────── #}
+<script>
+const PANTRY_ITEMS = [
+  "Fish sauce","Light soy sauce","Dark soy sauce","Oyster sauce","Hoisin sauce",
+  "Sweet soy sauce","Kecap manis","Sesame oil","Chilli oil","Coconut milk",
+  "Coconut cream","Rice vinegar","Black vinegar","Chinkiang vinegar","Mirin",
+  "Sake","Shaoxing wine","Miso paste","White miso","Red miso",
+  "Gochujang","Doenjang","Sambal oelek","Sriracha","XO sauce",
+  "Doubanjiang","Chilli bean paste","Black bean sauce","Char siu sauce","Plum sauce",
+  "Sweet chilli sauce","Teriyaki sauce","Ponzu","Maggi seasoning","Shrimp paste",
+  "Belacan","Tamarind paste","Laksa paste","Pad Thai sauce","Coconut sugar",
+  "Palm sugar","Rock sugar","Condensed milk","Evaporated milk","Pandan extract",
+  "Gochugaru","Five spice powder","Curry powder","Turmeric powder","White pepper",
+  "Sichuan peppercorn","Star anise","Dried chillies","Chilli flakes","Togarashi",
+  "Lemongrass paste","Galangal powder","Dashi powder","Agar agar",
+  "Jasmine rice","Glutinous rice","Brown rice","Rice flour","Tapioca starch",
+  "Cornstarch","Potato starch","Panko breadcrumbs",
+  "Rice noodles","Glass noodles","Egg noodles","Udon noodles","Soba noodles",
+  "Instant noodles","Wonton wrappers","Spring roll wrappers","Dumpling wrappers",
+  "Silken tofu","Firm tofu","Tofu puffs",
+  "Dried shiitake mushrooms","Wood ear mushrooms","Dried shrimp","Dried scallops",
+  "Fermented black beans","Lily buds","Bean curd skin","Dried red dates",
+  "Kombu","Nori","Wakame","Bonito flakes","Dashi stock",
+  "Fish balls","Fish cakes","Lap cheong",
+  "Water chestnuts","Bamboo shoots","Baby corn",
+  "Sesame seeds","Black sesame seeds",
+];
+
+function fuzzyScore(item, q) {
+  const s = item.toLowerCase();
+  if (s.includes(q)) return 100 + (q.length / s.length) * 10;
+  let j = 0;
+  for (let i = 0; i < s.length && j < q.length; i++) {
+    if (s[i] === q[j]) j++;
+  }
+  return j === q.length ? 10 + (q.length / s.length) * 10 : 0;
+}
+
+(function () {
+  const input = document.getElementById('name');
+  const list = document.getElementById('name-dropdown');
+  if (!input || !list) return;
+
+  let activeIdx = 0;
+
+  function renderSuggestions(query) {
+    const q = query.toLowerCase();
+    if (q.length < 2) { list.hidden = true; return; }
+    const scored = PANTRY_ITEMS
+      .map(item => ({ item, score: fuzzyScore(item, q) }))
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6);
+    if (!scored.length) { list.hidden = true; return; }
+    activeIdx = 0;
+    list.innerHTML = scored.map((x, i) =>
+      `<li role="option" data-val="${x.item}" class="${i === 0 ? 'is-active' : ''}">${x.item}</li>`
+    ).join('');
+    list.hidden = false;
+  }
+
+  function selectItem(value) {
+    input.value = value;
+    list.hidden = true;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  input.addEventListener('input', () => renderSuggestions(input.value));
+
+  input.addEventListener('keydown', e => {
+    if (list.hidden) return;
+    const items = list.querySelectorAll('li');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[activeIdx]?.classList.remove('is-active');
+      activeIdx = Math.min(activeIdx + 1, items.length - 1);
+      items[activeIdx]?.classList.add('is-active');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[activeIdx]?.classList.remove('is-active');
+      activeIdx = Math.max(activeIdx - 1, 0);
+      items[activeIdx]?.classList.add('is-active');
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      const active = list.querySelector('.is-active');
+      if (active) { e.preventDefault(); selectItem(active.dataset.val); }
+    } else if (e.key === 'Escape') {
+      list.hidden = true;
+    }
+  });
+
+  list.addEventListener('mousedown', e => {
+    const li = e.target.closest('li');
+    if (li) { e.preventDefault(); selectItem(li.dataset.val); }
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !list.contains(e.target)) list.hidden = true;
+  });
+})();
+</script>
 
 
 <script>

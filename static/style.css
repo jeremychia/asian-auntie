@@ -770,6 +770,37 @@ nav.container {
   color: var(--warn);
 }
 
+.autocomplete-wrap {
+  position: relative;
+}
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% - 0.5rem);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.autocomplete-dropdown li {
+  padding: 0.5rem 0.875rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.autocomplete-dropdown li.is-active,
+.autocomplete-dropdown li:hover {
+  background: var(--brand-tint);
+  color: var(--brand-dark);
+}
+
 .hint {
   font-size: 0.875rem;
   color: var(--brand-dark);
