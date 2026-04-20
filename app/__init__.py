@@ -101,12 +101,18 @@ def create_app():
     from app.recipes.routes import recipes_bp
     from app.api.auth import api_auth_bp
     from app.api.items import api_items_bp
+    from app.notifications import notifications_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(perishables_bp)
     app.register_blueprint(recipes_bp)
     app.register_blueprint(api_auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(api_items_bp, url_prefix="/api/v1")
+    app.register_blueprint(notifications_bp)
+
+    @app.context_processor
+    def inject_vapid_public_key():
+        return {"vapid_public_key": app.config.get("VAPID_PUBLIC_KEY", "")}
 
     return app
 

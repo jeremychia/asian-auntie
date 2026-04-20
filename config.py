@@ -31,6 +31,17 @@ class Config:
     # OpenAI
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
+    # Web Push (VAPID) — generate your own keys with py_vapid for production
+    VAPID_PRIVATE_KEY = os.environ.get(
+        "VAPID_PRIVATE_KEY",
+        "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgZxc1+xhanvM0lNTT\nUEsuid/qEtNYikJvykLdFHVxV0mhRANCAAR5j+/eL/K2r0x+eBbQ6fd6MemCUlLb\nuOJPxE18VSHpa+9cQcOaa7b++Ed+ijufyB1d+tSsardyGPiNgIs//lr4\n-----END PRIVATE KEY-----\n",
+    )
+    VAPID_PUBLIC_KEY = os.environ.get(
+        "VAPID_PUBLIC_KEY",
+        "BHmP794v8ravTH54FtDp93ox6YJSUtu44k_ETXxVIelr71xBw5prtv74R36KO5_IHV361Kxqt3IY-I2Aiz_-Wvg",
+    )
+    VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "admin@asian-auntie.app")
+
     # Logging
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 

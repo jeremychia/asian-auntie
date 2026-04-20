@@ -20,6 +20,7 @@ dependencies = [
     "pillow>=11.0",
     "openai>=1.59",
     "python-dotenv>=1.0",
+    "pywebpush>=2.3.0",
 ]
 
 [dependency-groups]

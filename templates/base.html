@@ -6,6 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Asian Auntie" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <link
       rel="manifest"
       href="{{ url_for('static', filename='manifest.json') }}"
@@ -72,5 +73,51 @@
       </div>
       {% endif %} {% endwith %} {% block content %}{% endblock %}
     </main>
+
+    {% if current_user.is_authenticated %}
+    <script>
+    const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = "=".repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+      const rawData = atob(base64);
+      return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+    }
+
+    function csrfHeaders() {
+      return {
+        "Content-Type": "application/json",
+        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')?.content || "",
+      };
+    }
+
+    async function registerPush() {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) return; // already subscribed
+
+      // Only subscribe if user has already granted permission (not prompting here — onboarding does that)
+      if (Notification.permission !== "granted") return;
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+      await fetch("/notifications/subscribe", {
+        method: "POST",
+        headers: csrfHeaders(),
+        body: JSON.stringify({ subscription: sub.toJSON() }),
+      });
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/static/sw.js", { scope: "/" })
+        .then(() => registerPush())
+        .catch(() => {});
+    }
+    </script>
+    {% endif %}
   </body>
 </html>
