@@ -156,7 +156,9 @@ window.addEventListener('DOMContentLoaded', function() {
   <div class="confirm-card">
     <p class="confirm-card__summary">
       <strong>{{ form.name.data }}</strong>
-      {% if form.expiry_date.data %}&nbsp;· expires {{ form.expiry_date.data.strftime("%-d %b %Y") }}{% endif %}
+      {% if form.expiry_date.data %}&nbsp;· expires {{ form.expiry_date.data.strftime("%-d %b %Y") }}
+        {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
+      {% endif %}
     </p>
     <div class="confirm-card__actions">
       <button type="submit" class="btn btn-primary">Looks good</button>
@@ -180,7 +182,9 @@ window.addEventListener('DOMContentLoaded', function() {
     <label for="item_type">Type</label>
     {{ form.item_type(id="item_type") }}
 
-    <label for="expiry_date">Expiry date</label>
+    <label for="expiry_date">Expiry date
+      {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
+    </label>
     {{ form.expiry_date(id="expiry_date", class=("field-highlight" if mid_conf else "")) }}
     {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
     <small id="expiry-warning" class="field-warning" hidden></small>

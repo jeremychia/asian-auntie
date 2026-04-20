@@ -751,6 +751,25 @@ nav.container {
   box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.12) !important;
 }
 
+.expiry-source-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.1em 0.45em;
+  border-radius: var(--r-sm);
+  margin-left: 0.4em;
+  vertical-align: middle;
+}
+.expiry-source-label--printed {
+  background: var(--brand-tint);
+  color: var(--brand-dark);
+}
+.expiry-source-label--estimated {
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  color: var(--warn);
+}
+
 .hint {
   font-size: 0.875rem;
   color: var(--brand-dark);

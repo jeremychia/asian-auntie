@@ -128,19 +128,23 @@ def add_item():
         confidence = recognition.confidence if recognition else 0.0
         form = AddItemForm()
 
+        expiry_source = None
         if recognition and confidence >= 0.60 and recognition.name:
             form.name.data = recognition.name
             form.item_type.data = recognition.item_type
             if recognition.printed_expiry_date:
                 form.expiry_date.data = recognition.printed_expiry_date
+                expiry_source = "printed"
             elif recognition.shelf_life_days:
                 form.expiry_date.data = date.today() + timedelta(
                     days=recognition.shelf_life_days
                 )
+                expiry_source = "estimated"
             else:
                 form.expiry_date.data = date.today() + timedelta(
                     days=_SHELF_LIFE_DEFAULTS.get(recognition.item_type, 90)
                 )
+                expiry_source = "estimated"
 
         photo_data = [{"path": p["path"], "type": p["type"]} for p in saved_photos]
         form.photo_paths_json.data = json.dumps(photo_data)
@@ -154,6 +158,7 @@ def add_item():
             confidence=confidence,
             recognition=recognition,
             photo_items=photo_data,
+            expiry_source=expiry_source,
         )
 
     # ── POST step=confirm: save item from confirmation card ───────────────────
