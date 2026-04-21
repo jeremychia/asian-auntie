@@ -17,6 +17,7 @@ import time
 import json
 import argparse
 import socket
+import unicodedata
 from typing import NamedTuple, Optional
 from collections import defaultdict
 
@@ -34,8 +35,63 @@ TITLE_SUFFIXES = [
     r"\s*[|\-–—]\s*Glebe Kitchen.*",
     r"\s*[|\-–—]\s*Vicky Pham.*",
     r"\s*[|\-–—]\s*iamafoodblog.*",
+    r"\s*[|\-–—]\s*Nyonya Cooking.*",
+    r"\s*[|\-–—]\s*RecipeTin Eats.*",
+    r"\s*[|\-–—]\s*Huang Kitchen.*",
+    r"\s*[|\-–—]\s*Delightful Plate.*",
+    r"\s*[|\-–—]\s*Hot Thai Kitchen.*",
+    r"\s*[|\-–—]\s*Cook Me Indonesian.*",
+    r"\s*[|\-–—]\s*Daily Cooking Quest.*",
+    r"\s*[|\-–—]\s*What To Cook Today.*",
     r"\s*Recipe$",
 ]
+
+# Known alternate titles/transliterations for recipe names.
+# When a recipe name matches a key, its aliases are also accepted.
+RECIPE_ALIASES: dict[str, list[str]] = {
+    "Pho Bo": ["Pho", "Vietnamese Noodle Soup", "Pho Vietnamese Noodle Soup"],
+    "Pho Ga": ["Chicken Pho", "20-Minute Chicken Pho"],
+    "Bo Kho": ["Bo Kho", "Bho Kho", "Vietnamese Beef Stew"],
+    "Bun Bo Hue": [
+        "Bun Bo Hue",
+        "Bún Bò Huế",
+        "Spicy Vietnamese Beef",
+        "Spicy Beef Pork Noodle",
+    ],
+    "Banh Xeo": [
+        "Banh Xeo",
+        "Bánh Xèo",
+        "Vietnamese Crepes",
+        "Vietnamese Pancakes",
+        "Crispy Vietnamese",
+    ],
+    "Goi Cuon": ["Goi Cuon", "Gỏi Cuốn", "Vietnamese Spring Rolls"],
+    "Ca Kho To": [
+        "Ca Kho To",
+        "Cá Kho Tộ",
+        "Vietnamese Braised Fish",
+        "Vietnamese Caramelized",
+        "Braised Catfish",
+    ],
+    "Bun Cha": ["Bun Cha", "Bún Chả", "Vietnamese Grilled Pork", "Authentic Bun Cha"],
+    "Com Tam": ["Com Tam", "Cơm Tấm", "Broken Rice", "Authentic Com Tam"],
+    "Cha Ca La Vong": [
+        "Cha Ca",
+        "Chả Cá",
+        "Hanoi Fried Fish",
+        "Turmeric Dill",
+        "Chả Cá Lã Vọng",
+        "Cha Ca La Vong",
+    ],
+    "Som Tam": ["Som Tam", "Green Papaya Salad", "Thai Green Papaya"],
+    "Pad See Ew": ["Pad See Ew", "Thai Rice Noodles"],
+    "Pan Mee": ["Pan Mee", "Hakka Flat Noodle"],
+    "Rawon": ["Rawon", "East Javanese Beef Stew"],
+    "Pecel": ["Pecel", "Javanese Peanut Sauce", "Pecel Sayur"],
+    "Chee Cheong Fun": ["Chee Cheong Fun", "Cheung Fun", "Rice Noodle"],
+    "Bak Kut Teh": ["Bak Kut Teh", "Pork Ribs Tea", "Ultimate Guide"],
+    "Gado-Gado": ["Gado-Gado", "Gado Gado", "Indonesian salad", "peanut sauce"],
+}
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
@@ -100,8 +156,18 @@ def strip_title_suffix(title: str) -> str:
     return title.strip()
 
 
+def _normalize(s: str) -> str:
+    return (
+        unicodedata.normalize("NFKD", s)
+        .encode("ascii", "ignore")
+        .decode()
+        .lower()
+        .strip()
+    )
+
+
 def similarity(a: str, b: str) -> float:
-    return difflib.SequenceMatcher(None, a.lower().strip(), b.lower().strip()).ratio()
+    return difflib.SequenceMatcher(None, _normalize(a), _normalize(b)).ratio()
 
 
 def fetch_and_extract(
@@ -160,6 +226,23 @@ def validate_recipe(recipe: dict, threshold: float = 0.60) -> ValidationResult:
 
     if h1:
         h1_score = similarity(recipe_name, h1)
+
+    # Also score against known aliases (transliterations, alternate titles).
+    # Use substring containment as a fallback for long descriptive titles.
+    aliases = RECIPE_ALIASES.get(recipe_name, [])
+    for alias in aliases:
+        for text, score_var in [(title, "title"), (h1, "h1")]:
+            if not text:
+                continue
+            s = similarity(alias, text)
+            # Also treat as a match if the alias appears verbatim inside the title
+            if s < threshold and _normalize(alias) in _normalize(text):
+                s = threshold
+            if s >= threshold:
+                if score_var == "title":
+                    title_score = max(title_score, s)
+                else:
+                    h1_score = max(h1_score, s)
 
     best_score = max(title_score, h1_score)
 
