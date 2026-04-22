@@ -39,6 +39,24 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07),
     0 2px 4px -1px rgba(0, 0, 0, 0.04);
 
+  /* Success */
+  --success: #166534;
+  --success-tint: #dcfce7;
+
+  /* Typography scale */
+  --font-2xs: 0.68rem;
+  --font-xs: 0.72rem;
+  --font-caption: 0.75rem;
+  --font-sm: 0.8rem;
+  --font-secondary: 0.9rem;
+  --font-md: 0.875rem;
+  --font-base: 1rem;
+  --font-lg: 1.125rem;
+  --font-title: 1.375rem;
+
+  /* Transitions */
+  --transition-quick: color 0.15s, background 0.15s;
+
   /* PicoCSS bridge — so form fields & base styles stay consistent */
   --pico-primary: var(--brand);
   --pico-primary-hover: var(--brand-dark);
@@ -61,6 +79,10 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+
+/* PicoCSS scopes its own custom properties (--pico-color, --pico-background-color, etc.)
+   to each element, overriding the :root tokens. Buttons/inputs/selects that don't use
+   PicoCSS's default appearance need --pico-* reset inline on their selector. */
 
 /* Nudge PicoCSS containers out of the way — we handle layout ourselves */
 main.container,
@@ -92,7 +114,7 @@ nav.container {
 
 .nav-brand {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--font-base);
   color: var(--brand);
   text-decoration: none;
   letter-spacing: -0.015em;
@@ -108,15 +130,13 @@ nav.container {
 }
 
 .nav-link {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   font-weight: 500;
   color: var(--text-muted);
   text-decoration: none;
   padding: 0.35rem 0.75rem;
   border-radius: var(--r-full);
-  transition:
-    color 0.15s,
-    background 0.15s;
+  transition: var(--transition-quick);
   min-height: 32px;
   display: inline-flex;
   align-items: center;
@@ -141,7 +161,7 @@ nav.container {
 }
 
 .nav-logout {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   font-weight: 500;
   color: var(--text-muted);
   background: none;
@@ -183,12 +203,12 @@ nav.container {
   padding: 0.75rem 1rem;
   border-radius: var(--r-md);
   margin-bottom: 1.25rem;
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   font-weight: 500;
 }
 .flash-success {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--success-tint);
+  color: var(--success);
 }
 .flash-error {
   background: var(--urgent-tint);
@@ -229,7 +249,7 @@ nav.container {
 }
 
 .auth-eyebrow {
-  font-size: 0.75rem;
+  font-size: var(--font-caption);
   font-weight: 700;
   color: var(--brand);
   text-transform: uppercase;
@@ -238,14 +258,14 @@ nav.container {
 }
 
 .auth-card h1 {
-  font-size: 1.375rem;
+  font-size: var(--font-title);
   font-weight: 700;
   margin: 0 0 0.75rem;
   letter-spacing: -0.02em;
 }
 
 .auth-subtitle {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   margin: 0 0 1.5rem;
   line-height: 1.4;
@@ -254,7 +274,7 @@ nav.container {
 .auth-footer {
   text-align: center;
   margin-top: 1.25rem;
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
 }
 .auth-footer a {
@@ -278,7 +298,7 @@ nav.container {
 }
 
 .page-title {
-  font-size: 1.375rem;
+  font-size: var(--font-title);
   font-weight: 700;
   margin: 0;
   letter-spacing: -0.02em;
@@ -286,7 +306,7 @@ nav.container {
 }
 
 .page-title small {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   font-weight: 400;
   color: var(--text-subtle);
   margin-left: 0.5rem;
@@ -301,7 +321,7 @@ nav.container {
   justify-content: center;
   font-family: var(--pico-font-family);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   border-radius: var(--r-md);
   padding: 0.625rem 1.25rem;
   text-decoration: none;
@@ -366,7 +386,7 @@ nav.container {
 }
 
 .btn-sm {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   padding: 0.4rem 0.875rem;
   border-radius: var(--r-sm);
 }
@@ -434,7 +454,7 @@ nav.container {
 
 .item-card__name {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text);
   line-height: 1.35;
   display: block;
@@ -442,7 +462,7 @@ nav.container {
 }
 
 .item-card__type {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   color: var(--text-subtle);
   text-transform: capitalize;
   display: block;
@@ -451,7 +471,7 @@ nav.container {
 .item-card__badge {
   display: inline-block;
   margin-top: 0.625rem;
-  font-size: 0.68rem;
+  font-size: var(--font-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -459,18 +479,7 @@ nav.container {
   border-radius: var(--r-full);
 }
 
-.item-card--today .item-card__badge {
-  background: var(--urgent-tint);
-  color: var(--urgent);
-}
-.item-card--soon .item-card__badge {
-  background: var(--warn-tint);
-  color: var(--warn);
-}
-.item-card--ok .item-card__badge {
-  background: var(--expired-tint);
-  color: var(--text-muted);
-}
+/* badge urgency colors consolidated in "Status colors" section below */
 
 /* ═══════════════════════════════════════════════════
    Empty state
@@ -487,14 +496,14 @@ nav.container {
 }
 
 .empty-state__title {
-  font-size: 1.125rem;
+  font-size: var(--font-lg);
   font-weight: 600;
   color: var(--text);
   margin: 0 0 0.5rem;
 }
 
 .empty-state__body {
-  font-size: 0.9rem;
+  font-size: var(--font-secondary);
   color: var(--text-muted);
   margin: 0 0 1.75rem;
 }
@@ -506,7 +515,7 @@ nav.container {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   font-weight: 500;
   color: var(--text-muted);
   text-decoration: none;
@@ -562,13 +571,13 @@ nav.container {
 }
 
 .meta-label {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   font-weight: 500;
 }
 
 .meta-value {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text);
   font-weight: 600;
   display: flex;
@@ -579,7 +588,7 @@ nav.container {
 /* Inline urgency badges */
 .badge {
   display: inline-block;
-  font-size: 0.68rem;
+  font-size: var(--font-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -587,17 +596,29 @@ nav.container {
   border-radius: var(--r-full);
   vertical-align: middle;
 }
-.badge--today {
+/* ═══════════════════════════════════════════════════
+   Status colors (badges, match chips, notif badges)
+═══════════════════════════════════════════════════ */
+:is(.badge--today, .item-card--today .item-card__badge) {
   background: var(--urgent-tint);
   color: var(--urgent);
 }
-.badge--soon {
+:is(.badge--soon, .item-card--soon .item-card__badge, .match--mid) {
   background: var(--warn-tint);
   color: var(--warn);
 }
-.badge--expired {
+:is(
+    .badge--expired,
+    .item-card--ok .item-card__badge,
+    .match--low,
+    .notif-badge--off
+  ) {
   background: var(--expired-tint);
-  color: var(--expired);
+  color: var(--text-muted);
+}
+:is(.match--high, .notif-badge--on) {
+  background: var(--success-tint);
+  color: var(--success);
 }
 
 .item-actions {
@@ -615,7 +636,7 @@ nav.container {
 
 .remove-panel summary {
   padding: 0.875rem 1.125rem;
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
@@ -623,9 +644,7 @@ nav.container {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition:
-    color 0.15s,
-    background 0.15s;
+  transition: var(--transition-quick);
   user-select: none;
 }
 .remove-panel summary::-webkit-details-marker {
@@ -642,7 +661,7 @@ nav.container {
 .remove-panel summary::after {
   content: "›";
   margin-left: auto;
-  font-size: 1.125rem;
+  font-size: var(--font-lg);
   transition: transform 0.2s;
 }
 .remove-panel[open] summary::after {
@@ -663,7 +682,7 @@ nav.container {
 }
 
 .step-label {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -674,7 +693,7 @@ nav.container {
 
 .step-hint {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: var(--font-secondary);
   margin: 0;
 }
 
@@ -697,7 +716,7 @@ nav.container {
 }
 
 .photo-capture-text {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   margin: 0;
 }
@@ -713,7 +732,7 @@ nav.container {
   border-radius: var(--r-md);
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--font-secondary);
   transition: background 0.15s;
 }
 .photo-capture-label:hover {
@@ -738,7 +757,7 @@ nav.container {
 }
 
 .confirm-card__summary {
-  font-size: 1rem;
+  font-size: var(--font-base);
   font-weight: 600;
   margin: 0 0 1rem;
   color: var(--text);
@@ -765,7 +784,7 @@ nav.container {
 }
 
 .expiry-source-label {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   font-weight: 500;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -805,7 +824,7 @@ nav.container {
 .autocomplete-dropdown li {
   padding: 0.5rem 0.875rem;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--font-secondary);
   color: var(--text);
 }
 .autocomplete-dropdown li.is-active,
@@ -815,7 +834,7 @@ nav.container {
 }
 
 .hint {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--brand-dark);
   background: var(--brand-tint);
   padding: 0.625rem 0.875rem;
@@ -833,7 +852,7 @@ nav.container {
 }
 
 .skip-link {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   text-decoration: none;
 }
@@ -861,7 +880,7 @@ nav.container {
 .search-input {
   flex: 1;
   font-family: var(--pico-font-family);
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border-strong);
@@ -870,7 +889,6 @@ nav.container {
   outline: none;
   min-width: 0;
   /* override pico */
-  --pico-color: var(--text);
   --pico-background-color: var(--surface);
   --pico-border-color: var(--border-strong);
   margin: 0;
@@ -887,7 +905,7 @@ nav.container {
 
 .sort-select {
   font-family: var(--pico-font-family);
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   font-weight: 500;
   color: var(--text-muted);
   background: var(--surface);
@@ -911,7 +929,7 @@ nav.container {
 .no-results {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   padding: 2rem 0;
 }
 
@@ -957,7 +975,7 @@ nav.container {
 
 .item-card__name--overlay {
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: #fff;
   line-height: 1.3;
   flex: 1;
@@ -1072,7 +1090,7 @@ nav.container {
   border: none;
   border-radius: 0 var(--r-lg) var(--r-lg) 0;
   font-family: var(--pico-font-family);
-  font-size: 0.75rem;
+  font-size: var(--font-caption);
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -1100,7 +1118,7 @@ nav.container {
   margin-bottom: 1.25rem;
 }
 .warning-banner__text {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   font-weight: 500;
   color: var(--urgent);
   margin: 0;
@@ -1122,7 +1140,7 @@ nav.container {
   color: #fff;
   border-radius: var(--r-full);
   padding: 0.625rem 1rem 0.625rem 1.25rem;
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   font-weight: 500;
   box-shadow:
     var(--shadow-md),
@@ -1163,7 +1181,7 @@ nav.container {
   border-radius: var(--r-full);
   color: #fff;
   font-family: var(--pico-font-family);
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   font-weight: 700;
   padding: 0.25rem 0.75rem;
   cursor: pointer;
@@ -1178,7 +1196,7 @@ nav.container {
 }
 
 .undo-toast__timer {
-  font-size: 0.75rem;
+  font-size: var(--font-caption);
   color: rgba(255, 255, 255, 0.5);
   min-width: 1ch;
   text-align: right;
@@ -1205,7 +1223,7 @@ nav.container {
 }
 
 .confirm-dialog__question {
-  font-size: 1rem;
+  font-size: var(--font-base);
   font-weight: 600;
   color: var(--text);
   margin: 0 0 1.25rem;
@@ -1230,7 +1248,7 @@ nav.container {
    Recipes: scope note
 ═══════════════════════════════════════════════════ */
 .recipes-scope-note {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   margin: -0.75rem 0 1.75rem;
 }
@@ -1247,14 +1265,14 @@ nav.container {
 }
 
 .btn-lg {
-  font-size: 1rem;
+  font-size: var(--font-base);
   padding: 0.875rem 1.5rem;
   border-radius: var(--r-lg);
   justify-content: space-between;
 }
 
 .pantry-cta__count {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   font-weight: 500;
   opacity: 0.75;
 }
@@ -1276,7 +1294,7 @@ nav.container {
   padding: 0.375rem 0.625rem 0.375rem 0.875rem;
   border-radius: var(--r-full);
   font-family: var(--pico-font-family);
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -1303,7 +1321,7 @@ nav.container {
   color: var(--brand);
 }
 .chip__remove {
-  font-size: 0.9rem;
+  font-size: var(--font-secondary);
   line-height: 1;
   opacity: 0.6;
   transition: opacity 0.1s;
@@ -1329,7 +1347,7 @@ nav.container {
 .manual-input {
   width: 100%;
   font-family: var(--pico-font-family);
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border-strong);
@@ -1337,7 +1355,6 @@ nav.container {
   padding: 0.55rem 0.875rem;
   outline: none;
   /* override pico */
-  --pico-color: var(--text);
   --pico-background-color: var(--surface);
   margin: 0;
   height: auto;
@@ -1365,7 +1382,7 @@ nav.container {
 }
 .autocomplete-item {
   padding: 0.5rem 0.875rem;
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text);
   cursor: pointer;
 }
@@ -1375,7 +1392,7 @@ nav.container {
 }
 
 .no-ingredients-msg {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   margin-top: 0.5rem;
   text-align: center;
@@ -1389,7 +1406,7 @@ nav.container {
 }
 
 .results-title {
-  font-size: 1rem;
+  font-size: var(--font-base);
   font-weight: 600;
   color: var(--text-muted);
   margin: 0;
@@ -1415,7 +1432,6 @@ nav.container {
     box-shadow 0.15s,
     border-color 0.15s;
   /* override pico */
-  --pico-color: var(--text);
   margin: 0;
   box-shadow: none;
 }
@@ -1443,27 +1459,15 @@ nav.container {
 }
 
 .recipe-card__match {
-  font-size: 0.75rem;
+  font-size: var(--font-caption);
   font-weight: 700;
   padding: 2px 8px;
   border-radius: var(--r-full);
   white-space: nowrap;
   flex-shrink: 0;
 }
-.match--high {
-  background: #dcfce7;
-  color: #166534;
-}
-.match--mid {
-  background: var(--warn-tint);
-  color: var(--warn);
-}
-.match--low {
-  background: var(--expired-tint);
-  color: var(--text-muted);
-}
 .recipe-card__match--lg {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   padding: 3px 10px;
 }
 
@@ -1472,7 +1476,7 @@ nav.container {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 .recipe-card__dot {
@@ -1483,7 +1487,7 @@ nav.container {
 }
 
 .recipe-card__summary {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 .recipe-card__missing {
@@ -1520,7 +1524,7 @@ nav.container {
   width: 32px;
   height: 32px;
   padding: 0;
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
@@ -1560,7 +1564,7 @@ nav.container {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   margin-bottom: 0.75rem;
 }
@@ -1573,7 +1577,7 @@ nav.container {
 }
 
 .recipe-detail__summary {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
@@ -1592,7 +1596,7 @@ nav.container {
   gap: 0.625rem;
   padding: 0.625rem 1rem;
   border-bottom: 1px solid var(--border);
-  font-size: 0.875rem;
+  font-size: var(--font-md);
 }
 .ing-row:last-child {
   border-bottom: none;
@@ -1607,7 +1611,7 @@ nav.container {
 .ing-row__dot {
   width: 16px;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: var(--font-caption);
   flex-shrink: 0;
 }
 .ing-row--have .ing-row__dot {
@@ -1626,7 +1630,7 @@ nav.container {
 }
 
 .ing-row__status {
-  font-size: 0.75rem;
+  font-size: var(--font-caption);
   color: var(--text-subtle);
 }
 .ing-row--have .ing-row__status {
@@ -1651,7 +1655,7 @@ nav.container {
   }
 
   .nav-brand {
-    font-size: 0.9rem;
+    font-size: var(--font-secondary);
   }
 
   .nav-end {
@@ -1659,13 +1663,13 @@ nav.container {
   }
 
   .nav-link {
-    font-size: 0.8rem;
+    font-size: var(--font-sm);
     padding: 0.3rem 0.6rem;
     min-height: 28px;
   }
 
   .nav-logout {
-    font-size: 0.8rem;
+    font-size: var(--font-sm);
     padding: 0.3rem 0.6rem;
     min-height: 28px;
   }
@@ -1740,7 +1744,7 @@ nav.container {
 
 .recipe-card__skipped {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   color: var(--text-muted);
   font-style: italic;
   margin-top: 0.25rem;
@@ -1750,8 +1754,8 @@ nav.container {
 
 .recipe-detail__match-note {
   display: block;
-  font-size: 0.8rem;
-  color: #166534;
+  font-size: var(--font-sm);
+  color: var(--success);
   margin-top: 0.25rem;
 }
 
@@ -1764,7 +1768,7 @@ nav.container {
 }
 
 .feedback-prompt__question {
-  font-size: 0.9rem;
+  font-size: var(--font-secondary);
   font-weight: 600;
   color: var(--text);
   margin: 0 0 0.75rem;
@@ -1787,7 +1791,6 @@ nav.container {
   transition:
     background 0.15s,
     border-color 0.15s;
-  --pico-color: var(--text);
   --pico-background-color: var(--surface);
   margin: 0;
 }
@@ -1799,9 +1802,9 @@ nav.container {
 }
 
 .feedback-btn--no:hover {
-  background: #fef2f2;
+  background: var(--urgent-tint);
   border-color: #fca5a5;
-  color: #991b1b;
+  color: var(--urgent);
 }
 
 .feedback-prompt__reasons {
@@ -1811,7 +1814,7 @@ nav.container {
 }
 
 .feedback-reason-btn {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   padding: 0.4rem 0.75rem;
   border-radius: var(--r-full);
   border: 1.5px solid var(--border-strong);
@@ -1837,7 +1840,7 @@ nav.container {
 }
 
 .feedback-thanks {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   text-align: center;
   margin: 0;
@@ -1858,17 +1861,17 @@ nav.container {
   margin: 0 0 0.375rem;
 }
 .settings-section__desc {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   margin: 0 0 1.25rem;
 }
 .settings-label {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   font-weight: 600;
   margin: 0 0 0.75rem;
 }
 .settings-hint {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   margin: 0.75rem 0 1rem;
 }
@@ -1886,14 +1889,7 @@ nav.container {
   padding: 0.2em 0.6em;
   border-radius: var(--r-full);
 }
-.notif-badge--on {
-  background: #dcfce7;
-  color: #166534;
-}
-.notif-badge--off {
-  background: var(--expired-tint);
-  color: var(--text-muted);
-}
+/* notif-badge--on/off colors consolidated in "Status colors" section */
 
 /* ── Day picker (shared by settings + onboarding) ──────────────── */
 .day-picker {
@@ -1957,7 +1953,7 @@ nav.container {
   margin: 0 0 0.5rem;
 }
 .onboarding-modal__desc {
-  font-size: 0.875rem;
+  font-size: var(--font-md);
   color: var(--text-muted);
   margin: 0 0 1.25rem;
 }
@@ -2004,6 +2000,6 @@ nav.container {
 }
 
 .toggle-icon {
-  font-size: 1rem;
+  font-size: var(--font-base);
   line-height: 1;
 }
