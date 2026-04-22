@@ -240,8 +240,15 @@ nav.container {
 .auth-card h1 {
   font-size: 1.375rem;
   font-weight: 700;
-  margin: 0 0 1.5rem;
+  margin: 0 0 0.75rem;
   letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+  line-height: 1.4;
 }
 
 .auth-footer {
