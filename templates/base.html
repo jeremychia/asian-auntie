@@ -41,14 +41,14 @@
         >
         <div class="nav-end">
           <a
-            href="{{ url_for('recipes.index') }}"
-            class="nav-link{% if request.path.startswith('/recipes') %} nav-link--active{% endif %}"
-            >Find recipes</a
-          >
-          <a
             href="{{ url_for('perishables.add_item') }}"
             class="nav-link nav-link--primary"
             >+ Add item</a
+          >
+          <a
+            href="{{ url_for('recipes.index') }}"
+            class="nav-link{% if request.path.startswith('/recipes') %} nav-link--active{% endif %}"
+            >Find recipes</a
           >
           <a
             href="{{ url_for('notifications.settings') }}"
