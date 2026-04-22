@@ -40,8 +40,11 @@
 
   <div id="photo-actions" hidden>
     <div class="form-actions">
-      <button type="button" class="btn btn-secondary" onclick="addAnotherPhoto()">Add another photo</button>
-      <button type="submit" class="btn btn-primary">Done</button>
+      <button type="button" class="btn btn-secondary" onclick="addAnotherPhoto()" id="add-more-btn">Add another photo</button>
+      <button type="submit" class="btn btn-primary" id="done-btn" onclick="handleDoneClick(event)">Done</button>
+    </div>
+    <div id="upload-status" hidden style="text-align: center; margin-top: 1rem;">
+      <p style="font-size: 0.9rem; color: #666;">⏳ Processing photos...</p>
     </div>
   </div>
 
@@ -109,6 +112,16 @@ function addAnotherPhoto() {
     '</select>';
   entries.appendChild(entry);
   document.getElementById('photo-' + idx).click();
+}
+
+function handleDoneClick(event) {
+  const doneBtn = document.getElementById('done-btn');
+  const addMoreBtn = document.getElementById('add-more-btn');
+  const uploadStatus = document.getElementById('upload-status');
+
+  doneBtn.disabled = true;
+  addMoreBtn.disabled = true;
+  uploadStatus.hidden = false;
 }
 
 // Auto-open camera on page load
