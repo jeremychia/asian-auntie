@@ -15,8 +15,13 @@
       {% endfor %}
 
       <label for="password">{{ form.password.label.text }}</label>
-      {{ form.password(id="password", autocomplete="current-password") }} {% for
-      error in form.password.errors %}
+      <div class="password-field">
+        {{ form.password(id="password", autocomplete="current-password") }}
+        <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+          <span class="toggle-icon">👁️</span>
+        </button>
+      </div>
+      {% for error in form.password.errors %}
       <small class="field-error">{{ error }}</small>
       {% endfor %}
 

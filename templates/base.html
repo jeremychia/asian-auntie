@@ -124,5 +124,22 @@
     }
     </script>
     {% endif %}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.querySelector('.toggle-password');
+      if (!toggleBtn) return;
+
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const input = document.querySelector('.password-field input');
+        const icon = toggleBtn.querySelector('.toggle-icon');
+
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        icon.textContent = isPassword ? '🙈' : '👁️';
+      });
+    });
+    </script>
   </body>
 </html>
