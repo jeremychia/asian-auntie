@@ -187,6 +187,28 @@ MANAGE-009:
     - Search searches item name only (not type, not notes) for simplicity
     - Sort preference syncs locally; cross-device sync deferred to v2
 
+MANAGE-010:
+  title: Photo compression and size limits
+  status: locked
+  decision: |
+    Compress all uploaded photos to JPEG format with 85% quality by default.
+    Enforce a strict 100KB file size limit per image by reducing quality to minimum 50% if needed.
+    This applies to all photo uploads: camera capture on add-item screen and manual photo uploads.
+  rationale: |
+    High-resolution phone photos are often 3-10MB uncompressed, consuming excessive storage and bandwidth.
+    Item recognition doesn't require high resolution — it only needs enough clarity to identify the product
+    and read any printed dates. 85% JPEG quality is imperceptible to the human eye but reduces file size
+    by 70-90% compared to original PNG/HEIC formats.
+    100KB hard limit ensures consistent storage costs and fast upload/load times across all users and network conditions.
+    Phones on slow networks (3G, rural areas) benefit from faster uploads. Users on metered connections
+    benefit from lower data usage.
+    This is transparent to the user — they upload normally, the backend handles compression silently.
+  mitigations:
+    - Compression is lossless for recognition purposes (85% quality still readable by OCR/detection models)
+    - Fallback to original bytes if compression fails (prevents corrupted uploads)
+    - Quality degradation is non-linear: starts at 85%, only reduces to 50% if image is very large
+    - Test recognition accuracy on compressed samples before shipping
+
 MANAGE-INTEGRATION:
   title: Ecosystem integration with other features
   status: pending

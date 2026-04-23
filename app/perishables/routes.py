@@ -2,6 +2,8 @@ import json
 import os
 import hashlib
 from datetime import datetime, timezone, date, timedelta
+from io import BytesIO
+from PIL import Image
 from flask import (
     Blueprint,
     render_template,
@@ -40,13 +42,43 @@ _SHELF_LIFE_DEFAULTS = {
 
 
 def _save_photo_bytes(image_bytes: bytes, original_filename: str) -> str:
-    """Write image bytes to the upload folder and return the unique filename."""
+    """Compress and save image bytes to the upload folder, return the unique filename.
+
+    Target: keep files under 100KB to optimize storage and bandwidth.
+    """
+    max_size_kb = 100
+    quality = 85
+
+    try:
+        img = Image.open(BytesIO(image_bytes))
+        if img.mode in ("RGBA", "LA", "P"):
+            img = img.convert("RGB")
+
+        compressed_buffer = BytesIO()
+        img.save(compressed_buffer, format="JPEG", quality=quality, optimize=True)
+        compressed_bytes = compressed_buffer.getvalue()
+
+        while len(compressed_bytes) > max_size_kb * 1024 and quality > 50:
+            quality -= 5
+            compressed_buffer = BytesIO()
+            img.save(compressed_buffer, format="JPEG", quality=quality, optimize=True)
+            compressed_bytes = compressed_buffer.getvalue()
+    except Exception:
+        compressed_bytes = image_bytes
+
     filename = secure_filename(original_filename) or "photo.jpg"
-    content_hash = hashlib.sha256(image_bytes).hexdigest()[:16]
+    if not filename.lower().endswith((".jpg", ".jpeg")):
+        filename = (
+            filename.rsplit(".", 1)[0] + ".jpg"
+            if "." in filename
+            else filename + ".jpg"
+        )
+
+    content_hash = hashlib.sha256(compressed_bytes).hexdigest()[:16]
     unique_name = f"{current_user.id}_{content_hash}_{filename}"
     save_path = os.path.join(current_app.config["UPLOAD_FOLDER"], unique_name)
     with open(save_path, "wb") as f:
-        f.write(image_bytes)
+        f.write(compressed_bytes)
     return unique_name
 
 
