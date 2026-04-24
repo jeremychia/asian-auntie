@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Asian Auntie" />
+    <link
+      rel="manifest"
+      href="{{ url_for('static', filename='manifest.json') }}"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="{{ url_for('static', filename='icon-192.png') }}"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <title>Asian Auntie — Finally know what to cook tonight</title>
+  </head>
+  <body class="lp-page">
+
+    <header class="site-header">
+      <div class="lp-header-inner">
+        <a href="/" class="nav-brand">Asian Auntie</a>
+        <nav class="lp-header-nav">
+          <a href="/login" class="lp-header-login">Log in</a>
+          <a href="/register" class="btn btn-primary btn-sm">Get started</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+
+      <!-- Hero -->
+      <section class="lp-hero">
+        <div class="lp-container">
+          <p class="auth-eyebrow">Your kitchen, sorted</p>
+          <h1 class="lp-hero__headline">Finally know what<br>to cook tonight.</h1>
+          <p class="lp-hero__sub">
+            Open the fridge, wonder what to make, close it again — we've all been there.
+            Asian Auntie turns what you already have into Malaysian and Southeast Asian recipes
+            you'll actually want to cook.
+          </p>
+          <div class="lp-hero__ctas">
+            <a href="/register" class="btn btn-primary btn-lg">Get started for free</a>
+            <a href="/login" class="btn btn-secondary btn-lg">Log in</a>
+          </div>
+          <div class="lp-hero-graphic" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="lp-features" id="features">
+        <div class="lp-container">
+          <h2 class="lp-section-title">Always know what's for dinner</h2>
+          <div class="lp-features-grid">
+
+            <div class="lp-feature-card">
+              <span class="lp-feature-card__icon" aria-hidden="true">🍜</span>
+              <h3 class="lp-feature-card__title">Cook with what you have</h3>
+              <p class="lp-feature-card__desc">
+                Tell Asian Auntie what's in your fridge and get Malaysian &amp; Southeast Asian
+                recipes matched to exactly what you have. No more staring blankly at the shelves.
+              </p>
+            </div>
+
+            <div class="lp-feature-card">
+              <span class="lp-feature-card__icon" aria-hidden="true">📸</span>
+              <h3 class="lp-feature-card__title">Snap to log</h3>
+              <p class="lp-feature-card__desc">
+                Point your phone at any food item and it reads the label —
+                name, expiry, done. No typing needed.
+              </p>
+            </div>
+
+            <div class="lp-feature-card">
+              <span class="lp-feature-card__icon" aria-hidden="true">⏰</span>
+              <h3 class="lp-feature-card__title">Reminders before things turn</h3>
+              <p class="lp-feature-card__desc">
+                Get a nudge the evening before something's about to expire,
+                so it ends up in tonight's dinner instead of the bin.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section class="lp-how" id="how-it-works">
+        <div class="lp-container">
+          <h2 class="lp-section-title">Three steps to tonight's dinner</h2>
+          <ol class="lp-steps">
+
+            <li class="lp-step">
+              <span class="lp-step__num" aria-hidden="true">1</span>
+              <div>
+                <h3 class="lp-step__title">Snap</h3>
+                <p class="lp-step__desc">
+                  Take a photo of your food item. The app reads the label,
+                  picks up the expiry date, and logs it straight away.
+                </p>
+              </div>
+            </li>
+
+            <li class="lp-step">
+              <span class="lp-step__num" aria-hidden="true">2</span>
+              <div>
+                <h3 class="lp-step__title">Track</h3>
+                <p class="lp-step__desc">
+                  Your dashboard shows everything colour-coded by urgency. A push
+                  notification arrives the evening before anything expires.
+                </p>
+              </div>
+            </li>
+
+            <li class="lp-step">
+              <span class="lp-step__num" aria-hidden="true">3</span>
+              <div>
+                <h3 class="lp-step__title">Cook</h3>
+                <p class="lp-step__desc">
+                  Select your soon-to-expire items and discover recipes — from
+                  char kway teow to achar — that use exactly what you have.
+                </p>
+              </div>
+            </li>
+
+          </ol>
+        </div>
+      </section>
+
+      <!-- Final CTA -->
+      <section class="lp-cta-banner">
+        <div class="lp-container lp-cta-banner__inner">
+          <h2 class="lp-cta-banner__heading">What's for dinner tonight?</h2>
+          <p class="lp-cta-banner__sub">Your pantry has the answer. Free to use.</p>
+          <a href="/register" class="btn btn-primary btn-lg">Get started for free</a>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="lp-footer">
+      <div class="lp-container lp-footer__inner">
+        <a href="/" class="nav-brand">Asian Auntie</a>
+      </div>
+    </footer>
+
+  </body>
+</html>
