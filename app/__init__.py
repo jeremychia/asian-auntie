@@ -103,6 +103,7 @@ def create_app():
     from app.api.auth import api_auth_bp
     from app.api.items import api_items_bp
     from app.notifications import notifications_bp
+    from app.onboarding import onboarding_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -111,6 +112,7 @@ def create_app():
     app.register_blueprint(api_auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(api_items_bp, url_prefix="/api/v1")
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(onboarding_bp)
 
     @app.context_processor
     def inject_vapid_public_key():

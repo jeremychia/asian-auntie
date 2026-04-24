@@ -33,14 +33,37 @@ def unsubscribe():
 @notifications_bp.route("/settings", methods=["GET"])
 @login_required
 def settings():
+    from app.onboarding.routes import ALL_CUISINES, CUISINE_COUNTS
+
     cooking_days = (
         json.loads(current_user.cooking_days) if current_user.cooking_days else None
+    )
+    cuisine_prefs = (
+        json.loads(current_user.cuisine_prefs) if current_user.cuisine_prefs else []
     )
     return render_template(
         "settings.html",
         cooking_days=cooking_days,
         notifications_enabled=current_user.notifications_enabled,
+        all_cuisines=ALL_CUISINES,
+        cuisine_counts=CUISINE_COUNTS,
+        cuisine_prefs=cuisine_prefs,
     )
+
+
+@notifications_bp.route("/settings/cuisine-prefs", methods=["POST"])
+@login_required
+def save_cuisine_prefs():
+    from app.onboarding.routes import ALL_CUISINES
+
+    data = request.get_json(silent=True) or {}
+    raw = data.get("cuisine_prefs", [])
+    if not isinstance(raw, list):
+        return jsonify({"error": "invalid cuisine_prefs"}), 400
+    valid = set(ALL_CUISINES)
+    current_user.cuisine_prefs = json.dumps([c for c in raw if c in valid])
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @notifications_bp.route("/settings/cooking-days", methods=["POST"])

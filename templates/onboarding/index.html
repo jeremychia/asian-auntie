@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+{% block title %}Welcome — Asian Auntie{% endblock %}
+{% block content %}
+<div class="onboarding-wrap">
+
+  <div class="onboarding-header">
+    <span class="onboarding-logo">Asian Auntie</span>
+    <div class="onboarding-progress" aria-label="Progress">
+      <div class="onboarding-progress__bar" id="progress-bar"></div>
+    </div>
+    <p class="onboarding-step-label" id="step-label">Step 1 of 4</p>
+  </div>
+
+  <form method="post" action="{{ url_for('onboarding.save') }}" id="onboarding-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="consent" id="consent-hidden" value="false" />
+
+    <!-- ── Step 1: Location ───────────────────────────────────────────── -->
+    <div class="onboarding-step" id="step-1">
+      <h1 class="onboarding-title">Where are you based?</h1>
+      <p class="onboarding-desc">We use this to tailor your experience and apply the right privacy rules.</p>
+      <div class="option-grid option-grid--2col">
+        {% for label, code in locations %}
+        <label class="option-card {% if existing_location == code %}option-card--selected{% endif %}">
+          <input type="radio" name="location" value="{{ code }}"
+                 {% if existing_location == code %}checked{% endif %}>
+          {{ label }}
+        </label>
+        {% endfor %}
+      </div>
+      <div class="onboarding-nav">
+        <div class="onboarding-nav__bar onboarding-nav__bar--end">
+          <button type="button" class="btn btn-primary" id="next-1">Next &rarr;</button>
+        </div>
+        <button type="button" class="onboarding-skip step-skip" data-target="2">Skip this step</button>
+      </div>
+    </div>
+
+    <!-- ── Step 2: Cuisine preferences ───────────────────────────────── -->
+    <div class="onboarding-step" id="step-2" hidden>
+      <h1 class="onboarding-title">Which cuisines do you like to cook?</h1>
+      <p class="onboarding-desc">Pick as many as you like. We'll show you what's already available.</p>
+      <div class="option-grid option-grid--3col">
+        {% for cuisine in all_cuisines %}
+        <label class="option-card {% if cuisine in existing_prefs %}option-card--selected{% endif %}">
+          <input type="checkbox" name="cuisine_prefs" value="{{ cuisine }}"
+                 {% if cuisine in existing_prefs %}checked{% endif %}>
+          {{ cuisine }}
+          <span class="option-card__count">{{ cuisine_counts[cuisine] }} recipes</span>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="cuisine-feedback" id="cuisine-feedback" hidden>
+        <span class="cuisine-feedback__text" id="cuisine-feedback-text"></span>
+      </div>
+
+      <div class="other-cuisines-section">
+        <p class="other-cuisines-label">Any cuisines you'd like that aren't listed above?</p>
+        <div class="tag-input-wrap">
+          <div class="tag-input" id="tag-input-box">
+            <span class="tag-chip-list" id="tag-chip-list"></span>
+            <input type="text" class="tag-input__field" id="other-cuisine-input"
+                   placeholder="e.g. Japanese, Korean, Indian…" autocomplete="off" />
+          </div>
+          <input type="hidden" name="other_cuisine_requests" id="other-cuisine-hidden" value="[]" />
+        </div>
+        <div class="tag-hints" id="tag-hints"></div>
+      </div>
+
+      <div class="onboarding-nav">
+        <div class="onboarding-nav__bar">
+          <button type="button" class="btn btn-ghost" id="back-2">&larr; Back</button>
+          <button type="button" class="btn btn-primary" id="next-2">Next &rarr;</button>
+        </div>
+        <button type="button" class="onboarding-skip step-skip" data-target="3">Skip this step</button>
+      </div>
+    </div>
+
+    <!-- ── Step 3: Household size ─────────────────────────────────────── -->
+    <div class="onboarding-step" id="step-3" hidden>
+      <h1 class="onboarding-title">How many people do you cook for?</h1>
+      <p class="onboarding-desc">We'll use this to help with recipe scaling in future.</p>
+      <div class="option-grid option-grid--2col">
+        {% for label, code in household_sizes %}
+        <label class="option-card {% if existing_household == code %}option-card--selected{% endif %}">
+          <input type="radio" name="household_size" value="{{ code }}"
+                 {% if existing_household == code %}checked{% endif %}>
+          {{ label }}
+        </label>
+        {% endfor %}
+      </div>
+      <div class="onboarding-nav">
+        <div class="onboarding-nav__bar">
+          <button type="button" class="btn btn-ghost" id="back-3">&larr; Back</button>
+          <button type="button" class="btn btn-primary" id="next-3">Next &rarr;</button>
+        </div>
+        <button type="button" class="onboarding-skip step-skip" data-target="4">Skip this step</button>
+      </div>
+    </div>
+
+    <!-- ── Step 4: Privacy notice & consent ──────────────────────────── -->
+    <div class="onboarding-step" id="step-4" hidden>
+      <h1 class="onboarding-title">Before you start</h1>
+      <p class="onboarding-desc">A quick word on how we handle your data.</p>
+
+      <div class="privacy-notice" id="privacy-notice">
+
+        <!-- General notice — shown to everyone -->
+        <div class="privacy-section">
+          <h3 class="privacy-section__heading">What we collect</h3>
+          <ul class="privacy-list">
+            <li>Your username and encrypted password — to identify your account</li>
+            <li>Your region and preferences — to personalise recipe suggestions</li>
+            <li>Food items and photos you add — to track your pantry and read expiry labels</li>
+            <li>Cooking days — to time expiry reminders</li>
+          </ul>
+        </div>
+
+        <div class="privacy-section">
+          <h3 class="privacy-section__heading">How we use it</h3>
+          <ul class="privacy-list">
+            <li>To show you recipes that match what you have in your pantry</li>
+            <li>To send expiry reminders (only if you turn notifications on)</li>
+            <li>We do <strong>not</strong> sell or share your data with third parties</li>
+            <li>We do <strong>not</strong> use your data for advertising</li>
+          </ul>
+        </div>
+
+        <div class="privacy-section">
+          <h3 class="privacy-section__heading">Data storage</h3>
+          <p class="privacy-text">
+            Your data is stored on our server. We take reasonable steps to protect it.
+            You can request deletion at any time by emailing
+            <a href="mailto:jeremyjchia@gmail.com">jeremyjchia@gmail.com</a>.
+          </p>
+        </div>
+
+        <!-- GDPR supplement — shown only for EU / UK locations -->
+        <div class="privacy-section privacy-gdpr" id="gdpr-section" hidden>
+          <h3 class="privacy-section__heading">Your rights under GDPR / UK GDPR</h3>
+          <p class="privacy-text">
+            Because you are based in the EU or UK, you have the following rights under
+            the General Data Protection Regulation (GDPR) and UK GDPR:
+          </p>
+          <ul class="privacy-list">
+            <li><strong>Access</strong> — request a copy of your personal data</li>
+            <li><strong>Rectification</strong> — ask us to correct inaccurate data</li>
+            <li><strong>Erasure</strong> — ask us to delete your data ("right to be forgotten")</li>
+            <li><strong>Restriction</strong> — ask us to pause processing your data</li>
+            <li><strong>Portability</strong> — receive your data in a machine-readable format</li>
+            <li><strong>Objection</strong> — object to processing in certain circumstances</li>
+            <li><strong>Withdraw consent</strong> — at any time, without affecting past processing</li>
+          </ul>
+          <p class="privacy-text">
+            <strong>Legal basis:</strong> We process your data on the basis of your consent
+            (Article&nbsp;6(1)(a) GDPR). You may withdraw consent at any time by deleting
+            your account or emailing
+            <a href="mailto:jeremyjchia@gmail.com">jeremyjchia@gmail.com</a>.
+          </p>
+          <p class="privacy-text">
+            <strong>Data controller:</strong> Jeremy Chia —
+            <a href="mailto:jeremyjchia@gmail.com">jeremyjchia@gmail.com</a>
+          </p>
+          <p class="privacy-text">
+            If you have concerns about how we handle your data, you have the right to lodge
+            a complaint with your national supervisory authority (e.g. the ICO in the UK,
+            or your local DPA in the EU).
+          </p>
+        </div>
+
+      </div><!-- .privacy-notice -->
+
+      <label class="consent-checkbox" id="consent-label">
+        <input type="checkbox" id="consent-check" />
+        <span class="consent-checkbox__text" id="consent-text">
+          I have read and understood the above. I agree to Asian Auntie processing my
+          data as described.
+        </span>
+      </label>
+      <p class="consent-error" id="consent-error" hidden>Please tick the box above to continue.</p>
+
+      <div class="onboarding-nav">
+        <div class="onboarding-nav__bar">
+          <button type="button" class="btn btn-ghost" id="back-4">&larr; Back</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">Get started</button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script>
+const GDPR_LOCATIONS = {{ gdpr_locations | tojson }};
+const CUISINE_COUNTS = {{ cuisine_counts | tojson }};
+
+let currentStep = 1;
+const totalSteps = 4;
+
+function goTo(n) {
+  document.getElementById(`step-${currentStep}`).hidden = true;
+  currentStep = n;
+  document.getElementById(`step-${currentStep}`).hidden = false;
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  const pct = ((currentStep - 1) / (totalSteps - 1)) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('step-label').textContent = `Step ${currentStep} of ${totalSteps}`;
+}
+
+// Option card toggles
+document.querySelectorAll('.option-card input[type="radio"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const grid = radio.closest('.option-grid');
+    grid.querySelectorAll('.option-card').forEach(c => c.classList.remove('option-card--selected'));
+    radio.closest('.option-card').classList.add('option-card--selected');
+  });
+});
+
+document.querySelectorAll('.option-card input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    cb.closest('.option-card').classList.toggle('option-card--selected', cb.checked);
+    updateCuisineFeedback();
+  });
+});
+
+// Cuisine feedback
+function updateCuisineFeedback() {
+  const checked = [...document.querySelectorAll('input[name="cuisine_prefs"]:checked')].map(el => el.value);
+  const feedbackEl = document.getElementById('cuisine-feedback');
+  const textEl = document.getElementById('cuisine-feedback-text');
+  if (checked.length === 0) {
+    feedbackEl.hidden = true;
+    return;
+  }
+  const total = checked.reduce((sum, c) => sum + (CUISINE_COUNTS[c] || 0), 0);
+  const cuisineList = checked.join(', ');
+  textEl.textContent = `${total} recipes available across ${cuisineList}`;
+  feedbackEl.hidden = false;
+}
+
+// Navigation
+document.getElementById('next-1').addEventListener('click', () => goTo(2));
+document.getElementById('back-2').addEventListener('click', () => goTo(1));
+document.getElementById('next-2').addEventListener('click', () => goTo(3));
+document.getElementById('back-3').addEventListener('click', () => goTo(2));
+document.getElementById('next-3').addEventListener('click', () => goTo(4));
+document.getElementById('back-4').addEventListener('click', () => goTo(3));
+
+document.querySelectorAll('.step-skip').forEach(btn => {
+  btn.addEventListener('click', () => goTo(+btn.dataset.target));
+});
+
+// GDPR section visibility — reacts to location selection
+function updateGdprSection() {
+  const selected = document.querySelector('input[name="location"]:checked');
+  const code = selected ? selected.value : '';
+  const gdprSection = document.getElementById('gdpr-section');
+  const consentText = document.getElementById('consent-text');
+  const isGdpr = GDPR_LOCATIONS.includes(code);
+  gdprSection.hidden = !isGdpr;
+  if (isGdpr) {
+    consentText.textContent =
+      'I have read and understood the above, including my GDPR rights. I give my ' +
+      'explicit consent for Asian Auntie to process my personal data as described.';
+  } else {
+    consentText.textContent =
+      'I have read and understood the above. I agree to Asian Auntie processing my data as described.';
+  }
+}
+
+document.querySelectorAll('input[name="location"]').forEach(r => {
+  r.addEventListener('change', updateGdprSection);
+});
+
+// Consent gate on submit
+document.getElementById('submit-btn').addEventListener('click', (e) => {
+  const checked = document.getElementById('consent-check').checked;
+  const errorEl = document.getElementById('consent-error');
+  if (!checked) {
+    e.preventDefault();
+    errorEl.hidden = false;
+    return;
+  }
+  document.getElementById('consent-hidden').value = 'true';
+  errorEl.hidden = true;
+});
+
+// ── Other cuisines chip input ────────────────────────────────────────
+const CUISINE_SOURCES = {
+  'japanese':       'Just One Cookbook or RecipeTin Japan',
+  'korean':         'Maangchi or Korean Bapsang',
+  'indian':         "Swasthi's Recipes or Hebbar's Kitchen",
+  'sri lankan':     'The Flavor Bender or Hungry Lankan',
+  'burmese':        'Cooking with Noodles or Burma Love cookbook',
+  'laotian':        'Simple Lao Food or Hot Thai Kitchen',
+  'cambodian':      'Nyum Bai or The Cambodian Kitchen',
+  'bangladeshi':    "Sabita's Kitchen or Dhaka Kitchen",
+  'pakistani':      'Fatima Cooks or My Food Story',
+  'nepali':         'Cook with Kushi or My Newari Kitchen',
+  'mexican':        'Mexico in My Kitchen or Rick Bayless',
+  'italian':        'Serious Eats or Smitten Kitchen',
+  'french':         'David Lebovitz or French Cooking Academy',
+  'greek':          'My Greek Dish or Kopiaste',
+  'turkish':        "Ozlem's Turkish Table or Give Recipe",
+  'middle eastern': 'Ottolenghi or The Mediterranean Dish',
+  'moroccan':       'My Moroccan Food or Taste of Maroc',
+  'ethiopian':      'Immaculate Bites or Yohanis Gebreyesus',
+  'west african':   'Immaculate Bites or My Diaspora Kitchen',
+  'caribbean':      'That Girl Cooks Healthy or Simply Trini Cooking',
+  'brazilian':      'Easy Brazilian Food or Olivia's Cuisine',
+  'peruvian':       'Peru Delights or Laylita's Recipes',
+  'spanish':        'Spain on a Fork or The Spanish Radish',
+};
+
+const otherCuisines = [];
+
+function normalise(s) {
+  return s.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function hintFor(cuisine) {
+  const key = normalise(cuisine);
+  for (const [k, v] of Object.entries(CUISINE_SOURCES)) {
+    if (key === k || key.includes(k) || k.includes(key)) return v;
+  }
+  return null;
+}
+
+function renderChips() {
+  const list = document.getElementById('tag-chip-list');
+  list.innerHTML = otherCuisines.map((c, i) =>
+    `<span class="tag-chip">${c}<button type="button" class="tag-chip__remove" data-index="${i}" aria-label="Remove ${c}">&times;</button></span>`
+  ).join('');
+  list.querySelectorAll('.tag-chip__remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      otherCuisines.splice(+btn.dataset.index, 1);
+      renderChips();
+      renderHints();
+    });
+  });
+  document.getElementById('other-cuisine-hidden').value = JSON.stringify(otherCuisines);
+}
+
+function renderHints() {
+  const container = document.getElementById('tag-hints');
+  if (otherCuisines.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = otherCuisines.map(c => {
+    const source = hintFor(c);
+    if (source) {
+      return `<div class="tag-hint"><span class="tag-hint__cuisine">${c}</span> — no recipes yet, but try <span class="tag-hint__source">${source}</span></div>`;
+    }
+    return `<div class="tag-hint"><span class="tag-hint__cuisine">${c}</span> — we'll look into adding these. Try searching on YouTube in the meantime.</div>`;
+  }).join('');
+}
+
+function addCuisine(raw) {
+  const name = raw.trim();
+  if (!name) return;
+  // Avoid duplicates (case-insensitive) and already-covered cuisines
+  const lower = name.toLowerCase();
+  const alreadyCovered = Object.keys(CUISINE_COUNTS).some(c => c.toLowerCase() === lower);
+  const alreadyAdded = otherCuisines.some(c => c.toLowerCase() === lower);
+  if (alreadyCovered || alreadyAdded) return;
+  otherCuisines.push(name.charAt(0).toUpperCase() + name.slice(1));
+  renderChips();
+  renderHints();
+}
+
+const otherInput = document.getElementById('other-cuisine-input');
+otherInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    addCuisine(otherInput.value.replace(/,$/, ''));
+    otherInput.value = '';
+  }
+});
+otherInput.addEventListener('blur', () => {
+  if (otherInput.value.trim()) {
+    addCuisine(otherInput.value);
+    otherInput.value = '';
+  }
+});
+
+// Init pre-filled other cuisines from server (re-visit case)
+const existingOther = {{ (current_user.other_cuisine_requests or '[]') | tojson }};
+try {
+  JSON.parse(existingOther).forEach(c => addCuisine(c));
+} catch (_) {}
+
+// Init
+updateProgress();
+updateCuisineFeedback();
+updateGdprSection();
+</script>
+{% endblock %}

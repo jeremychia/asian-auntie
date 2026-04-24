@@ -19,6 +19,21 @@ class User(UserMixin, db.Model):
     push_subscription = db.Column(db.Text, nullable=True)  # Web Push subscription JSON
     notifications_enabled = db.Column(db.Boolean, nullable=False, default=False)
 
+    # Onboarding / user profile
+    # location: short region code — MY, SG, TH, VN, ID, PH, CN, GB, EU, AU, US, OTHER
+    location = db.Column(db.String(16), nullable=True)
+    # cuisine_prefs: JSON list of cuisine names e.g. ["Malaysian", "Thai"]
+    cuisine_prefs = db.Column(db.Text, nullable=True)
+    # household_size: "solo", "2-3", "4-5", "6+"
+    household_size = db.Column(db.String(16), nullable=True)
+    # gdpr_consent + consent_date: explicit consent record for EU/UK users;
+    # set for all users when they complete onboarding (True = agreed)
+    gdpr_consent = db.Column(db.Boolean, nullable=True)
+    consent_date = db.Column(db.DateTime, nullable=True)
+    onboarding_done = db.Column(db.Boolean, nullable=False, default=False)
+    # Cuisines outside our current corpus that users want to cook — user research signal
+    other_cuisine_requests = db.Column(db.Text, nullable=True)  # JSON list of strings
+
     items = db.relationship("Item", back_populates="user", lazy="dynamic")
     refresh_tokens = db.relationship(
         "RefreshToken", back_populates="user", lazy="dynamic"

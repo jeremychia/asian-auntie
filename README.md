@@ -72,6 +72,27 @@ Key environment variables:
 - `make setup` — install dependencies, install Git hooks, and run migrations
 - `make migrate msg="Your message"` — create and apply a new migration
 
+## Data Storage
+
+User data is stored in a single SQLite file at `instance/app.db` (created automatically on first run, excluded from version control).
+
+Key tables:
+
+| Table                | What's stored                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `users`              | Credentials, onboarding preferences (location, cuisines, household size), consent record |
+| `items`              | Pantry items — name, type, expiry date, soft-delete metadata                             |
+| `item_photos`        | Paths to uploaded photos in `uploads/`                                                   |
+| `recipe_engagements` | Per-user recipe feedback (made it, not for me, skip reason)                              |
+| `recognition_cache`  | Cached OCR results keyed by image hash                                                   |
+| `refresh_tokens`     | JWT refresh tokens with revocation support                                               |
+
+The `uploads/` folder holds the actual photo files alongside the database.
+
+**Backing up:** copy both `instance/app.db` and `uploads/` to preserve all user data.
+
+**Production:** set `DATABASE_URL` to a Postgres connection string to swap out SQLite. Run `flask db upgrade` on the new database to apply all migrations.
+
 ## Repository Layout
 
 - `app/` — Flask application package

@@ -21,6 +21,8 @@ def login():
         if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
             login_user(user, remember=form.remember_me.data)
             logger.info("login_success", user_id=user.id)
+            if not user.onboarding_done:
+                return redirect(url_for("onboarding.index"))
             next_page = request.args.get("next")
             return redirect(next_page or url_for("perishables.dashboard"))
         else:
@@ -47,8 +49,7 @@ def register():
         db.session.commit()
         login_user(user, remember=True)
         logger.info("register_success", user_id=user.id)
-        flash("Welcome! Your account has been created.", "success")
-        return redirect(url_for("perishables.dashboard"))
+        return redirect(url_for("onboarding.index"))
 
     return render_template("auth/register.html", form=form)
 

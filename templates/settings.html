@@ -5,6 +5,28 @@
   <h1 class="page-title">Settings</h1>
 
   <section class="settings-section">
+    <h2 class="settings-section__title">Cuisine preferences</h2>
+    <p class="settings-section__desc">
+      Which cuisines do you like to cook? We use this to personalise your recipe suggestions.
+    </p>
+    <div class="option-grid option-grid--3col" id="cuisine-grid">
+      {% for cuisine in all_cuisines %}
+      <label class="option-card {% if cuisine in cuisine_prefs %}option-card--selected{% endif %}"
+             style="font-size: var(--font-sm)">
+        <input type="checkbox" name="cuisine_prefs" value="{{ cuisine }}"
+               {% if cuisine in cuisine_prefs %}checked{% endif %}>
+        {{ cuisine }}
+        <span class="option-card__count">{{ cuisine_counts[cuisine] }} recipes</span>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="settings-actions" style="margin-top: 1rem">
+      <button class="btn btn-primary" id="save-cuisines-btn">Save preferences</button>
+      <span class="save-confirmation" id="cuisine-saved" hidden>Saved</span>
+    </div>
+  </section>
+
+  <section class="settings-section">
     <h2 class="settings-section__title">Expiry notifications</h2>
     <p class="settings-section__desc">
       Asian Auntie can remind you the evening before you cook when something is
@@ -134,5 +156,26 @@ function updateStatus(enabled) {
     : '<span class="notif-badge notif-badge--off">Notifications off</span>';
   disableBtn.style.display = enabled ? '' : 'none';
 }
+
+// Cuisine preference chips
+document.querySelectorAll('#cuisine-grid .option-card input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    cb.closest('.option-card').classList.toggle('option-card--selected', cb.checked);
+  });
+});
+
+document.getElementById('save-cuisines-btn').addEventListener('click', async () => {
+  const selected = [...document.querySelectorAll('#cuisine-grid input:checked')].map(el => el.value);
+  const res = await fetch('/settings/cuisine-prefs', {
+    method: 'POST',
+    headers: csrfHeaders(),
+    body: JSON.stringify({ cuisine_prefs: selected }),
+  });
+  if (res.ok) {
+    const savedEl = document.getElementById('cuisine-saved');
+    savedEl.hidden = false;
+    setTimeout(() => { savedEl.hidden = true; }, 2500);
+  }
+});
 </script>
 {% endblock %}
