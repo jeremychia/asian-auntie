@@ -10,13 +10,6 @@ auth_bp = Blueprint("auth", __name__)
 logger = get_logger(__name__)
 
 
-@auth_bp.route("/")
-def landing():
-    if current_user.is_authenticated:
-        return redirect(url_for("perishables.dashboard"))
-    return render_template("landing.html")
-
-
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:

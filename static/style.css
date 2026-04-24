@@ -2225,6 +2225,69 @@ nav.container {
   align-items: center;
 }
 
+/* ── Landing page ingredient search ───────────────────────── */
+.lp-search {
+  padding: 3.5rem 0;
+  background: var(--surface-alt, #f7f6f3);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.lp-search__sub {
+  color: var(--text-muted);
+  margin-top: -0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: var(--font-base);
+}
+
+.lp-search__input-area {
+  max-width: 540px;
+}
+
+.lp-search__results {
+  margin-top: 1.5rem;
+}
+
+.lp-search__results-title {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lp-results-gate {
+  margin-top: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.lp-results-gate__msg {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-base);
+}
+
+@media (max-width: 600px) {
+  .lp-results-gate {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .lp-results-gate .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Prose layout for future blog/static content pages */
 .lp-prose {
   padding: 3rem 0;

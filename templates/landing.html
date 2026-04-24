@@ -61,6 +61,43 @@
         </div>
       </section>
 
+      <!-- Interactive search teaser -->
+      <section class="lp-search" id="try-it">
+        <div class="lp-container">
+          <h2 class="lp-section-title">Try it — what's in your fridge right now?</h2>
+          <p class="lp-search__sub">Type a few ingredients and see which recipes come up. No sign-up needed to try.</p>
+
+          <div class="lp-search__input-area">
+            <div class="manual-input-row">
+              <div class="manual-input-wrap">
+                <input
+                  type="text"
+                  id="lp-ingredient-input"
+                  class="manual-input"
+                  placeholder="e.g. chicken, garlic, coconut milk…"
+                  autocomplete="off"
+                  aria-label="Add ingredient"
+                  aria-autocomplete="list"
+                  aria-controls="lp-autocomplete-list"
+                />
+                <ul id="lp-autocomplete-list" class="autocomplete-list" role="listbox" hidden></ul>
+              </div>
+              <button type="button" class="btn btn-secondary" id="lp-add-btn">Add</button>
+            </div>
+          </div>
+
+          <div id="lp-chip-area" class="chip-area" hidden>
+            <div id="lp-chip-list" class="chip-list" aria-label="Selected ingredients" role="list"></div>
+          </div>
+
+          <div id="lp-results-area" class="lp-search__results" hidden>
+            <p id="lp-results-title" class="lp-search__results-title"></p>
+            <div id="lp-recipe-list" class="recipe-list"></div>
+            <p id="lp-no-results" class="no-results" hidden>No matches found. Try a different ingredient.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Features -->
       <section class="lp-features" id="features">
         <div class="lp-container">
@@ -151,6 +188,197 @@
       </section>
 
     </main>
+
+    <script>
+(function () {
+  const INGREDIENTS = [
+    "anchovies","aubergine","bak choy","bamboo shoots","banana blossom",
+    "bean sprouts","belacan","bok choy","chicken","chilli flakes","chilli paste",
+    "chillies","chinese sausage","chives","coconut milk","coriander",
+    "cucumber","dark soy sauce","doubanjiang","dried chillies","dried shrimp",
+    "eggs","fish","fish cake","fish sauce","five spice","flat rice noodles",
+    "galangal","garlic","ginger","kaffir lime leaves","lemongrass",
+    "lap cheong","light soy sauce","lime juice","minced pork","mushrooms",
+    "noodles","oil","oyster sauce","palm sugar","pandan leaves","peanuts",
+    "pork","prawns","rice","rice noodles","sambal","sesame oil","shallots",
+    "soy sauce","spring onions","tamarind","tempeh","tofu","tomatoes",
+    "turmeric","vinegar","white pepper","yellow noodles",
+  ].sort();
+
+  let ingredients = [];
+
+  const input     = document.getElementById('lp-ingredient-input');
+  const addBtn    = document.getElementById('lp-add-btn');
+  const chipArea  = document.getElementById('lp-chip-area');
+  const chipList  = document.getElementById('lp-chip-list');
+  const acList    = document.getElementById('lp-autocomplete-list');
+  const resultsArea   = document.getElementById('lp-results-area');
+  const recipeList    = document.getElementById('lp-recipe-list');
+  const noResults     = document.getElementById('lp-no-results');
+  const resultsTitle  = document.getElementById('lp-results-title');
+
+  function addIngredient(name) {
+    name = name.trim();
+    if (!name) return;
+    if (ingredients.find(i => i.toLowerCase() === name.toLowerCase())) {
+      input.value = '';
+      closeAC();
+      return;
+    }
+    ingredients.push(name);
+    input.value = '';
+    closeAC();
+    renderChips();
+    doSearch();
+  }
+
+  addBtn.addEventListener('click', () => addIngredient(input.value));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addIngredient(input.value); }
+    if (e.key === 'Escape') closeAC();
+  });
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { closeAC(); return; }
+    const matches = INGREDIENTS.filter(i => i.includes(q)).slice(0, 8);
+    if (!matches.length) { closeAC(); return; }
+    acList.innerHTML = '';
+    matches.forEach(m => {
+      const li = document.createElement('li');
+      li.role = 'option';
+      li.className = 'autocomplete-item';
+      li.textContent = m;
+      li.addEventListener('mousedown', e => { e.preventDefault(); addIngredient(m); });
+      acList.appendChild(li);
+    });
+    acList.hidden = false;
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.manual-input-wrap')) closeAC();
+  });
+
+  function closeAC() { acList.hidden = true; acList.innerHTML = ''; }
+
+  function renderChips() {
+    chipList.innerHTML = '';
+    chipArea.hidden = ingredients.length === 0;
+    ingredients.forEach((name, idx) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip chip--active';
+      chip.setAttribute('role', 'listitem');
+
+      const label = document.createElement('span');
+      label.textContent = name;
+      chip.appendChild(label);
+
+      const remove = document.createElement('span');
+      remove.className = 'chip__remove';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', 'Remove ' + name);
+      chip.appendChild(remove);
+
+      chip.addEventListener('click', e => {
+        if (e.target === remove || e.target.classList.contains('chip__remove')) {
+          ingredients.splice(idx, 1);
+          renderChips();
+          doSearch();
+        }
+      });
+
+      chipList.appendChild(chip);
+    });
+  }
+
+  async function doSearch() {
+    if (!ingredients.length) {
+      resultsArea.hidden = true;
+      return;
+    }
+    try {
+      const params = new URLSearchParams({ ingredients: ingredients.join(',') });
+      const resp = await fetch('/search?' + params);
+      if (!resp.ok) return;
+      const { results } = await resp.json();
+      renderResults(results);
+    } catch (_) {}
+  }
+
+  const PREVIEW_COUNT = 3;
+
+  function renderResults(results) {
+    resultsArea.hidden = false;
+    recipeList.innerHTML = '';
+    noResults.hidden = results.length > 0;
+    resultsTitle.textContent = results.length
+      ? results.length + ' recipe' + (results.length !== 1 ? 's' : '') + ' found'
+      : '';
+
+    const visible = results.slice(0, PREVIEW_COUNT);
+    const hidden  = results.slice(PREVIEW_COUNT);
+
+    visible.forEach(r => recipeList.appendChild(makeCard(r)));
+
+    if (hidden.length) {
+      const gate = document.createElement('div');
+      gate.className = 'lp-results-gate';
+      gate.innerHTML = `
+        <p class="lp-results-gate__msg">
+          + ${hidden.length} more recipe${hidden.length !== 1 ? 's' : ''} — sign up free to see them all.
+        </p>
+        <a href="/register" class="btn btn-primary">Get started for free</a>
+      `;
+      recipeList.appendChild(gate);
+    }
+  }
+
+  function makeCard(r) {
+    const card = document.createElement('div');
+    card.className = 'recipe-card';
+
+    const matchClass = r.match_pct >= 80 ? 'match--high'
+                     : r.match_pct >= 50 ? 'match--mid'
+                                         : 'match--low';
+
+    const missingSnippet = r.missing.length
+      ? '· Missing: <span class="recipe-card__missing">'
+        + r.missing.slice(0, 3).map(esc).join(', ')
+        + (r.missing.length > 3 ? ' +' + (r.missing.length - 3) + ' more' : '')
+        + '</span>'
+      : '';
+
+    card.innerHTML = `
+      <div class="recipe-card__header">
+        <div class="recipe-card__title-row">
+          <span class="recipe-card__name">${esc(r.name)}</span>
+          <span class="recipe-card__match ${matchClass}">${r.match_pct}%</span>
+        </div>
+        <div class="recipe-card__meta">
+          <span class="recipe-card__source">${esc(r.source)}</span>
+          <span class="recipe-card__dot">·</span>
+          <span class="recipe-card__cuisine">${esc(r.cuisine)}</span>
+          ${r.cook_time ? '<span class="recipe-card__dot">·</span><span class="recipe-card__time">' + esc(r.cook_time) + '</span>' : ''}
+        </div>
+      </div>
+      <div class="recipe-card__summary">
+        You have <strong>${r.matched_count} of ${r.total_count}</strong> ingredients ${missingSnippet}
+      </div>
+    `;
+
+    return card;
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+})();
+    </script>
 
     <footer class="lp-footer">
       <div class="lp-container lp-footer__inner">

@@ -96,6 +96,7 @@ def create_app():
         return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
     # Register blueprints
+    from app.main.routes import main_bp
     from app.auth.routes import auth_bp
     from app.perishables.routes import perishables_bp
     from app.recipes.routes import recipes_bp
@@ -103,6 +104,7 @@ def create_app():
     from app.api.items import api_items_bp
     from app.notifications import notifications_bp
 
+    app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(perishables_bp)
     app.register_blueprint(recipes_bp)
