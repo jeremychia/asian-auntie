@@ -48,6 +48,46 @@ make dev
 http://localhost:8080
 ```
 
+## Image Recognition
+
+The app can identify pantry items from photos. Three providers are supported — the first one configured wins:
+
+| Priority | Provider           | When to use                          | Setup                                                   |
+| -------- | ------------------ | ------------------------------------ | ------------------------------------------------------- |
+| 1        | **Ollama** (local) | Local development — free, no API key | See below                                               |
+| 2        | **Groq**           | Production (Railway) — free tier     | Set `GROQ_API_KEY`                                      |
+| 3        | **OpenAI**         | Fallback — best accuracy             | Set `OPENAI_API_KEY`                                    |
+| —        | Stub               | No provider configured               | Returns zero-confidence result, manual entry form shown |
+
+### Local development with Ollama
+
+1. Install Ollama:
+
+   ```bash
+   brew install ollama
+   ```
+
+2. Pull the vision model (~7 GB):
+
+   ```bash
+   ollama pull llama3.2-vision
+   ```
+
+3. Start Ollama (or add it to login items with `brew services start ollama`):
+
+   ```bash
+   ollama serve
+   ```
+
+4. Add to your `.env`:
+   ```
+   OLLAMA_BASE_URL=http://localhost:11434
+   ```
+
+### Production (Railway)
+
+Set `GROQ_API_KEY` in the Railway dashboard. Get a free key at [console.groq.com](https://console.groq.com). No other recognition config is needed.
+
 ## Configuration
 
 Copy the environment template and edit values as needed:
@@ -61,7 +101,9 @@ Key environment variables:
 - `FLASK_SECRET_KEY`
 - `JWT_SECRET_KEY`
 - `DATABASE_URL`
-- `OPENAI_API_KEY`
+- `OLLAMA_BASE_URL` — local Ollama server (e.g. `http://localhost:11434`)
+- `GROQ_API_KEY` — Groq API key for production
+- `OPENAI_API_KEY` — OpenAI fallback
 - `LOG_LEVEL`
 - `FLASK_ENV`
 - `ALLOWED_ORIGINS`
