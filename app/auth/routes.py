@@ -59,4 +59,4 @@ def register():
 def logout():
     logger.info("logout", user_id=current_user.id)
     logout_user()
-    return redirect(url_for("auth.landing"))
+    return redirect(url_for("main.landing"))
