@@ -31,4 +31,3 @@ logs/
 
 # Pipeline build artefacts
 pipeline/cache/
-pipeline/staging/
