@@ -1,0 +1,38 @@
+[project]
+name = "asian-auntie-pipeline"
+version = "0.1.0"
+description = "Recipe extraction pipeline for Asian food blogs"
+requires-python = ">=3.12"
+# No external dependencies — only stdlib is used (urllib, json, re, html.parser, xml.etree)
+dependencies = []
+
+[project.scripts]
+pipeline-run = "pipeline.run:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pipeline"]
+
+# ── GitHub Actions example ────────────────────────────────────────────────────
+# See pipeline/README.md for a full workflow walkthrough.
+#
+# Minimal workflow to run the pipeline in CI:
+#
+# jobs:
+#   scrape:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: astral-sh/setup-uv@v4
+#         with:
+#           python-version: "3.12"
+#       - run: |
+#           cd pipeline
+#           uv run --project pyproject.toml python run.py --site rasa_malaysia --limit 50
+#       - uses: actions/upload-artifact@v4
+#         with:
+#           name: staging
+#           path: pipeline/staging/

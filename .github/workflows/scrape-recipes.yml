@@ -1,0 +1,50 @@
+name: Scrape Recipes
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: "Site key to scrape (leave blank for all)"
+        required: false
+        default: ""
+      limit:
+        description: "Max new recipes per site (leave blank for unlimited)"
+        required: false
+        default: ""
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+
+      - name: Scrape recipes
+        run: |
+          SITE="${{ github.event.inputs.site }}"
+          LIMIT="${{ github.event.inputs.limit }}"
+          ARGS=""
+          if [ -n "$SITE" ]; then
+            ARGS="--site $SITE"
+          else
+            # Scrape all configured sites
+            for KEY in rasa_malaysia woks_of_life panlasang_pinoy hungry_huy hot_thai_kitchen made_with_lau nyonya_cooking; do
+              ARGS="--site $KEY"
+              LIMIT_ARG=""
+              if [ -n "$LIMIT" ]; then LIMIT_ARG="--limit $LIMIT"; fi
+              uv run python pipeline/run.py $ARGS $LIMIT_ARG
+            done
+            exit 0
+          fi
+          if [ -n "$LIMIT" ]; then ARGS="$ARGS --limit $LIMIT"; fi
+          uv run python pipeline/run.py $ARGS
+
+      - name: Upload staging files for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: recipe-staging-${{ github.run_id }}
+          path: pipeline/staging/
+          retention-days: 14

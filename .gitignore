@@ -28,3 +28,7 @@ logs/
 # IDE
 .idea/
 .vscode/
+
+# Pipeline build artefacts
+pipeline/cache/
+pipeline/staging/
