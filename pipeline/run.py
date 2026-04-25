@@ -40,7 +40,12 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 from pipeline.sites import SITES
 from pipeline.fetch import fetch
 from pipeline.discover import discover_via_categories, discover_via_sitemap
-from pipeline.extract import find_recipe_jsonld, map_to_recipe
+from pipeline.extract import (
+    find_recipe_jsonld,
+    map_to_recipe,
+    find_recipe_nextdata,
+    map_nextdata_to_recipe,
+)
 from pipeline import store
 
 
@@ -104,12 +109,19 @@ def _scrape_site(
         if not html_text:
             continue
 
-        jsonld = find_recipe_jsonld(html_text)
-        if not jsonld:
-            print(f"  [NO JSON-LD] {url}", file=sys.stderr)
-            continue
+        if site.get("extraction") == "nextdata":
+            data = find_recipe_nextdata(html_text)
+            if not data:
+                print(f"  [NO NEXT_DATA] {url}", file=sys.stderr)
+                continue
+            recipe = map_nextdata_to_recipe(data, site["name"], cuisine, url)
+        else:
+            jsonld = find_recipe_jsonld(html_text)
+            if not jsonld:
+                print(f"  [NO JSON-LD] {url}", file=sys.stderr)
+                continue
+            recipe = map_to_recipe(jsonld, site["name"], cuisine, url)
 
-        recipe = map_to_recipe(jsonld, site["name"], cuisine, url)
         if not recipe:
             print(f"  [SKIP] {url} — missing name or ingredients", file=sys.stderr)
             continue

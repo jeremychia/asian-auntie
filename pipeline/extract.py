@@ -78,6 +78,74 @@ def find_recipe_jsonld(html_text: str) -> Optional[dict]:
     return None
 
 
+def find_recipe_nextdata(html_text: str) -> Optional[dict]:
+    """Extract recipe data from a Next.js __NEXT_DATA__ JSON script block.
+
+    Returns the first query's data dict, which on Made with Lau recipe pages
+    contains the full recipe object from Sanity CMS.
+    """
+    marker = '<script id="__NEXT_DATA__" type="application/json">'
+    start = html_text.find(marker)
+    if start == -1:
+        return None
+    start += len(marker)
+    end = html_text.find("</script>", start)
+    if end == -1:
+        return None
+    try:
+        obj = json.loads(html_text[start:end])
+        queries = obj["props"]["pageProps"]["trpcState"]["queries"]
+        if not queries:
+            return None
+        return queries[0]["state"]["data"]
+    except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+        return None
+
+
+def map_nextdata_to_recipe(
+    data: dict,
+    source_name: str,
+    cuisine: str,
+    url: str,
+) -> Optional[dict]:
+    """Map a Made with Lau __NEXT_DATA__ recipe dict to our internal recipe shape.
+
+    Ingredients come from ingredientsArray (Sanity CMS format). Times are
+    already in integer minutes (prepTime, totalTime).
+    """
+    name = data.get("englishTitle", "").strip()
+    if not name:
+        return None
+
+    raw_ingredients = [
+        item
+        for item in data.get("ingredientsArray", [])
+        if item.get("_type") == "ingredient"
+    ]
+    if not raw_ingredients:
+        return None
+
+    ingredients = [
+        item["item"].strip().lower() for item in raw_ingredients if item.get("item")
+    ]
+    ingredients = [i for i in ingredients if i]
+    if not ingredients:
+        return None
+
+    total_mins = data.get("totalTime")
+
+    return {
+        "id": slugify(name),
+        "name": name,
+        "source": source_name,
+        "source_url": url,
+        "cuisine": cuisine,
+        "cook_time": format_cook_time(total_mins),
+        "difficulty": infer_difficulty(total_mins),
+        "ingredients": ingredients,
+    }
+
+
 def map_to_recipe(
     data: dict,
     source_name: str,

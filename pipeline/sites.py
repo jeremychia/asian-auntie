@@ -77,14 +77,16 @@ SITES: dict[str, dict] = {
         ],
     },
     # ── Made with Lau ─────────────────────────────────────────────────────────
+    # Next.js site — recipe data lives in __NEXT_DATA__ JSON, not JSON-LD.
+    # Discovery via flat sitemap (urlset, not a sitemap index).
     "made_with_lau": {
         "name": "Made with Lau",
-        "discovery": "category",
+        "discovery": "sitemap",
+        "sitemap_index_url": "https://www.madewithlau.com/sitemap.xml",
+        "url_pattern": r"https://www\.madewithlau\.com/recipes/[^/]+$",
+        "cuisine_default": "Chinese",
         "delay": 2.0,
-        "max_pages": 3,
-        "categories": [
-            ("https://www.madewithlau.com/recipes", "Chinese"),
-        ],
+        "extraction": "nextdata",
     },
     # ── Nyonya Cooking ────────────────────────────────────────────────────────
     "nyonya_cooking": {

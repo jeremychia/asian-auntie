@@ -125,15 +125,16 @@ def discover_via_sitemap(
     url_filter: Optional[re.Pattern] = None,
     delay: float = 2.0,
 ) -> list[str]:
-    """Walk an XML sitemap index and return all leaf page URLs.
+    """Walk an XML sitemap and return all leaf page URLs.
 
+    Handles both sitemap indexes (sitemapindex root) and flat sitemaps (urlset root).
     url_filter: if provided, only URLs matching this pattern are kept.
     Returns a sorted list of URLs (no cuisine information).
     """
     NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
     found: set[str] = set()
 
-    print(f"  [discover] sitemap index — {sitemap_index_url}", file=sys.stderr)
+    print(f"  [discover] sitemap — {sitemap_index_url}", file=sys.stderr)
     index_xml = fetch(sitemap_index_url, delay=delay)
     if not index_xml:
         return []
@@ -144,21 +145,33 @@ def discover_via_sitemap(
         print(f"  [sitemap parse error] {e}", file=sys.stderr)
         return []
 
-    sub_urls = [loc.text.strip() for loc in root.findall(".//sm:loc", NS) if loc.text]
-    print(f"  [discover] {len(sub_urls)} sub-sitemaps found", file=sys.stderr)
-
-    for sub_url in sub_urls:
-        sub_xml = fetch(sub_url, delay=delay)
-        if not sub_xml:
-            continue
-        try:
-            sub_root = ET.fromstring(sub_xml)
-        except ET.ParseError:
-            continue
-        for loc in sub_root.findall(".//sm:loc", NS):
-            if loc.text:
-                url = loc.text.strip()
-                if url_filter is None or url_filter.search(url):
-                    found.add(url)
+    if "sitemapindex" in root.tag:
+        # Sitemap index — fetch each sub-sitemap and collect leaf URLs.
+        sub_urls = [
+            loc.text.strip() for loc in root.findall(".//sm:loc", NS) if loc.text
+        ]
+        print(f"  [discover] {len(sub_urls)} sub-sitemaps found", file=sys.stderr)
+        for sub_url in sub_urls:
+            sub_xml = fetch(sub_url, delay=delay)
+            if not sub_xml:
+                continue
+            try:
+                sub_root = ET.fromstring(sub_xml)
+            except ET.ParseError:
+                continue
+            for loc in sub_root.findall(".//sm:loc", NS):
+                if loc.text:
+                    url = loc.text.strip()
+                    if url_filter is None or url_filter.search(url):
+                        found.add(url)
+    else:
+        # Flat urlset sitemap — extract URLs directly without a second fetch.
+        all_urls = [
+            loc.text.strip() for loc in root.findall(".//sm:loc", NS) if loc.text
+        ]
+        print(f"  [discover] {len(all_urls)} URLs in flat sitemap", file=sys.stderr)
+        for url in all_urls:
+            if url_filter is None or url_filter.search(url):
+                found.add(url)
 
     return sorted(found)

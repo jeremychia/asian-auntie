@@ -17,6 +17,7 @@ copying the dict blocks (no reformatting needed).
 """
 
 import json
+import datetime
 import pathlib
 from collections import defaultdict
 from typing import Optional
@@ -101,7 +102,8 @@ def _repr_list(items: list[str], indent: int) -> str:
 
 
 def staging_path(site_key: str) -> pathlib.Path:
-    return _STAGING_DIR / f"{site_key}.py"
+    today = datetime.date.today().isoformat()
+    return _STAGING_DIR / f"{today}_{site_key}.py"
 
 
 def write_staging(site_key: str, recipes: list[dict]) -> pathlib.Path:
