@@ -1,9 +1,11 @@
 """
-Image recognition service — wraps OpenAI Vision API.
+Image recognition service — wraps a vision LLM API.
 
-Stub mode: if OPENAI_API_KEY is not set, returns a zero-confidence result.
-The caller (web route or API endpoint) branches on confidence to decide
-whether to show a pre-filled card or the manual entry form.
+Provider priority (first match wins):
+  1. Ollama   — OLLAMA_BASE_URL set (local dev, free)
+  2. Groq     — GROQ_API_KEY set   (production, free tier, OpenAI-compatible)
+  3. OpenAI   — OPENAI_API_KEY set (fallback)
+  4. Stub     — no key set, returns zero-confidence result
 
 Confidence routing (from docs/manage-perishables/flows.yaml):
   ≥ 0.85  → one-tap confirm (pre-filled card)
@@ -14,6 +16,7 @@ Confidence routing (from docs/manage-perishables/flows.yaml):
 import hashlib
 import json
 import os
+import re
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional
@@ -101,53 +104,89 @@ def recognize_items_multi(photos: list[tuple[bytes, str]]) -> RecognitionResult:
     return max((r for r, _ in results), key=lambda r: r.confidence)
 
 
+def _resolve_provider() -> tuple[str, str, str | None]:
+    """
+    Return (provider_name, model, base_url) for the first configured provider.
+    base_url is None for OpenAI (uses SDK default).
+    """
+    ollama_url = os.environ.get("OLLAMA_BASE_URL", "")
+    if ollama_url:
+        return "ollama", "llama3.2-vision", f"{ollama_url.rstrip('/')}/v1"
+
+    groq_key = os.environ.get("GROQ_API_KEY", "")
+    if groq_key:
+        return (
+            "groq",
+            "meta-llama/llama-4-scout-17b-16e-instruct",
+            "https://api.groq.com/openai/v1",
+        )
+
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
+    if openai_key:
+        return "openai", "gpt-4o", None
+
+    return "stub", "", None
+
+
+def _resolve_api_key(provider: str) -> str:
+    if provider == "ollama":
+        return "ollama"
+    if provider == "groq":
+        return os.environ.get("GROQ_API_KEY", "")
+    return os.environ.get("OPENAI_API_KEY", "")
+
+
 def recognize_item(image_bytes: bytes) -> RecognitionResult:
     """
     Recognise a food item from an image.
 
-    Returns a RecognitionResult. If OPENAI_API_KEY is not configured,
-    returns a stub zero-confidence result so the app works without an API key.
+    Provider is selected automatically from env vars — see module docstring.
+    Returns a stub zero-confidence result when no provider is configured.
     """
-    api_key = os.environ.get("OPENAI_API_KEY", "")
-    if not api_key:
-        logger.info("recognition_stub_mode", reason="no_api_key")
+    provider, model, base_url = _resolve_provider()
+    if provider == "stub":
+        logger.info("recognition_stub_mode", reason="no_provider_configured")
         return _stub_result()
 
     image_hash = hashlib.sha256(image_bytes).hexdigest()
 
-    # Check cache first
     cached = _get_cached_result(image_hash)
     if cached:
         logger.info("recognition_cache_hit", image_hash=image_hash[:16])
         cached.cache_hit = True
         return cached
 
-    # Call OpenAI Vision
     try:
-        result = _call_openai_vision(api_key, image_bytes, image_hash)
+        api_key = _resolve_api_key(provider)
+        result = _call_vision_api(
+            api_key, base_url, model, provider, image_bytes, image_hash
+        )
         _save_to_cache(image_hash, result)
         return result
     except Exception as exc:
-        logger.error("recognition_api_error", error=str(exc))
+        logger.error("recognition_api_error", provider=provider, error=str(exc))
         return _stub_result()
 
 
-def _call_openai_vision(
-    api_key: str, image_bytes: bytes, image_hash: str
+def _call_vision_api(
+    api_key: str,
+    base_url: str | None,
+    model: str,
+    provider: str,
+    image_bytes: bytes,
+    image_hash: str,
 ) -> RecognitionResult:
     import base64
     import time
     from openai import OpenAI
 
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, base_url=base_url)
 
-    # Resize to reduce token cost before encoding
     resized = _resize_image(image_bytes)
     b64_image = base64.b64encode(resized).decode("utf-8")
 
-    start = time.monotonic()
-    response = client.chat.completions.create(
-        model="gpt-4o",
+    kwargs: dict = dict(
+        model=model,
         messages=[
             {
                 "role": "user",
@@ -164,12 +203,17 @@ def _call_openai_vision(
             }
         ],
         max_tokens=256,
-        response_format={"type": "json_object"},
     )
+    # Groq and Ollama don't support response_format=json_object on all models
+    if provider == "openai":
+        kwargs["response_format"] = {"type": "json_object"}
+
+    start = time.monotonic()
+    response = client.chat.completions.create(**kwargs)
     latency_ms = round((time.monotonic() - start) * 1000)
 
     raw = response.choices[0].message.content
-    data = json.loads(raw)
+    data = json.loads(_extract_json(raw))
 
     printed_expiry = None
     if data.get("printed_expiry_date"):
@@ -193,6 +237,8 @@ def _call_openai_vision(
 
     logger.info(
         "recognition_api_call",
+        provider=provider,
+        model=model,
         image_hash=image_hash[:16],
         confidence=result.confidence,
         item_name=result.name,
@@ -215,6 +261,14 @@ def _resize_image(image_bytes: bytes, max_size: int = 512) -> bytes:
     except Exception:
         # If Pillow fails, send original — don't break the flow
         return image_bytes
+
+
+def _extract_json(text: str) -> str:
+    """Extract the first JSON object from text, handling prose-wrapped responses."""
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        return match.group(0)
+    return text
 
 
 def _get_cached_result(image_hash: str) -> Optional[RecognitionResult]:
