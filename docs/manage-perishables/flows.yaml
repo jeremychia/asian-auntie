@@ -62,7 +62,7 @@ flows:
       - Photo count per item
       - Photo types present (barcode, appearance, label, other)
     open_questions:
-      - Which image recognition API? (Google Vision, OpenAI Vision, custom?)
+      - Image recognition provider: Ollama (llama3.2-vision) locally, Groq (llama-4-scout) in production — decided
       - Which barcode lookup API/database for product identification from barcodes?
       - What is the max number of photos per item? (cap needed for storage)
       - Should autocomplete list be curated manually or seeded from recognition logs?
