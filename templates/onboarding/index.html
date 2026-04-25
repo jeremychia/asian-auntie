@@ -11,6 +11,10 @@
     <p class="onboarding-step-label" id="step-label">Step 1 of 4</p>
   </div>
 
+  <form method="post" action="{{ url_for('onboarding.skip') }}" id="skip-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  </form>
+
   <form method="post" action="{{ url_for('onboarding.save') }}" id="onboarding-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="consent" id="consent-hidden" value="false" />
@@ -32,7 +36,7 @@
         <div class="onboarding-nav__bar onboarding-nav__bar--end">
           <button type="button" class="btn btn-primary" id="next-1">Next &rarr;</button>
         </div>
-        <button type="button" class="onboarding-skip step-skip" data-target="2">Skip this step</button>
+        <button type="submit" form="skip-form" class="onboarding-skip">Skip this step</button>
       </div>
     </div>
 
@@ -250,9 +254,6 @@ document.getElementById('back-3').addEventListener('click', () => goTo(2));
 document.getElementById('next-3').addEventListener('click', () => goTo(4));
 document.getElementById('back-4').addEventListener('click', () => goTo(3));
 
-document.querySelectorAll('.step-skip').forEach(btn => {
-  btn.addEventListener('click', () => goTo(+btn.dataset.target));
-});
 
 // GDPR section visibility — reacts to location selection
 function updateGdprSection() {

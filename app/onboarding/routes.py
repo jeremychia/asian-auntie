@@ -102,6 +102,14 @@ def save():
     return redirect(url_for("perishables.dashboard"))
 
 
+@onboarding_bp.route("/onboarding/skip", methods=["POST"])
+@login_required
+def skip():
+    current_user.onboarding_done = True
+    db.session.commit()
+    return redirect(url_for("perishables.dashboard"))
+
+
 @onboarding_bp.route("/onboarding/cuisine-preview")
 @login_required
 def cuisine_preview():
