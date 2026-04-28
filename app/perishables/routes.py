@@ -1,6 +1,8 @@
 import json
 import os
 import hashlib
+import urllib.request
+import urllib.error
 from datetime import datetime, timezone, date, timedelta
 from io import BytesIO
 from PIL import Image
@@ -12,18 +14,143 @@ from flask import (
     flash,
     request,
     current_app,
+    jsonify,
 )
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models import Item, ItemPhoto
-from app.perishables.forms import AddItemForm
+from app.perishables.forms import AddItemForm, ITEM_TYPES
 from app.recognition.service import recognize_items_multi
 from app.logging_config import get_logger
 
 perishables_bp = Blueprint("perishables", __name__)
 logger = get_logger(__name__)
+
+# Open Food Facts family — tried in order; all share the same API structure
+_OFF_DOMAINS = [
+    "world.openfoodfacts.org",
+    "world.openbeautyfacts.org",
+    "world.openproductsfacts.org",
+]
+
+# Maps OFF categories_tags prefixes → item_type enum.
+# Checked in order; first match wins.
+_OFF_CATEGORY_MAP: list[tuple[frozenset[str], str]] = [
+    (
+        frozenset(
+            {
+                "en:dairy-products",
+                "en:cheeses",
+                "en:milks",
+                "en:yogurts",
+                "en:cream",
+                "en:butter",
+            }
+        ),
+        "dairy",
+    ),
+    (
+        frozenset(
+            {
+                "en:sauces",
+                "en:hot-sauces",
+                "en:fish-sauces",
+                "en:soy-sauces",
+                "en:cooking-sauces",
+                "en:pasta-sauces",
+            }
+        ),
+        "sauce",
+    ),
+    (
+        frozenset(
+            {
+                "en:oils-and-fats",
+                "en:vegetable-oils",
+                "en:cooking-oils",
+                "en:olive-oils",
+                "en:sesame-oils",
+            }
+        ),
+        "oil",
+    ),
+    (frozenset({"en:spices", "en:herbs", "en:spice-mixes", "en:seasonings"}), "spice"),
+    (
+        frozenset(
+            {
+                "en:condiments",
+                "en:vinegars",
+                "en:mustards",
+                "en:ketchup",
+                "en:mayonnaises",
+                "en:relishes",
+            }
+        ),
+        "condiment",
+    ),
+    (
+        frozenset(
+            {
+                "en:fresh-produce",
+                "en:vegetables",
+                "en:fruits",
+                "en:fresh-vegetables",
+                "en:fresh-fruits",
+            }
+        ),
+        "produce",
+    ),
+    (
+        frozenset(
+            {
+                "en:dried-products",
+                "en:cereals",
+                "en:legumes",
+                "en:pasta",
+                "en:rice",
+                "en:noodles",
+                "en:dried-foods",
+            }
+        ),
+        "dried",
+    ),
+    (
+        frozenset({"en:seafood", "en:fish", "en:shellfish", "en:fish-products"}),
+        "seafood",
+    ),
+    (frozenset({"en:tofu", "en:soy-products", "en:tempeh"}), "tofu"),
+]
+
+_VALID_ITEM_TYPES = {k for k, _ in ITEM_TYPES}
+
+
+def _map_off_categories(categories: list[str]) -> str:
+    cat_set = set(categories)
+    for keywords, item_type in _OFF_CATEGORY_MAP:
+        if cat_set & keywords:
+            return item_type
+    return "other"
+
+
+def _lookup_off(barcode: str) -> dict | None:
+    """Query Open Food Facts family for a barcode. Returns the product dict or None."""
+    for domain in _OFF_DOMAINS:
+        url = f"https://{domain}/api/v2/product/{barcode}.json"
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "AsianAuntie/1.0 (jeremyjchia@gmail.com)"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                body = json.loads(resp.read())
+                if body.get("status") == 1 and body.get("product"):
+                    return body["product"]
+        except Exception:
+            continue
+    return None
+
 
 # Default shelf life by item type (days), used when recognition has no printed date
 _SHELF_LIFE_DEFAULTS = {
@@ -96,6 +223,44 @@ def _save_item_photos(item_id: int, photo_data: list[dict]) -> None:
                 display_order=i,
             )
         )
+
+
+@perishables_bp.route("/items/barcode_lookup", methods=["POST"])
+@login_required
+def barcode_lookup():
+    data = request.get_json(silent=True) or {}
+    barcode = str(data.get("barcode", "")).strip()
+
+    if not barcode.isdigit() or not (8 <= len(barcode) <= 14):
+        return jsonify({"error": "Invalid barcode"}), 400
+
+    product = _lookup_off(barcode)
+    if not product:
+        return jsonify({"found": False})
+
+    name = (product.get("product_name") or product.get("product_name_en") or "").strip()
+    if not name:
+        return jsonify({"found": False})
+
+    categories = product.get("categories_tags") or []
+    item_type = _map_off_categories(categories)
+    shelf_life_days = _SHELF_LIFE_DEFAULTS.get(item_type, 90)
+
+    logger.info(
+        "barcode_lookup",
+        user_id=current_user.id,
+        barcode=barcode,
+        name=name,
+        item_type=item_type,
+    )
+    return jsonify(
+        {
+            "found": True,
+            "name": name,
+            "item_type": item_type,
+            "shelf_life_days": shelf_life_days,
+        }
+    )
 
 
 @perishables_bp.route("/")
@@ -182,6 +347,7 @@ def add_item():
         form.photo_paths_json.data = json.dumps(photo_data)
         form.confidence_score.data = str(confidence)
         form.cache_hit.data = "1" if (recognition and recognition.cache_hit) else "0"
+        form.source.data = "photo"
 
         return render_template(
             "perishables/add_item.html",
@@ -191,6 +357,39 @@ def add_item():
             recognition=recognition,
             photo_items=photo_data,
             expiry_source=expiry_source,
+            source="photo",
+        )
+
+    # ── POST step=barcode_confirm: barcode lookup result → show confirmation ──
+    if step == "barcode_confirm":
+        name = request.form.get("name", "").strip()
+        item_type = request.form.get("item_type", "other")
+        try:
+            shelf_life_days = int(request.form.get("shelf_life_days", 90))
+        except (TypeError, ValueError):
+            shelf_life_days = 90
+
+        if item_type not in _VALID_ITEM_TYPES:
+            item_type = "other"
+
+        form = AddItemForm()
+        form.name.data = name
+        form.item_type.data = item_type
+        form.expiry_date.data = date.today() + timedelta(days=shelf_life_days)
+        form.photo_paths_json.data = "[]"
+        form.confidence_score.data = "0.75"
+        form.cache_hit.data = "0"
+        form.source.data = "barcode"
+
+        return render_template(
+            "perishables/add_item.html",
+            step="confirm",
+            form=form,
+            confidence=0.75,
+            recognition=None,
+            photo_items=[],
+            expiry_source="estimated",
+            source="barcode",
         )
 
     # ── POST step=confirm: save item from confirmation card ───────────────────
@@ -251,6 +450,7 @@ def add_item():
             confidence=confidence,
             recognition=None,
             photo_items=photo_items,
+            source=form.source.data or "photo",
         )
 
     # ── POST step=manual: save item from manual form ──────────────────────────

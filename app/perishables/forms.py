@@ -32,14 +32,15 @@ class AddItemForm(FlaskForm):
     )  # JSON: [{"path": "...", "type": "appearance"}, ...]
     confidence_score = HiddenField()
     cache_hit = HiddenField()
+    source = HiddenField()  # "barcode", "photo", or "manual"
     submit = SubmitField("Save item")
 
     def validate_expiry_date(self, field):
         today = date.today()
         if field.data < today:
             raise ValidationError("That date has already passed.")
-        max_date = today.replace(year=today.year + 2)
+        max_date = today.replace(year=today.year + 5)
         if field.data > max_date:
             raise ValidationError(
-                "Expiry date cannot be more than 2 years in the future."
+                "Expiry date cannot be more than 5 years in the future."
             )

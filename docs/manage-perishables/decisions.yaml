@@ -40,7 +40,7 @@ MANAGE-002:
     Items without printed dates: use shelf-life default, label as "Estimated".
   mitigations:
     - Validate: date must be today or in future (block past dates)
-    - Validate: date must be within 2 years (warn if >18 months — unusual)
+    - Validate: date must be within 5 years (warn if >18 months — unusual)
     - "Estimated" label on pre-filled dates signals the user should verify
     - User can always scroll the date picker to override
 
@@ -208,6 +208,39 @@ MANAGE-010:
     - Fallback to original bytes if compression fails (prevents corrupted uploads)
     - Quality degradation is non-linear: starts at 85%, only reduces to 50% if image is very large
     - Test recognition accuracy on compressed samples before shipping
+
+MANAGE-011:
+  title: Barcode lookup database
+  status: locked
+  decision: |
+    Open Food Facts family (openfoodfacts.org, openbeautyfacts.org, openproductsfacts.org).
+    Tried in order per request: food → personal care → general household.
+    Client-side scanning: html5-qrcode (MIT) for live UPC-A / EAN-13 detection in the browser.
+    Attribution: "Powered by Open Food Facts" link shown on the barcode-path confirm card (OdBL requirement).
+  rationale: |
+    Open Food Facts has 4M+ products, is free under OdBL, and covers the food/Asian pantry items this
+    app tracks. The companion databases (Open Beauty Facts, Open Products Facts) extend coverage to
+    personal care and general household goods using an identical API structure — so the fallback chain
+    adds minimal code complexity.
+    No barcode database (free or paid) includes expiry dates: these are printed on the physical package.
+    The barcode path therefore always renders the mid-confidence confirm card with the expiry field
+    highlighted, seeded with a shelf-life estimate the user must verify.
+    html5-qrcode provides live camera scanning in the browser without a native app. It is open-source
+    and actively maintained (via community fork), supports all major consumer barcode formats, and
+    requires no SDK or API key.
+  barcode_standards: |
+    UPC-A (12-digit, North America) and EAN-13 (13-digit, global) are GTIN identifiers managed by GS1.
+    They encode only product identity — no expiry, no batch, no price.
+    GS1-128 / DataMatrix barcodes can encode expiry (AI-17), but only appear on logistics/wholesale
+    packaging, not consumer products.
+  attribution: |
+    OdBL requires: attribution visible to end users, improvements shared back under OdBL.
+    Implementation: "Product info from Open Food Facts" link shown on the confirm card when source="barcode".
+  mitigations:
+    - If OFF family has no result, user falls through to manual form — no blocking error
+    - Expiry date field is always pre-seeded with shelf-life estimate and highlighted so user reviews it
+    - Category mapping is best-effort (OFF taxonomy → 10-item app enum); unknown categories → "other"
+    - html5-qrcode requires HTTPS and camera permission; graceful fallback message if unavailable
 
 MANAGE-INTEGRATION:
   title: Ecosystem integration with other features

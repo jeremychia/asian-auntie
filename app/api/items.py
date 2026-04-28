@@ -43,10 +43,10 @@ class ItemCreateSchema(Schema):
         today = date.today()
         if value < today:
             raise ValidationError("Expiry date cannot be in the past.")
-        max_date = today.replace(year=today.year + 2)
+        max_date = today.replace(year=today.year + 5)
         if value > max_date:
             raise ValidationError(
-                "Expiry date cannot be more than 2 years in the future."
+                "Expiry date cannot be more than 5 years in the future."
             )
 
 

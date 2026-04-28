@@ -35,7 +35,7 @@ Q05:
 Q06:
   title: How do you validate that an expiry date is realistic?
   status: unknown
-  impact: System has no way to catch "expires in 100 years" or "expired 2 years ago"
+  impact: System has no way to catch "expires in 100 years" or "expired 5 years ago"
   risk: App could suggest eating spoiled food if user enters wrong date
 
 Q07:

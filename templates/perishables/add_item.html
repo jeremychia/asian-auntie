@@ -5,57 +5,197 @@
 <div class="content">
 
 {% if step == 'photo' %}
-{# ── Step 1: Photo capture ───────────────────────────────────────── #}
-<div class="step-header">
-  <span class="step-label">Step 1 of 2</span>
-  <p class="step-hint">Take one or more photos and we'll fill in the details for you.</p>
+{# ── Step 1: Choose method ───────────────────────────────────────── #}
+
+{# ── Method landing ── #}
+<div id="method-landing">
+  <div class="step-header">
+    <span class="step-label">Add item</span>
+    <p class="step-hint">How would you like to identify this item?</p>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.25rem;">
+    <button type="button" class="btn btn-primary btn-lg btn-full" onclick="startBarcode()">
+      Scan barcode — fastest
+    </button>
+    <button type="button" class="btn btn-secondary btn-lg btn-full" onclick="startPhotos()">
+      Take photos
+    </button>
+  </div>
+
+  <div class="form-actions" style="justify-content:center;">
+    <a href="{{ url_for('perishables.add_item') }}?skip=1" class="skip-link">Enter manually instead</a>
+  </div>
 </div>
 
-<form method="post" action="{{ url_for('perishables.add_item') }}" enctype="multipart/form-data" id="photo-form">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <input type="hidden" name="step" value="photo">
-
-  {# Thumbnail strip — populated by JS as photos are added #}
-  <div class="photo-strip" id="photo-strip"></div>
-
-  {# Photo entries — each contains a file input and type select, added dynamically #}
-  <div id="photo-entries"></div>
-
-  <div class="photo-capture-zone" id="capture-zone">
-    <span class="photo-capture-icon">📷</span>
-    <p class="photo-capture-text">Point your camera at the expiry date label</p>
-    <label class="photo-capture-label">
-      Take photo
-      <input type="file" name="photos" accept="image/*" capture="environment"
-             class="visually-hidden" id="photo-0" data-idx="0"
-             onchange="handlePhotoSelected(this)">
-    </label>
-    <select name="photo_types" id="type-select-0" class="visually-hidden">
-      <option value="appearance" selected>Appearance</option>
-      <option value="barcode">Barcode</option>
-      <option value="label">Label</option>
-      <option value="other">Other</option>
-    </select>
+{# ── Barcode scanner panel ── #}
+<div id="barcode-panel" hidden>
+  <div class="step-header">
+    <span class="step-label">Scan barcode</span>
+    <p class="step-hint">Point at the barcode on the packaging — it will detect automatically.</p>
   </div>
 
-  <div id="photo-actions" hidden>
+  <div id="barcode-reader" style="width:100%; border-radius:var(--r-lg); overflow:hidden; margin-bottom:1rem;"></div>
+
+  <div id="barcode-searching" style="text-align:center; padding:0.75rem 0; color:var(--text-muted); font-size:var(--font-secondary);">
+    Searching for barcode...
+  </div>
+  <div id="barcode-looking-up" hidden style="text-align:center; padding:0.75rem 0; color:var(--text-muted); font-size:var(--font-secondary);">
+    Looking up product...
+  </div>
+  <div id="barcode-not-found" hidden style="text-align:center; padding:1rem 0;">
+    <p class="step-hint" style="margin-bottom:1rem;">Product not found in database.</p>
+    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+      <button type="button" class="btn btn-secondary btn-full" onclick="resetBarcode()">Try again</button>
+      <button type="button" class="btn btn-secondary btn-full" onclick="startPhotos()">Take photos instead</button>
+    </div>
+  </div>
+
+  <div class="form-actions" style="margin-top:1rem;">
+    <button type="button" class="btn btn-ghost" onclick="showLanding()">Back</button>
+  </div>
+
+  {# Hidden form: submits barcode lookup result to barcode_confirm step #}
+  <form method="post" action="{{ url_for('perishables.add_item') }}" id="barcode-submit-form" hidden>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="step" value="barcode_confirm">
+    <input type="hidden" name="name" id="bc-name">
+    <input type="hidden" name="item_type" id="bc-item-type">
+    <input type="hidden" name="shelf_life_days" id="bc-shelf-life">
+  </form>
+</div>
+
+{# ── Photo capture panel ── #}
+<div id="photo-panel" hidden>
+  <div class="step-header">
+    <span class="step-label">Step 1 of 2</span>
+    <p class="step-hint">Take one or more photos and we'll fill in the details for you.</p>
+  </div>
+
+  <form method="post" action="{{ url_for('perishables.add_item') }}" enctype="multipart/form-data" id="photo-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="step" value="photo">
+
+    <div class="photo-strip" id="photo-strip"></div>
+    <div id="photo-entries"></div>
+
+    <div class="photo-capture-zone" id="capture-zone">
+      <span class="photo-capture-icon">📷</span>
+      <p class="photo-capture-text">Point your camera at the expiry date label</p>
+      <label class="photo-capture-label">
+        Take photo
+        <input type="file" name="photos" accept="image/*" capture="environment"
+               class="visually-hidden" id="photo-0" data-idx="0"
+               onchange="handlePhotoSelected(this)">
+      </label>
+      <select name="photo_types" id="type-select-0" class="visually-hidden">
+        <option value="appearance" selected>Appearance</option>
+        <option value="barcode">Barcode</option>
+        <option value="label">Label</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div id="photo-actions" hidden>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="addAnotherPhoto()" id="add-more-btn">Add another photo</button>
+        <button type="submit" class="btn btn-primary" id="done-btn" onclick="handleDoneClick(event)">Done</button>
+      </div>
+      <div id="upload-status" hidden style="text-align:center; margin-top:1rem;">
+        <p style="font-size:0.9rem; color:#666;">Processing photos...</p>
+      </div>
+    </div>
+
     <div class="form-actions">
-      <button type="button" class="btn btn-secondary" onclick="addAnotherPhoto()" id="add-more-btn">Add another photo</button>
-      <button type="submit" class="btn btn-primary" id="done-btn" onclick="handleDoneClick(event)">Done</button>
+      <button type="button" class="btn btn-ghost" onclick="showLanding()">Back</button>
     </div>
-    <div id="upload-status" hidden style="text-align: center; margin-top: 1rem;">
-      <p style="font-size: 0.9rem; color: #666;">⏳ Processing photos...</p>
-    </div>
-  </div>
+  </form>
+</div>
 
-  <div class="form-actions">
-    <a href="{{ url_for('perishables.add_item') }}?skip=1" class="skip-link">Skip — enter manually</a>
-  </div>
-</form>
-
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
+const BARCODE_LOOKUP_URL = "{{ url_for('perishables.barcode_lookup') }}";
+const CSRF_TOKEN = "{{ csrf_token() }}";
+let html5Qrcode = null;
 let photoCount = 0;
 
+// ── Panel switching ──────────────────────────────────────────────
+function showLanding() {
+  stopBarcode();
+  document.getElementById('method-landing').hidden = false;
+  document.getElementById('barcode-panel').hidden = true;
+  document.getElementById('photo-panel').hidden = true;
+}
+
+function startBarcode() {
+  document.getElementById('method-landing').hidden = true;
+  document.getElementById('barcode-panel').hidden = false;
+  document.getElementById('barcode-not-found').hidden = true;
+  document.getElementById('barcode-searching').hidden = false;
+  document.getElementById('barcode-looking-up').hidden = true;
+
+  html5Qrcode = new Html5Qrcode("barcode-reader");
+  html5Qrcode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 100 } },
+    onBarcodeDetected,
+    null
+  ).catch(function(err) {
+    document.getElementById('barcode-searching').textContent = 'Camera unavailable — try photos instead.';
+  });
+}
+
+function stopBarcode() {
+  if (html5Qrcode) {
+    html5Qrcode.stop().catch(function() {});
+    html5Qrcode = null;
+  }
+}
+
+function resetBarcode() {
+  document.getElementById('barcode-not-found').hidden = true;
+  document.getElementById('barcode-searching').hidden = false;
+  startBarcode();
+}
+
+function startPhotos() {
+  stopBarcode();
+  document.getElementById('method-landing').hidden = true;
+  document.getElementById('barcode-panel').hidden = true;
+  document.getElementById('photo-panel').hidden = false;
+  document.getElementById('photo-0').click();
+}
+
+// ── Barcode detection ────────────────────────────────────────────
+function onBarcodeDetected(decodedText) {
+  stopBarcode();
+  document.getElementById('barcode-searching').hidden = true;
+  document.getElementById('barcode-looking-up').hidden = false;
+
+  fetch(BARCODE_LOOKUP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+    body: JSON.stringify({ barcode: decodedText }),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.found) {
+      document.getElementById('bc-name').value = data.name;
+      document.getElementById('bc-item-type').value = data.item_type;
+      document.getElementById('bc-shelf-life').value = data.shelf_life_days;
+      document.getElementById('barcode-submit-form').submit();
+    } else {
+      document.getElementById('barcode-looking-up').hidden = true;
+      document.getElementById('barcode-not-found').hidden = false;
+    }
+  })
+  .catch(function() {
+    document.getElementById('barcode-looking-up').hidden = true;
+    document.getElementById('barcode-not-found').hidden = false;
+  });
+}
+
+// ── Photo capture ────────────────────────────────────────────────
 function handlePhotoSelected(input) {
   const file = input.files[0];
   if (!file) return;
@@ -66,8 +206,6 @@ function handlePhotoSelected(input) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const strip = document.getElementById('photo-strip');
-
-    // Build thumbnail with inline type label
     const thumb = document.createElement('div');
     thumb.className = 'photo-thumb';
     thumb.id = 'thumb-' + idx;
@@ -80,7 +218,6 @@ function handlePhotoSelected(input) {
         '<option value="other"' + (typeSelect.value === 'other' ? ' selected' : '') + '>Other</option>' +
       '</select>';
     strip.appendChild(thumb);
-
     document.getElementById('capture-zone').hidden = true;
     document.getElementById('photo-actions').hidden = false;
   };
@@ -95,8 +232,6 @@ function syncTypeSelect(thumbSelect, idx) {
 function addAnotherPhoto() {
   photoCount++;
   const idx = photoCount;
-
-  // Add a hidden file input + type select pair to the form
   const entries = document.getElementById('photo-entries');
   const entry = document.createElement('div');
   entry.id = 'entry-' + idx;
@@ -115,19 +250,10 @@ function addAnotherPhoto() {
 }
 
 function handleDoneClick(event) {
-  const doneBtn = document.getElementById('done-btn');
-  const addMoreBtn = document.getElementById('add-more-btn');
-  const uploadStatus = document.getElementById('upload-status');
-
-  doneBtn.disabled = true;
-  addMoreBtn.disabled = true;
-  uploadStatus.hidden = false;
+  document.getElementById('done-btn').disabled = true;
+  document.getElementById('add-more-btn').disabled = true;
+  document.getElementById('upload-status').hidden = false;
 }
-
-// Auto-open camera on page load
-window.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('photo-0').click();
-});
 </script>
 
 
@@ -164,6 +290,7 @@ window.addEventListener('DOMContentLoaded', function() {
   {{ form.photo_paths_json() }}
   {{ form.confidence_score() }}
   {{ form.cache_hit() }}
+  {{ form.source() }}
 
   {% if high_conf %}
   <div class="confirm-card">
@@ -204,6 +331,12 @@ window.addEventListener('DOMContentLoaded', function() {
     {{ form.expiry_date(id="expiry_date", class=("field-highlight" if mid_conf else "")) }}
     {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
     <small id="expiry-warning" class="field-warning" hidden></small>
+
+    {% if source == "barcode" %}
+    <p style="font-size:var(--font-xs); color:var(--text-muted); margin:0.25rem 0 0.75rem;">
+      Product info from <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>
+    </p>
+    {% endif %}
 
     <div class="form-actions">
       {{ form.submit(class="btn btn-primary") }}
