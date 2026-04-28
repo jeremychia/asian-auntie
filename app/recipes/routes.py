@@ -38,14 +38,19 @@ def index():
     )
 
 
+PAGE_SIZE = 10
+
+
 @recipes_bp.route("/recipes/search", methods=["POST"])
 @login_required
 def search():
     data = request.get_json(silent=True) or {}
     ingredients: list[str] = [str(i).strip() for i in data.get("ingredients", []) if i]
+    page: int = max(1, int(data.get("page", 1)))
+    show_all: bool = bool(data.get("show_all", False))
 
     if not ingredients:
-        return jsonify({"results": []})
+        return jsonify({"results": [], "total": 0, "has_more": False})
 
     results = []
     for recipe in RECIPES:
@@ -55,16 +60,26 @@ def search():
 
     # Sort: match % descending, then fewer ingredients first (simpler recipes)
     results.sort(key=lambda r: (-r["match_pct"], r["total_count"]))
-    results = results[:20]
+
+    total = len(results)
+    if show_all:
+        page_results = results
+        has_more = False
+    else:
+        start = (page - 1) * PAGE_SIZE
+        end = start + PAGE_SIZE
+        page_results = results[start:end]
+        has_more = end < total
 
     logger.info(
         "recipe_search",
         user_id=current_user.id,
         ingredient_count=len(ingredients),
-        result_count=len(results),
+        result_count=total,
+        page=page,
     )
 
-    return jsonify({"results": results})
+    return jsonify({"results": page_results, "total": total, "has_more": has_more})
 
 
 _VALID_FEEDBACK = {"yes_made", "not_for_me"}

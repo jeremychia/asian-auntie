@@ -63,11 +63,6 @@
       Some ingredients match broadly — add more specific ones for better results.
     </p>
 
-    <!-- Refresh results button (shown when ingredients change after first search) -->
-    <button type="button" class="btn btn-secondary btn-full" id="refresh-btn" hidden>
-      Refresh results
-    </button>
-
   </div>
 
   <!-- ── Results ───────────────────────────────────────────────── -->
@@ -79,6 +74,12 @@
     <p id="no-recipes-msg" class="no-results" hidden>
       No matches found. Try removing an ingredient.
     </p>
+    <button type="button" class="btn btn-secondary btn-full" id="load-more-btn" hidden>
+      Load more
+    </button>
+    <button type="button" class="btn btn-secondary btn-full" id="show-all-btn" hidden>
+      Show all results
+    </button>
   </div>
 
 </div>
@@ -130,7 +131,10 @@
   // Each ingredient: { label: string, active: boolean, source: "pantry"|"manual" }
   let ingredients = [];
   let pantryLoaded = false;
-  let hasSearchedOnce = false;   // true after first auto-search (pantry load)
+  let currentPage = 1;
+  let currentIngredients = [];
+  let totalResults = 0;
+  let searchDebounce = null;
   // Track which recipes got feedback this session (to avoid re-prompting)
   const sessionFeedback = new Set();
 
@@ -147,7 +151,8 @@
   const noRecipesMsg       = document.getElementById('no-recipes-msg');
   const noIngredientsMsg   = document.getElementById('no-ingredients-msg');
   const genericIngMsg      = document.getElementById('generic-ingredient-msg');
-  const refreshBtn         = document.getElementById('refresh-btn');
+  const loadMoreBtn        = document.getElementById('load-more-btn');
+  const showAllBtn         = document.getElementById('show-all-btn');
   const resultsTitle       = document.getElementById('results-title');
   const dialog             = document.getElementById('recipe-dialog');
   const dialogContent      = document.getElementById('recipe-dialog-content');
@@ -169,12 +174,6 @@
       search();
     });
   }
-
-  // ── Refresh button ───────────────────────────────────────────
-  refreshBtn.addEventListener('click', () => {
-    refreshBtn.hidden = true;
-    search();
-  });
 
   // ── Chips ────────────────────────────────────────────────────
   function renderChips() {
@@ -273,96 +272,116 @@
 
   // ── Search ───────────────────────────────────────────────────
 
-  // Mark results as stale — show "Refresh results" button instead of auto-searching.
-  // Only show the button if a search has already run once (pantry load was the trigger).
   function markDirty() {
     const anyActive = ingredients.some(i => i.active);
     if (!anyActive) {
       resultsArea.hidden = true;
-      refreshBtn.hidden = true;
       return;
     }
-    if (hasSearchedOnce) {
-      refreshBtn.hidden = false;
-    } else {
-      // No results shown yet — auto-search so the first manual ingredient triggers results
-      search();
-    }
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(search, 150);
   }
 
   function search() {
     const active = ingredients.filter(i => i.active).map(i => i.label);
     if (!active.length) {
       resultsArea.hidden = true;
-      refreshBtn.hidden = true;
       return;
     }
-    refreshBtn.hidden = true;
     _doSearch(active);
   }
 
   async function _doSearch(active) {
-    hasSearchedOnce = true;
+    currentIngredients = active;
+    currentPage = 1;
+    recipeList.innerHTML = '';
     try {
-      const resp = await fetch('/recipes/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCsrf(),
-        },
-        body: JSON.stringify({ ingredients: active }),
-      });
-      if (!resp.ok) return;
-      const { results } = await resp.json();
-      renderResults(results);
+      const { results, total, has_more } = await fetchPage(active, 1);
+      totalResults = total;
+      resultsArea.hidden = false;
+      noRecipesMsg.hidden = results.length > 0;
+      resultsTitle.textContent = total
+        ? `${total} recipe${total !== 1 ? 's' : ''} found`
+        : 'Recipes';
+      results.forEach(r => recipeList.appendChild(makeCard(r)));
+      updatePaginationButtons(has_more, total - results.length);
     } catch (_) {}
   }
 
-  function renderResults(results) {
-    resultsArea.hidden = false;
-    recipeList.innerHTML = '';
-    noRecipesMsg.hidden = results.length > 0;
-    resultsTitle.textContent = results.length
-      ? `${results.length} recipe${results.length !== 1 ? 's' : ''} found`
-      : 'Recipes';
+  function updatePaginationButtons(hasMore, remaining) {
+    loadMoreBtn.hidden = !hasMore;
+    showAllBtn.hidden = !hasMore;
+    if (hasMore) {
+      loadMoreBtn.textContent = `Load more (${remaining} remaining)`;
+      showAllBtn.textContent = `Show all ${totalResults} results`;
+    }
+  }
 
-    results.forEach(r => {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'recipe-card';
-      card.setAttribute('aria-label', `View ${r.name}`);
-
-      const matchClass = r.match_pct >= 80 ? 'match--high'
-                       : r.match_pct >= 50 ? 'match--mid'
-                                           : 'match--low';
-
-      const skippedBadge = SKIPPED.has(r.id)
-        ? `<span class="recipe-card__skipped">You skipped this before</span>`
-        : '';
-
-      card.innerHTML = `
-        <div class="recipe-card__header">
-          <div class="recipe-card__title-row">
-            <span class="recipe-card__name">${esc(r.name)}</span>
-            <span class="recipe-card__match ${matchClass}">${r.match_pct}%</span>
-          </div>
-          <div class="recipe-card__meta">
-            <span class="recipe-card__source">${esc(r.source)}</span>
-            <span class="recipe-card__dot">·</span>
-            <span class="recipe-card__cuisine">${esc(r.cuisine)}</span>
-            ${r.cook_time ? `<span class="recipe-card__dot">·</span><span class="recipe-card__time">${esc(r.cook_time)}</span>` : ''}
-          </div>
-          ${skippedBadge}
-        </div>
-        <div class="recipe-card__summary">
-          You have <strong>${r.matched_count} of ${r.total_count}</strong> ingredients
-          ${r.missing.length ? `· Missing: <span class="recipe-card__missing">${r.missing.slice(0,3).map(esc).join(', ')}${r.missing.length > 3 ? ` +${r.missing.length - 3} more` : ''}</span>` : ''}
-        </div>
-      `;
-
-      card.addEventListener('click', () => openRecipe(r));
-      recipeList.appendChild(card);
+  async function fetchPage(active, page, showAll = false) {
+    const resp = await fetch('/recipes/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({ ingredients: active, page, show_all: showAll }),
     });
+    if (!resp.ok) throw new Error('search failed');
+    return resp.json();
+  }
+
+  loadMoreBtn.addEventListener('click', async () => {
+    currentPage += 1;
+    try {
+      const { results, has_more } = await fetchPage(currentIngredients, currentPage);
+      results.forEach(r => recipeList.appendChild(makeCard(r)));
+      updatePaginationButtons(has_more, totalResults - recipeList.children.length);
+    } catch (_) {}
+  });
+
+  showAllBtn.addEventListener('click', async () => {
+    try {
+      const { results } = await fetchPage(currentIngredients, 1, true);
+      recipeList.innerHTML = '';
+      results.forEach(r => recipeList.appendChild(makeCard(r)));
+      loadMoreBtn.hidden = true;
+      showAllBtn.hidden = true;
+    } catch (_) {}
+  });
+
+  function makeCard(r) {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'recipe-card';
+    card.setAttribute('aria-label', `View ${r.name}`);
+
+    const matchClass = r.match_pct >= 80 ? 'match--high'
+                     : r.match_pct >= 50 ? 'match--mid'
+                                         : 'match--low';
+
+    const skippedBadge = SKIPPED.has(r.id)
+      ? `<span class="recipe-card__skipped">You skipped this before</span>`
+      : '';
+
+    card.innerHTML = `
+      <div class="recipe-card__header">
+        <div class="recipe-card__title-row">
+          <span class="recipe-card__name">${esc(r.name)}</span>
+          <span class="recipe-card__match ${matchClass}">${r.match_pct}%</span>
+        </div>
+        <div class="recipe-card__meta">
+          <span class="recipe-card__source">${esc(r.source)}</span>
+          <span class="recipe-card__dot">·</span>
+          <span class="recipe-card__cuisine">${esc(r.cuisine)}</span>
+          ${r.cook_time ? `<span class="recipe-card__dot">·</span><span class="recipe-card__time">${esc(r.cook_time)}</span>` : ''}
+        </div>
+        ${skippedBadge}
+      </div>
+      <div class="recipe-card__summary">
+        You have <strong>${r.matched_count} of ${r.total_count}</strong> ingredients
+        ${r.missing.length ? `· Missing: <span class="recipe-card__missing">${r.missing.slice(0,3).map(esc).join(', ')}${r.missing.length > 3 ? ` +${r.missing.length - 3} more` : ''}</span>` : ''}
+      </div>
+    `;
+
+    card.addEventListener('click', () => openRecipe(r));
+    return card;
   }
 
   // ── Recipe detail dialog ─────────────────────────────────────
