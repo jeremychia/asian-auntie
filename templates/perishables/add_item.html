@@ -62,6 +62,7 @@
     <input type="hidden" name="name" id="bc-name">
     <input type="hidden" name="item_type" id="bc-item-type">
     <input type="hidden" name="shelf_life_days" id="bc-shelf-life">
+    <input type="hidden" name="off_image_path" id="bc-image-path">
   </form>
 </div>
 
@@ -183,6 +184,7 @@ function onBarcodeDetected(decodedText) {
       document.getElementById('bc-name').value = data.name;
       document.getElementById('bc-item-type').value = data.item_type;
       document.getElementById('bc-shelf-life').value = data.shelf_life_days;
+      document.getElementById('bc-image-path').value = data.image_path || '';
       document.getElementById('barcode-submit-form').submit();
     } else {
       document.getElementById('barcode-looking-up').hidden = true;

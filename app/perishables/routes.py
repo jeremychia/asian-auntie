@@ -246,12 +246,31 @@ def barcode_lookup():
     item_type = _map_off_categories(categories)
     shelf_life_days = _SHELF_LIFE_DEFAULTS.get(item_type, 90)
 
+    image_path = None
+    image_url = (
+        product.get("image_front_url")
+        or product.get("image_url")
+        or product.get("image_front_small_url")
+    )
+    if image_url:
+        try:
+            req = urllib.request.Request(
+                image_url,
+                headers={"User-Agent": "AsianAuntie/1.0 (jeremyjchia@gmail.com)"},
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                image_bytes = resp.read()
+            image_path = _save_photo_bytes(image_bytes, f"{barcode}.jpg")
+        except Exception:
+            image_path = None
+
     logger.info(
         "barcode_lookup",
         user_id=current_user.id,
         barcode=barcode,
         name=name,
         item_type=item_type,
+        image_cached=image_path is not None,
     )
     return jsonify(
         {
@@ -259,6 +278,7 @@ def barcode_lookup():
             "name": name,
             "item_type": item_type,
             "shelf_life_days": shelf_life_days,
+            "image_path": image_path,
         }
     )
 
@@ -372,11 +392,16 @@ def add_item():
         if item_type not in _VALID_ITEM_TYPES:
             item_type = "other"
 
+        off_image_path = request.form.get("off_image_path", "").strip()
+        photo_data = (
+            [{"path": off_image_path, "type": "appearance"}] if off_image_path else []
+        )
+
         form = AddItemForm()
         form.name.data = name
         form.item_type.data = item_type
         form.expiry_date.data = date.today() + timedelta(days=shelf_life_days)
-        form.photo_paths_json.data = "[]"
+        form.photo_paths_json.data = json.dumps(photo_data)
         form.confidence_score.data = "0.75"
         form.cache_hit.data = "0"
         form.source.data = "barcode"
@@ -387,7 +412,7 @@ def add_item():
             form=form,
             confidence=0.75,
             recognition=None,
-            photo_items=[],
+            photo_items=photo_data,
             expiry_source="estimated",
             source="barcode",
         )
