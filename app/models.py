@@ -73,7 +73,7 @@ class Item(db.Model):
     removed_at = db.Column(db.DateTime, nullable=True)
     removal_reason = db.Column(
         db.String(32), nullable=True
-    )  # "used", "discarded", "unwanted"
+    )  # "used", "discarded", "unwanted", "mistake"
 
     user = db.relationship("User", back_populates="items")
     photos = db.relationship(

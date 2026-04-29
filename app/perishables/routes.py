@@ -605,7 +605,7 @@ def remove_item(item_id):
         .first_or_404()
     )
     reason = request.form.get("reason", "unwanted")
-    if reason not in ("discarded", "unwanted"):
+    if reason not in ("discarded", "unwanted", "mistake"):
         reason = "unwanted"
     item_name = item.name
     today = date.today()

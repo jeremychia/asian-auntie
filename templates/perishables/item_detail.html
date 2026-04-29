@@ -122,6 +122,20 @@ today).days %}
             Don't want it
           </button>
         </form>
+        <form
+          method="post"
+          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            name="reason"
+            value="mistake"
+            class="btn btn-ghost btn-sm"
+          >
+            Keyed in by mistake
+          </button>
+        </form>
         {% else %}
         {# Not expired: recommend "Don't want it" #}
         <form
@@ -150,6 +164,20 @@ today).days %}
             class="btn btn-secondary btn-sm"
           >
             Threw it away
+          </button>
+        </form>
+        <form
+          method="post"
+          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            name="reason"
+            value="mistake"
+            class="btn btn-ghost btn-sm"
+          >
+            Keyed in by mistake
           </button>
         </form>
         {% endif %}
