@@ -24,6 +24,7 @@ from app.models import Item, ItemPhoto
 from app.perishables.forms import AddItemForm, ITEM_TYPES, PANTRY_ITEMS
 from app.recognition.service import recognize_items_multi
 from app.logging_config import get_logger
+from app.ingredient_normalization import normalize_ingredient
 
 perishables_bp = Blueprint("perishables", __name__)
 logger = get_logger(__name__)
@@ -134,31 +135,6 @@ def _get_user_item(item_id: int, include_removed: bool = False):
     else:
         query = query.filter(Item.removed_at.isnot(None))
     return query.first_or_404()
-
-
-def _fuzzy_standard_name(name: str) -> str | None:
-    """Return the best-matching PANTRY_ITEMS entry for a given name, or None.
-
-    Uses character-level subsequence matching, same algorithm as the frontend
-    autocomplete. Requires score > 0 and picks the highest scorer.
-    """
-    if not name:
-        return None
-    q = name.lower()
-
-    def score(candidate: str) -> float:
-        s = candidate.lower()
-        if q in s:
-            return 100 + len(q) / len(s) * 10
-        j = 0
-        for ch in s:
-            if j < len(q) and ch == q[j]:
-                j += 1
-        return (10 + len(q) / len(s) * 10) if j == len(q) else 0
-
-    scored = [(score(item), item) for item in PANTRY_ITEMS]
-    best_score, best_item = max(scored, key=lambda x: x[0])
-    return best_item if best_score > 0 else None
 
 
 def _map_off_categories(categories: list[str]) -> str:
@@ -426,7 +402,7 @@ def add_item():
         form.cache_hit.data = "1" if (recognition and recognition.cache_hit) else "0"
         form.source.data = "photo"
         if recognition and recognition.name:
-            form.standard_name.data = _fuzzy_standard_name(recognition.name)
+            form.standard_name.data = normalize_ingredient(recognition.name)
 
         return render_template(
             "perishables/add_item.html",
@@ -466,7 +442,7 @@ def add_item():
         form.cache_hit.data = "0"
         form.source.data = "barcode"
         form.barcode.data = barcode_value
-        form.standard_name.data = _fuzzy_standard_name(name)
+        form.standard_name.data = normalize_ingredient(name)
 
         return render_template(
             "perishables/add_item.html",
@@ -500,7 +476,7 @@ def add_item():
                 cache_hit=cache_hit,
                 location=form.location.data or None,
                 standard_name=form.standard_name.data
-                or _fuzzy_standard_name(form.name.data.strip()),
+                or normalize_ingredient(form.name.data.strip()),
                 barcode=form.barcode.data or None,
             )
             db.session.add(item)
@@ -554,7 +530,7 @@ def add_item():
                 item_type=form.item_type.data,
                 expiry_date=form.expiry_date.data,
                 location=form.location.data or None,
-                standard_name=_fuzzy_standard_name(form.name.data.strip()),
+                standard_name=normalize_ingredient(form.name.data.strip()),
             )
             db.session.add(item)
             db.session.flush()
@@ -644,7 +620,7 @@ def update_item(item_id):
     if new_standard_name:
         item.standard_name = new_standard_name
     elif name_changed:
-        item.standard_name = _fuzzy_standard_name(new_name)
+        item.standard_name = normalize_ingredient(new_name)
     item.name = new_name
     item.expiry_date = parsed_expiry
     item.item_type = new_item_type

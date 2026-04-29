@@ -9,6 +9,7 @@ Rules:
   - URL matches (handles old "-lau" suffix IDs): staging wins.
   - Staging is deduped by ID; last occurrence wins (egg-drop-soup appears twice).
   - New staging recipes are appended in a Made with Lau section at the end.
+  - All ingredients are normalized to PANTRY_ITEMS canonical names.
 
 Usage:
   python pipeline/merge_staging.py [--dry-run]
@@ -16,6 +17,9 @@ Usage:
 import ast
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from app.ingredient_normalization import normalize_ingredient
 
 ROOT = Path(__file__).resolve().parent.parent
 STAGING = ROOT / "pipeline/staging/2026-04-25_made_with_lau.py"
@@ -98,12 +102,17 @@ def section_header(name: str) -> str:
 
 
 def deduplicate_ingredients(recipe: dict) -> dict:
-    """Deduplicate ingredients and sort alphabetically."""
+    """Normalize, deduplicate, and sort ingredients alphabetically (lowercase)."""
     ingredients = recipe.get("ingredients", [])
+    # Normalize each ingredient to canonical name, then lowercase
+    normalized = []
+    for ing in ingredients:
+        canonical = normalize_ingredient(ing) or ing.lower().strip()
+        normalized.append(canonical.lower())
     # Deduplicate while preserving order, then sort
     seen = set()
     deduped = []
-    for ing in ingredients:
+    for ing in normalized:
         if ing not in seen:
             deduped.append(ing)
             seen.add(ing)

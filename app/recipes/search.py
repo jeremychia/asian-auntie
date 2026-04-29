@@ -1,4 +1,6 @@
 import re
+from app.ingredient_normalization import normalize_ingredient
+from app.perishables.forms import PANTRY_ITEMS
 
 _STOP_WORDS = {
     "a",
@@ -122,13 +124,31 @@ def _words(text: str) -> set[str]:
 
 
 def ingredient_matches(recipe_ingredient: str, user_ingredients: list[str]) -> bool:
-    ri_words = _words(recipe_ingredient)
+    normalized_recipe = (
+        normalize_ingredient(recipe_ingredient) or recipe_ingredient.lower().strip()
+    )
+    normalized_users = [
+        normalize_ingredient(ui) or ui.lower().strip() for ui in user_ingredients
+    ]
+
+    if normalized_recipe in normalized_users:
+        return True
+
+    # If normalized recipe is in PANTRY_ITEMS, only exact match on canonical names.
+    # This prevents "Grated coconut" from matching "Coconut milk" via word overlap.
+    pantry_lower = [p.lower() for p in PANTRY_ITEMS]
+    if normalized_recipe.lower() in pantry_lower:
+        return False
+
+    ri_words = _words(normalized_recipe.lower())
     if not ri_words:
         return False
-    for ui in user_ingredients:
-        if ri_words & _words(ui):
+
+    for ui in normalized_users:
+        ui_lower = ui.lower()
+        if ri_words & _words(ui_lower):
             return True
-        for canonical in SYNONYMS.get(ui.lower().strip(), []):
+        for canonical in SYNONYMS.get(ui_lower.strip(), []):
             if ri_words & _words(canonical):
                 return True
     return False
