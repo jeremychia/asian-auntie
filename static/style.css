@@ -423,8 +423,8 @@ nav.container {
   transition:
     box-shadow 0.15s,
     transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
   position: relative;
+  z-index: 1;
 }
 .item-card.is-swiped {
   transform: translateX(-72px);
@@ -990,6 +990,10 @@ select.sort-select:focus {
   color: #fff;
   line-height: 1.3;
   width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .item-card__badge--overlay {
