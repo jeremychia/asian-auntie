@@ -21,7 +21,7 @@ from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models import Item, ItemPhoto
-from app.perishables.forms import AddItemForm, ITEM_TYPES
+from app.perishables.forms import AddItemForm, ITEM_TYPES, PANTRY_ITEMS
 from app.recognition.service import recognize_items_multi
 from app.logging_config import get_logger
 
@@ -124,6 +124,31 @@ _OFF_CATEGORY_MAP: list[tuple[frozenset[str], str]] = [
 ]
 
 _VALID_ITEM_TYPES = {k for k, _ in ITEM_TYPES}
+
+
+def _fuzzy_standard_name(name: str) -> str | None:
+    """Return the best-matching PANTRY_ITEMS entry for a given name, or None.
+
+    Uses character-level subsequence matching, same algorithm as the frontend
+    autocomplete. Requires score > 0 and picks the highest scorer.
+    """
+    if not name:
+        return None
+    q = name.lower()
+
+    def score(candidate: str) -> float:
+        s = candidate.lower()
+        if q in s:
+            return 100 + len(q) / len(s) * 10
+        j = 0
+        for ch in s:
+            if j < len(q) and ch == q[j]:
+                j += 1
+        return (10 + len(q) / len(s) * 10) if j == len(q) else 0
+
+    scored = [(score(item), item) for item in PANTRY_ITEMS]
+    best_score, best_item = max(scored, key=lambda x: x[0])
+    return best_item if best_score > 0 else None
 
 
 def _map_off_categories(categories: list[str]) -> str:
@@ -390,6 +415,8 @@ def add_item():
         form.confidence_score.data = str(confidence)
         form.cache_hit.data = "1" if (recognition and recognition.cache_hit) else "0"
         form.source.data = "photo"
+        if recognition and recognition.name:
+            form.standard_name.data = _fuzzy_standard_name(recognition.name)
 
         return render_template(
             "perishables/add_item.html",
@@ -406,6 +433,7 @@ def add_item():
     if step == "barcode_confirm":
         name = request.form.get("name", "").strip()
         item_type = request.form.get("item_type", "other")
+        barcode_value = request.form.get("barcode", "").strip()
         try:
             shelf_life_days = int(request.form.get("shelf_life_days", 90))
         except (TypeError, ValueError):
@@ -427,6 +455,8 @@ def add_item():
         form.confidence_score.data = "0.75"
         form.cache_hit.data = "0"
         form.source.data = "barcode"
+        form.barcode.data = barcode_value
+        form.standard_name.data = _fuzzy_standard_name(name)
 
         return render_template(
             "perishables/add_item.html",
@@ -459,6 +489,9 @@ def add_item():
                 confidence_score=confidence_score,
                 cache_hit=cache_hit,
                 location=form.location.data or None,
+                standard_name=form.standard_name.data
+                or _fuzzy_standard_name(form.name.data.strip()),
+                barcode=form.barcode.data or None,
             )
             db.session.add(item)
             db.session.flush()  # get item.id before creating photos
@@ -511,6 +544,7 @@ def add_item():
                 item_type=form.item_type.data,
                 expiry_date=form.expiry_date.data,
                 location=form.location.data or None,
+                standard_name=_fuzzy_standard_name(form.name.data.strip()),
             )
             db.session.add(item)
             db.session.flush()

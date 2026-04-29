@@ -63,6 +63,7 @@
     <input type="hidden" name="item_type" id="bc-item-type">
     <input type="hidden" name="shelf_life_days" id="bc-shelf-life">
     <input type="hidden" name="off_image_path" id="bc-image-path">
+    <input type="hidden" name="barcode" id="bc-barcode">
   </form>
 </div>
 
@@ -204,6 +205,7 @@ function onBarcodeDetected(decodedText) {
       document.getElementById('bc-item-type').value = data.item_type;
       document.getElementById('bc-shelf-life').value = data.shelf_life_days;
       document.getElementById('bc-image-path').value = data.image_path || '';
+      document.getElementById('bc-barcode').value = decodedText;
       document.getElementById('barcode-submit-form').submit();
     } else {
       document.getElementById('barcode-looking-up').hidden = true;
@@ -382,6 +384,7 @@ function handleDoneClick(event) {
   {{ form.confidence_score() }}
   {{ form.cache_hit() }}
   {{ form.source() }}
+  {{ form.barcode() }}
 
   {% if high_conf %}
   <div class="confirm-card">
@@ -411,6 +414,13 @@ function handleDoneClick(event) {
       {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce") }}
       <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
       {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    </div>
+
+    <div class="autocomplete-wrap">
+      <label for="standard_name">Standard ingredient name</label>
+      {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk") }}
+      <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
+      <small class="field-hint">Used to match this item to recipes</small>
     </div>
 
     <label for="item_type">Type</label>
@@ -455,6 +465,13 @@ function handleDoneClick(event) {
     {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce", autofocus=true) }}
     <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
     {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+  </div>
+
+  <div class="autocomplete-wrap">
+    <label for="standard_name">Standard ingredient name</label>
+    {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk") }}
+    <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
+    <small class="field-hint">Used to match this item to recipes</small>
   </div>
 
   <label for="item_type">Type</label>
@@ -546,6 +563,67 @@ function fuzzyScore(item, q) {
     input.value = value;
     list.hidden = true;
     input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  input.addEventListener('input', () => renderSuggestions(input.value));
+
+  input.addEventListener('keydown', e => {
+    if (list.hidden) return;
+    const items = list.querySelectorAll('li');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[activeIdx]?.classList.remove('is-active');
+      activeIdx = Math.min(activeIdx + 1, items.length - 1);
+      items[activeIdx]?.classList.add('is-active');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[activeIdx]?.classList.remove('is-active');
+      activeIdx = Math.max(activeIdx - 1, 0);
+      items[activeIdx]?.classList.add('is-active');
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      const active = list.querySelector('.is-active');
+      if (active) { e.preventDefault(); selectItem(active.dataset.val); }
+    } else if (e.key === 'Escape') {
+      list.hidden = true;
+    }
+  });
+
+  list.addEventListener('mousedown', e => {
+    const li = e.target.closest('li');
+    if (li) { e.preventDefault(); selectItem(li.dataset.val); }
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !list.contains(e.target)) list.hidden = true;
+  });
+})();
+
+(function () {
+  const input = document.getElementById('standard_name');
+  const list = document.getElementById('standard-name-dropdown');
+  if (!input || !list) return;
+
+  let activeIdx = 0;
+
+  function renderSuggestions(query) {
+    const q = query.toLowerCase();
+    if (q.length < 2) { list.hidden = true; return; }
+    const scored = PANTRY_ITEMS
+      .map(item => ({ item, score: fuzzyScore(item, q) }))
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6);
+    if (!scored.length) { list.hidden = true; return; }
+    activeIdx = 0;
+    list.innerHTML = scored.map((x, i) =>
+      `<li role="option" data-val="${x.item}" class="${i === 0 ? 'is-active' : ''}">${x.item}</li>`
+    ).join('');
+    list.hidden = false;
+  }
+
+  function selectItem(value) {
+    input.value = value;
+    list.hidden = true;
   }
 
   input.addEventListener('input', () => renderSuggestions(input.value));

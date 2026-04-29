@@ -72,6 +72,12 @@ class Item(db.Model):
     # Storage location — fridge, freezer, pantry, cupboard, counter
     location = db.Column(db.String(32), nullable=True)
 
+    # Canonical pantry ingredient name for recipe matching (e.g. "Coconut milk")
+    standard_name = db.Column(db.String(256), nullable=True)
+
+    # Barcode value if item was identified via barcode scan
+    barcode = db.Column(db.String(64), nullable=True)
+
     # Soft delete — set on removal, null while in inventory
     removed_at = db.Column(db.DateTime, nullable=True)
     removal_reason = db.Column(

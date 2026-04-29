@@ -40,6 +40,12 @@ today).days %}
   {% endif %}
 
   <div class="meta-list">
+    {% if item.standard_name %}
+    <div class="meta-row">
+      <span class="meta-label">Ingredient</span>
+      <span class="meta-value">{{ item.standard_name }}</span>
+    </div>
+    {% endif %}
     <div class="meta-row">
       <span class="meta-label">Type</span>
       <span class="meta-value">{{ item.item_type | capitalize }}</span>
@@ -52,16 +58,18 @@ today).days %}
     {% endif %}
     <div class="meta-row">
       <span class="meta-label">Expires</span>
-      <span class="meta-value"
-        >{{ item.expiry_date.strftime("%-d %b %Y") }}</span
-      >
+      <span class="meta-value">{{ item.expiry_date.strftime("%-d %b %Y") }}</span>
     </div>
     <div class="meta-row">
       <span class="meta-label">Added</span>
-      <span class="meta-value"
-        >{{ item.date_added.strftime("%-d %b %Y") }}</span
-      >
+      <span class="meta-value">{{ item.date_added.strftime("%-d %b %Y") }}</span>
     </div>
+    {% if item.barcode %}
+    <div class="meta-row">
+      <span class="meta-label">Barcode</span>
+      <span class="meta-value">{{ item.barcode }}</span>
+    </div>
+    {% endif %}
   </div>
 
   <div class="item-actions">
