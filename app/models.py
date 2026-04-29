@@ -69,6 +69,9 @@ class Item(db.Model):
         db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
 
+    # Storage location — fridge, freezer, pantry, cupboard, counter
+    location = db.Column(db.String(32), nullable=True)
+
     # Soft delete — set on removal, null while in inventory
     removed_at = db.Column(db.DateTime, nullable=True)
     removal_reason = db.Column(

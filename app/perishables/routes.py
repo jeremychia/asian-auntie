@@ -458,6 +458,7 @@ def add_item():
                 expiry_date=form.expiry_date.data,
                 confidence_score=confidence_score,
                 cache_hit=cache_hit,
+                location=form.location.data or None,
             )
             db.session.add(item)
             db.session.flush()  # get item.id before creating photos
@@ -509,6 +510,7 @@ def add_item():
                 name=form.name.data.strip(),
                 item_type=form.item_type.data,
                 expiry_date=form.expiry_date.data,
+                location=form.location.data or None,
             )
             db.session.add(item)
             db.session.flush()

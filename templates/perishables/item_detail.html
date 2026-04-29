@@ -44,6 +44,12 @@ today).days %}
       <span class="meta-label">Type</span>
       <span class="meta-value">{{ item.item_type | capitalize }}</span>
     </div>
+    {% if item.location %}
+    <div class="meta-row">
+      <span class="meta-label">Location</span>
+      <span class="meta-value">{{ item.location | capitalize }}</span>
+    </div>
+    {% endif %}
     <div class="meta-row">
       <span class="meta-label">Expires</span>
       <span class="meta-value"

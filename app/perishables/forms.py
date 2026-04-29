@@ -5,6 +5,15 @@ from wtforms import StringField, SelectField, SubmitField, HiddenField
 from wtforms.fields import DateField
 from wtforms.validators import DataRequired, Length, ValidationError
 
+LOCATIONS = [
+    ("", "Not specified"),
+    ("fridge", "Fridge"),
+    ("freezer", "Freezer"),
+    ("pantry", "Pantry"),
+    ("cupboard", "Cupboard"),
+    ("counter", "Counter"),
+]
+
 ITEM_TYPES = [
     ("unknown", "Unknown"),
     ("sauce", "Sauce"),
@@ -23,6 +32,7 @@ ITEM_TYPES = [
 class AddItemForm(FlaskForm):
     name = StringField("Item name", validators=[DataRequired(), Length(min=1, max=256)])
     item_type = SelectField("Type", choices=ITEM_TYPES, default="unknown")
+    location = SelectField("Location", choices=LOCATIONS, default="")
     expiry_date = DateField("Expiry date", validators=[DataRequired()])
     photo = FileField(
         "Photo (optional)", validators=[FileAllowed(["jpg", "jpeg", "png", "webp"])]
