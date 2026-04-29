@@ -2,22 +2,46 @@
 endblock %} {% block content %} {% set days_left = (item.expiry_date -
 today).days %}
 
-<div class="content">
+<div class="content" id="item-detail">
   <a href="{{ url_for('perishables.dashboard') }}" class="back-link"
     >← Pantry</a
   >
 
   <div class="detail-header">
-    <h1>{{ item.name }}</h1>
-    {% if days_left == 0 %}
-    <span class="badge badge--today">Today</span>
-    {% elif days_left < 0 %}
-    <span class="badge badge--expired">Expired</span>
-    {% elif days_left <= 2 %}
-    <span class="badge badge--soon"
-      >{{ days_left }} day{{ "s" if days_left != 1 }}</span
-    >
-    {% endif %}
+    <div class="detail-header__title-row">
+      <h1 class="view-only">{{ item.name }}</h1>
+      <input
+        type="text"
+        form="edit-form"
+        name="name"
+        value="{{ item.name }}"
+        maxlength="256"
+        required
+        class="edit-only manual-input edit-name-input"
+      />
+    </div>
+    <div class="detail-header__right">
+      {% if days_left == 0 %}
+      <span class="badge badge--today">Today</span>
+      {% elif days_left < 0 %}
+      <span class="badge badge--expired">Expired</span>
+      {% elif days_left <= 2 %}
+      <span class="badge badge--soon"
+        >{{ days_left }} day{{ "s" if days_left != 1 }}</span
+      >
+      {% endif %}
+      <button
+        type="button"
+        class="btn-icon view-only"
+        id="edit-btn"
+        aria-label="Edit item details"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   {% if item.has_photo %}
@@ -40,25 +64,82 @@ today).days %}
   {% endif %}
 
   <div class="meta-list">
-    {% if item.standard_name %}
     <div class="meta-row">
       <span class="meta-label">Ingredient</span>
-      <span class="meta-value">{{ item.standard_name }}</span>
+      <div class="meta-value">
+        <span class="view-only">{{ item.standard_name or '—' }}</span>
+        <input
+          type="text"
+          form="edit-form"
+          name="standard_name"
+          list="standard-name-options"
+          value="{{ item.standard_name or '' }}"
+          placeholder="e.g. Coconut milk"
+          maxlength="256"
+          class="edit-only inline-edit__select"
+        />
+        <datalist id="standard-name-options">
+          {% for pantry_item in pantry_items_list %}
+          <option value="{{ pantry_item }}" />
+          {% endfor %}
+        </datalist>
+      </div>
     </div>
-    {% endif %}
     <div class="meta-row">
       <span class="meta-label">Type</span>
-      <span class="meta-value">{{ item.item_type | capitalize }}</span>
+      <div class="meta-value">
+        <span class="view-only">{{ item.item_type | capitalize }}</span>
+        <select form="edit-form" name="item_type" class="edit-only inline-edit__select">
+          <option value="unknown" {% if item.item_type == "unknown" %}selected{% endif %}>Unknown</option>
+          <option value="sauce" {% if item.item_type == "sauce" %}selected{% endif %}>Sauce</option>
+          <option value="oil" {% if item.item_type == "oil" %}selected{% endif %}>Oil</option>
+          <option value="spice" {% if item.item_type == "spice" %}selected{% endif %}>Spice</option>
+          <option value="condiment" {% if item.item_type == "condiment" %}selected{% endif %}>Condiment</option>
+          <option value="produce" {% if item.item_type == "produce" %}selected{% endif %}>Produce</option>
+          <option value="dried" {% if item.item_type == "dried" %}selected{% endif %}>Dried goods</option>
+          <option value="tofu" {% if item.item_type == "tofu" %}selected{% endif %}>Tofu</option>
+          <option value="seafood" {% if item.item_type == "seafood" %}selected{% endif %}>Seafood</option>
+          <option value="dairy" {% if item.item_type == "dairy" %}selected{% endif %}>Dairy</option>
+          <option value="other" {% if item.item_type == "other" %}selected{% endif %}>Other</option>
+        </select>
+      </div>
     </div>
-    {% if item.location %}
     <div class="meta-row">
       <span class="meta-label">Location</span>
-      <span class="meta-value">{{ item.location | capitalize }}</span>
+      <div class="meta-value">
+        <span class="view-only">{{ item.location | capitalize if item.location else "Not specified" }}</span>
+        <input
+          type="text"
+          form="edit-form"
+          name="location"
+          list="location-options"
+          value="{{ item.location | capitalize if item.location else '' }}"
+          placeholder="e.g. Fridge"
+          maxlength="32"
+          class="edit-only inline-edit__select"
+        />
+        <datalist id="location-options">
+          <option value="Fridge">
+          <option value="Freezer">
+          <option value="Pantry">
+          <option value="Cupboard">
+          <option value="Counter">
+        </datalist>
+      </div>
     </div>
-    {% endif %}
     <div class="meta-row">
       <span class="meta-label">Expires</span>
-      <span class="meta-value">{{ item.expiry_date.strftime("%-d %b %Y") }}</span>
+      <div class="meta-value">
+        <span class="view-only">{{ item.expiry_date.strftime("%-d %b %Y") }}</span>
+        <input
+          type="date"
+          form="edit-form"
+          name="expiry_date"
+          value="{{ item.expiry_date.strftime('%Y-%m-%d') }}"
+          required
+          class="edit-only inline-edit__select"
+        />
+      </div>
     </div>
     <div class="meta-row">
       <span class="meta-label">Added</span>
@@ -72,7 +153,18 @@ today).days %}
     {% endif %}
   </div>
 
-  <div class="item-actions">
+  <form
+    id="edit-form"
+    method="post"
+    action="{{ url_for('perishables.update_item', item_id=item.id) }}"
+    class="edit-only edit-actions-form"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="btn btn-primary btn-full">Save changes</button>
+    <button type="button" class="btn btn-secondary btn-full" id="cancel-edit-btn">Cancel</button>
+  </form>
+
+  <div class="item-actions view-only">
     <button
       type="button"
       class="btn btn-primary btn-full"
@@ -199,4 +291,15 @@ today).days %}
     </details>
   </div>
 </div>
+
+<script>
+  const detail = document.getElementById('item-detail');
+  document.getElementById('edit-btn').addEventListener('click', () => {
+    detail.classList.add('is-editing');
+    detail.querySelector('.edit-name-input').focus();
+  });
+  document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+    detail.classList.remove('is-editing');
+  });
+</script>
 {% endblock %}

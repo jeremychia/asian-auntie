@@ -593,7 +593,12 @@ def add_item():
 def item_detail(item_id):
     item = _get_user_item(item_id)
     today = date.today()
-    return render_template("perishables/item_detail.html", item=item, today=today)
+    return render_template(
+        "perishables/item_detail.html",
+        item=item,
+        today=today,
+        pantry_items_list=PANTRY_ITEMS,
+    )
 
 
 @perishables_bp.route("/items/<int:item_id>/location", methods=["POST"])
@@ -617,8 +622,12 @@ def update_item(item_id):
     new_expiry = request.form.get("expiry_date", "").strip()
     new_item_type = request.form.get("item_type", "").strip()
     new_location = request.form.get("location", "").strip().lower()
+    new_standard_name = request.form.get("standard_name", "").strip()
     if not new_name or len(new_name) > 256:
         flash("Item name is required and must be under 256 characters.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    if new_standard_name and len(new_standard_name) > 256:
+        flash("Ingredient name is too long.", "error")
         return redirect(url_for("perishables.item_detail", item_id=item_id))
     try:
         parsed_expiry = date.fromisoformat(new_expiry)
@@ -631,6 +640,11 @@ def update_item(item_id):
     if len(new_location) > 32:
         flash("Location name is too long.", "error")
         return redirect(url_for("perishables.item_detail", item_id=item_id))
+    name_changed = new_name != item.name
+    if new_standard_name:
+        item.standard_name = new_standard_name
+    elif name_changed:
+        item.standard_name = _fuzzy_standard_name(new_name)
     item.name = new_name
     item.expiry_date = parsed_expiry
     item.item_type = new_item_type

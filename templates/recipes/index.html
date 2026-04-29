@@ -111,7 +111,7 @@
   // ── Pantry data from server ─────────────────────────────────
   const PANTRY = [
     {% for item in pantry_items %}
-    {{ item.name | tojson }}{% if not loop.last %},{% endif %}
+    {{ (item.standard_name or item.name) | tojson }}{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
 
