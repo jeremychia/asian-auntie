@@ -58,8 +58,12 @@ def fmt_recipe(r: dict) -> str:
     for key in FIELD_ORDER:
         lines.append(f'        "{key}": {r[key]!r},')
     lines.append('        "ingredients": [')
+    # Deduplicate ingredients while preserving order
+    seen = set()
     for ing in r["ingredients"]:
-        lines.append(f"            {ing!r},")
+        if ing not in seen:
+            lines.append(f"            {ing!r},")
+            seen.add(ing)
     lines.append("        ],")
     lines.append("    },")
     return "\n".join(lines)
@@ -93,12 +97,25 @@ def section_header(name: str) -> str:
     return f"    # ── {name} {fill}"
 
 
+def deduplicate_ingredients(recipe: dict) -> dict:
+    """Deduplicate ingredients and sort alphabetically."""
+    ingredients = recipe.get("ingredients", [])
+    # Deduplicate while preserving order, then sort
+    seen = set()
+    deduped = []
+    for ing in ingredients:
+        if ing not in seen:
+            deduped.append(ing)
+            seen.add(ing)
+    return {**recipe, "ingredients": sorted(deduped)}
+
+
 def main(dry_run: bool = False) -> None:
     # Load + dedup staging by ID (last occurrence wins)
     staging_raw = load_recipes(STAGING)
     staging_by_id: dict[str, dict] = {}
     for r in staging_raw:
-        staging_by_id[r["id"]] = r
+        staging_by_id[r["id"]] = deduplicate_ingredients(r)
 
     staging_ids = set(staging_by_id)
     staging_urls = {r["source_url"] for r in staging_by_id.values()}
@@ -124,9 +141,9 @@ def main(dry_run: bool = False) -> None:
                 # Cross-source conflict: keep existing under a new ID
                 new_id = f"{r['id']}-{source_slug(r['source'])}"
                 cross_renamed.append((r["id"], new_id, r["source"]))
-                kept.append({**r, "id": new_id})
+                kept.append(deduplicate_ingredients({**r, "id": new_id}))
         else:
-            kept.append(r)
+            kept.append(deduplicate_ingredients(r))
 
     total_replaced = len(mwl_replaced) + len(url_replaced)
     new_count = (
