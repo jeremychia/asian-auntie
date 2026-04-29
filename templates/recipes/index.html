@@ -405,6 +405,7 @@
 
     dialogContent.innerHTML = `
       <div class="recipe-detail">
+        <button type="button" class="recipe-detail__back" id="back-to-recipes" aria-label="Back to recipes">← Back</button>
         <div class="recipe-detail__header">
           <h2 class="recipe-detail__title">${esc(r.name)}</h2>
           <div class="recipe-detail__meta">
@@ -528,6 +529,11 @@
 
   if (dialogClose) dialogClose.addEventListener('click', () => dialog.close());
   if (dialog) dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+
+  // Back to recipes button in detail view
+  dialog.addEventListener('click', e => {
+    if (e.target.id === 'back-to-recipes') dialog.close();
+  });
 
   // ── Helpers ─────────────────────────────────────────────────
   function norm(s) { return s.toLowerCase().trim(); }
