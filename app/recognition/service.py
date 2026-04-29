@@ -180,7 +180,7 @@ def _call_vision_api(
     import time
     from openai import OpenAI
 
-    client = OpenAI(api_key=api_key, base_url=base_url)
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=30.0)
 
     resized = _resize_image(image_bytes)
     b64_image = base64.b64encode(resized).decode("utf-8")

@@ -312,18 +312,25 @@ def add_item():
         return render_template("perishables/add_item.html", step="photo")
 
     step = request.form.get("step", "photo")
+    logger.info(
+        "add_item_post", step=step, num_files=len(request.files.getlist("photos"))
+    )
 
     # ── POST step=photo: run recognition on all photos → show confirmation ────
     if step == "photo":
         photo_files = request.files.getlist("photos")
         photo_types = request.form.getlist("photo_types")
 
+        logger.info("add_item_photo_start", num_files=len(photo_files))
+
         saved_photos = []  # list of {"path": str, "type": str, "bytes": bytes}
         for i, photo_file in enumerate(photo_files):
             if not (photo_file and photo_file.filename):
+                logger.info("add_item_photo_skip", idx=i, reason="no_file_or_filename")
                 continue
             image_bytes = photo_file.read()
             if not image_bytes:
+                logger.info("add_item_photo_skip", idx=i, reason="empty_bytes")
                 continue
             photo_type = photo_types[i] if i < len(photo_types) else "appearance"
             if photo_type not in ItemPhoto.VALID_TYPES:
@@ -332,14 +339,29 @@ def add_item():
             saved_photos.append(
                 {"path": path, "type": photo_type, "bytes": image_bytes}
             )
+            logger.info(
+                "add_item_photo_saved",
+                idx=i,
+                photo_type=photo_type,
+                size_bytes=len(image_bytes),
+            )
+
+        logger.info("add_item_photo_saved_count", count=len(saved_photos))
 
         if not saved_photos:
+            logger.warning("add_item_photo_no_valid_photos")
             return render_template(
                 "perishables/add_item.html", step="manual", form=AddItemForm()
             )
 
+        logger.info("add_item_recognition_start", num_photos=len(saved_photos))
         recognition = recognize_items_multi(
             [(p["bytes"], p["type"]) for p in saved_photos]
+        )
+        logger.info(
+            "add_item_recognition_done",
+            confidence=recognition.confidence if recognition else None,
+            name=recognition.name if recognition else None,
         )
 
         confidence = recognition.confidence if recognition else 0.0
