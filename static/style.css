@@ -419,7 +419,7 @@ nav.container {
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   text-decoration: none;
-  min-height: 130px;
+  min-height: 190px;
   transition:
     box-shadow 0.15s,
     transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -949,7 +949,6 @@ select.sort-select:focus {
 ═══════════════════════════════════════════════════ */
 .item-card--has-photo {
   padding: 0;
-  min-height: 190px;
   border: none;
 }
 .item-card--has-photo::before {
