@@ -536,10 +536,25 @@ nav.container {
 
 .detail-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.detail-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-header__right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .detail-header h1 {
@@ -548,6 +563,51 @@ nav.container {
   color: var(--text);
   margin: 0;
   letter-spacing: -0.02em;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+.btn-icon:hover {
+  color: var(--text);
+  background: var(--surface-alt, var(--border));
+}
+
+#item-detail .edit-only {
+  display: none !important;
+}
+#item-detail.is-editing .edit-only {
+  display: revert !important;
+}
+#item-detail.is-editing .view-only {
+  display: none !important;
+}
+
+.edit-name-input {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 0.2rem 0.5rem;
+  width: 100%;
+}
+
+.edit-actions-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+#item-detail.is-editing .edit-actions-form {
+  display: flex;
 }
 
 .item-photo {
@@ -572,7 +632,8 @@ nav.container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.875rem 1.125rem;
+  min-height: 3.25rem;
+  padding: 0 1.125rem;
   border-bottom: 1px solid var(--border);
 }
 .meta-row:last-child {
@@ -592,6 +653,17 @@ nav.container {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.inline-edit__select {
+  font-size: var(--font-md);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 0.25rem 0.5rem;
+  background: var(--surface);
+  color: var(--text);
+  width: auto;
+  align-self: center;
 }
 
 /* Inline urgency badges */

@@ -126,6 +126,16 @@ _OFF_CATEGORY_MAP: list[tuple[frozenset[str], str]] = [
 _VALID_ITEM_TYPES = {k for k, _ in ITEM_TYPES}
 
 
+def _get_user_item(item_id: int, include_removed: bool = False):
+    """Fetch an active item owned by the current user, or 404."""
+    query = Item.query.filter_by(id=item_id, user_id=current_user.id)
+    if not include_removed:
+        query = query.filter(Item.removed_at.is_(None))
+    else:
+        query = query.filter(Item.removed_at.isnot(None))
+    return query.first_or_404()
+
+
 def _fuzzy_standard_name(name: str) -> str | None:
     """Return the best-matching PANTRY_ITEMS entry for a given name, or None.
 
@@ -581,23 +591,58 @@ def add_item():
 @perishables_bp.route("/items/<int:item_id>")
 @login_required
 def item_detail(item_id):
-    item = (
-        Item.query.filter_by(id=item_id, user_id=current_user.id)
-        .filter(Item.removed_at.is_(None))
-        .first_or_404()
-    )
+    item = _get_user_item(item_id)
     today = date.today()
     return render_template("perishables/item_detail.html", item=item, today=today)
+
+
+@perishables_bp.route("/items/<int:item_id>/location", methods=["POST"])
+@login_required
+def update_location(item_id):
+    item = _get_user_item(item_id)
+    new_location = request.form.get("location", "").strip().lower()
+    if len(new_location) > 32:
+        flash("Location name is too long.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    item.location = new_location or None
+    db.session.commit()
+    return redirect(url_for("perishables.item_detail", item_id=item_id))
+
+
+@perishables_bp.route("/items/<int:item_id>/edit", methods=["POST"])
+@login_required
+def update_item(item_id):
+    item = _get_user_item(item_id)
+    new_name = request.form.get("name", "").strip()
+    new_expiry = request.form.get("expiry_date", "").strip()
+    new_item_type = request.form.get("item_type", "").strip()
+    new_location = request.form.get("location", "").strip().lower()
+    if not new_name or len(new_name) > 256:
+        flash("Item name is required and must be under 256 characters.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    try:
+        parsed_expiry = date.fromisoformat(new_expiry)
+    except ValueError:
+        flash("Invalid expiry date.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    if new_item_type not in _VALID_ITEM_TYPES:
+        flash("Invalid item type.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    if len(new_location) > 32:
+        flash("Location name is too long.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    item.name = new_name
+    item.expiry_date = parsed_expiry
+    item.item_type = new_item_type
+    item.location = new_location or None
+    db.session.commit()
+    return redirect(url_for("perishables.item_detail", item_id=item_id))
 
 
 @perishables_bp.route("/items/<int:item_id>/use", methods=["POST"])
 @login_required
 def mark_used(item_id):
-    item = (
-        Item.query.filter_by(id=item_id, user_id=current_user.id)
-        .filter(Item.removed_at.is_(None))
-        .first_or_404()
-    )
+    item = _get_user_item(item_id)
     item_name = item.name
     item.removed_at = datetime.now(timezone.utc)
     item.removal_reason = "used"
@@ -614,11 +659,7 @@ def mark_used(item_id):
 @perishables_bp.route("/items/<int:item_id>/undo", methods=["POST"])
 @login_required
 def undo_use(item_id):
-    item = (
-        Item.query.filter_by(id=item_id, user_id=current_user.id)
-        .filter(Item.removed_at.isnot(None))
-        .first_or_404()
-    )
+    item = _get_user_item(item_id, include_removed=True)
     item.removed_at = None
     item.removal_reason = None
     db.session.commit()
@@ -635,11 +676,7 @@ def undo_use(item_id):
 @perishables_bp.route("/items/<int:item_id>/remove", methods=["POST"])
 @login_required
 def remove_item(item_id):
-    item = (
-        Item.query.filter_by(id=item_id, user_id=current_user.id)
-        .filter(Item.removed_at.is_(None))
-        .first_or_404()
-    )
+    item = _get_user_item(item_id)
     reason = request.form.get("reason", "unwanted")
     if reason not in ("discarded", "unwanted", "mistake"):
         reason = "unwanted"
