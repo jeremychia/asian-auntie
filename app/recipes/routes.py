@@ -48,12 +48,21 @@ def search():
     ingredients: list[str] = [str(i).strip() for i in data.get("ingredients", []) if i]
     page: int = max(1, int(data.get("page", 1)))
     show_all: bool = bool(data.get("show_all", False))
+    cuisine: str = str(data.get("cuisine", "")).strip()
+    website: str = str(data.get("website", "")).strip()
 
     if not ingredients:
         return jsonify({"results": [], "total": 0, "has_more": False})
 
     results = []
     for recipe in RECIPES:
+        # Apply cuisine filter
+        if cuisine and recipe.get("cuisine", "") != cuisine:
+            continue
+        # Apply website filter
+        if website and recipe.get("source", "") != website:
+            continue
+
         scored = score_recipe(recipe, ingredients)
         if scored:
             results.append(scored)

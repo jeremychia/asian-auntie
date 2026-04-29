@@ -69,6 +69,44 @@
   <div id="results-area" class="results-area" hidden>
     <div class="results-header">
       <h2 class="results-title" id="results-title">Recipes</h2>
+      <!-- Filters -->
+      <div class="results-filters">
+        <div class="filter-group">
+          <label for="cuisine-filter" class="filter-label">Cuisine</label>
+          <select id="cuisine-filter" class="filter-select">
+            <option value="">All cuisines</option>
+            <option value="Chinese">Chinese</option>
+            <option value="Filipino">Filipino</option>
+            <option value="Indonesian">Indonesian</option>
+            <option value="Malaysian">Malaysian</option>
+            <option value="Singaporean">Singaporean</option>
+            <option value="Thai">Thai</option>
+            <option value="Vietnamese">Vietnamese</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="website-filter" class="filter-label">Website</label>
+          <select id="website-filter" class="filter-select">
+            <option value="">All websites</option>
+            <option value="Caroline's Cooking">Caroline's Cooking</option>
+            <option value="Cook Me Indonesian">Cook Me Indonesian</option>
+            <option value="Daily Cooking Quest">Daily Cooking Quest</option>
+            <option value="Delightful Plate">Delightful Plate</option>
+            <option value="Hot Thai Kitchen">Hot Thai Kitchen</option>
+            <option value="Huang Kitchen">Huang Kitchen</option>
+            <option value="Hungry Huy">Hungry Huy</option>
+            <option value="Lin's Food">Lin's Food</option>
+            <option value="Made with Lau">Made with Lau</option>
+            <option value="Nyonya Cooking">Nyonya Cooking</option>
+            <option value="Panlasang Pinoy">Panlasang Pinoy</option>
+            <option value="Rasa Malaysia">Rasa Malaysia</option>
+            <option value="RecipeTin Eats">RecipeTin Eats</option>
+            <option value="The Woks of Life">The Woks of Life</option>
+            <option value="Vicky Pham">Vicky Pham</option>
+            <option value="What To Cook Today">What To Cook Today</option>
+          </select>
+        </div>
+      </div>
     </div>
     <div id="recipe-list" class="recipe-list"></div>
     <p id="no-recipes-msg" class="no-results" hidden>
@@ -133,6 +171,8 @@
   let pantryLoaded = false;
   let currentPage = 1;
   let currentIngredients = [];
+  let currentCuisine = '';
+  let currentWebsite = '';
   let totalResults = 0;
   let searchDebounce = null;
   // Track which recipes got feedback this session (to avoid re-prompting)
@@ -154,6 +194,8 @@
   const loadMoreBtn        = document.getElementById('load-more-btn');
   const showAllBtn         = document.getElementById('show-all-btn');
   const resultsTitle       = document.getElementById('results-title');
+  const cuisineFilter      = document.getElementById('cuisine-filter');
+  const websiteFilter      = document.getElementById('website-filter');
   const dialog             = document.getElementById('recipe-dialog');
   const dialogContent      = document.getElementById('recipe-dialog-content');
   const dialogClose        = document.getElementById('dialog-close');
@@ -270,6 +312,21 @@
 
   function closeAC() { acList.hidden = true; acList.innerHTML = ''; }
 
+  // ── Filters ──────────────────────────────────────────────────
+  if (cuisineFilter) {
+    cuisineFilter.addEventListener('change', () => {
+      currentCuisine = cuisineFilter.value;
+      markDirty();
+    });
+  }
+
+  if (websiteFilter) {
+    websiteFilter.addEventListener('change', () => {
+      currentWebsite = websiteFilter.value;
+      markDirty();
+    });
+  }
+
   // ── Search ───────────────────────────────────────────────────
 
   function markDirty() {
@@ -296,7 +353,7 @@
     currentPage = 1;
     recipeList.innerHTML = '';
     try {
-      const { results, total, has_more } = await fetchPage(active, 1);
+      const { results, total, has_more } = await fetchPage(active, 1, false, currentCuisine, currentWebsite);
       totalResults = total;
       resultsArea.hidden = false;
       noRecipesMsg.hidden = results.length > 0;
@@ -317,11 +374,11 @@
     }
   }
 
-  async function fetchPage(active, page, showAll = false) {
+  async function fetchPage(active, page, showAll = false, cuisine = '', website = '') {
     const resp = await fetch('/recipes/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-      body: JSON.stringify({ ingredients: active, page, show_all: showAll }),
+      body: JSON.stringify({ ingredients: active, page, show_all: showAll, cuisine, website }),
     });
     if (!resp.ok) throw new Error('search failed');
     return resp.json();
@@ -330,7 +387,7 @@
   loadMoreBtn.addEventListener('click', async () => {
     currentPage += 1;
     try {
-      const { results, has_more } = await fetchPage(currentIngredients, currentPage);
+      const { results, has_more } = await fetchPage(currentIngredients, currentPage, false, currentCuisine, currentWebsite);
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       updatePaginationButtons(has_more, totalResults - recipeList.children.length);
     } catch (_) {}
@@ -338,7 +395,7 @@
 
   showAllBtn.addEventListener('click', async () => {
     try {
-      const { results } = await fetchPage(currentIngredients, 1, true);
+      const { results } = await fetchPage(currentIngredients, 1, true, currentCuisine, currentWebsite);
       recipeList.innerHTML = '';
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       loadMoreBtn.hidden = true;
