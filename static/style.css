@@ -1691,6 +1691,8 @@ select.sort-select:focus {
   /* override pico */
   margin: 0;
   box-shadow: none;
+  text-decoration: none;
+  color: inherit;
 }
 .recipe-card:hover {
   border-color: var(--brand);
