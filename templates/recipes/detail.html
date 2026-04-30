@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}{{ recipe.name }} — Asian Auntie{% endblock %}
+{% block content %}
+
+<div class="content">
+  <a href="{{ url_for('recipes.index') }}" class="recipe-detail__back" aria-label="Back to recipes">← Back</a>
+
+  <div class="recipe-detail">
+    <div class="recipe-detail__header">
+      <h1 class="recipe-detail__title">{{ recipe.name }}</h1>
+      <div class="recipe-detail__meta">
+        <span class="recipe-card__source">{{ recipe.source }}</span>
+        <span class="recipe-card__dot">·</span>
+        <span class="recipe-card__cuisine">{{ recipe.cuisine }}</span>
+        {% if recipe.cook_time %}<span class="recipe-card__dot">·</span><span class="recipe-card__time">{{ recipe.cook_time }}</span>{% endif %}
+        {% if recipe.difficulty %}<span class="recipe-card__dot">·</span><span>{{ recipe.difficulty }}</span>{% endif %}
+      </div>
+
+      {% if recipe.get('match_pct') %}
+      {% set match_class = 'match--high' if recipe.match_pct >= 80 else ('match--mid' if recipe.match_pct >= 50 else 'match--low') %}
+      <div class="recipe-detail__match-row">
+        <span class="recipe-card__match {{ match_class }} recipe-card__match--lg">{{ recipe.match_pct }}% match</span>
+        <span class="recipe-detail__summary">
+          {{ recipe.matched_count }} of {{ recipe.total_count }} ingredients
+          {% if recipe.missing | length == 0 %}— you have everything!{% else %}· Missing: {{ recipe.missing | join(', ') }}{% endif %}
+        </span>
+      </div>
+
+      {% if recipe.match_pct >= 80 %}
+      <span class="recipe-detail__match-note">You have most of what you need.</span>
+      {% endif %}
+      {% endif %}
+    </div>
+
+    <ul class="ing-list">
+      {% for ing in recipe.ingredients %}
+      {% set have = recipe.get('matched') and ing in recipe.matched %}
+      <li class="ing-row{% if have %} ing-row--have{% else %} ing-row--need{% endif %}">
+        <span class="ing-row__dot">{% if have %}✓{% else %}·{% endif %}</span>
+        <span class="ing-row__name">{{ ing }}</span>
+        <span class="ing-row__status">{% if have %}you have it{% else %}you'll need this{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% if recipe.source_url %}
+    <a
+      href="{{ recipe.source_url }}"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="btn btn-primary btn-full recipe-detail__cta"
+    >View full recipe on {{ recipe.source }} ↗</a>
+    {% else %}
+    <p class="source-unavailable">Source currently unavailable — ingredient list shown above.</p>
+    {% endif %}
+
+    <div id="feedback-section" class="feedback-section"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SKIPPED = new Set([
+    {% for rid in skipped_ids %}
+    {{ rid | tojson }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]);
+
+  const recipeId = {{ recipe.id | tojson }};
+  const recipeName = {{ recipe.name | tojson }};
+  const sessionFeedback = new Set();
+  const feedbackSection = document.getElementById('feedback-section');
+
+  // Show feedback prompt after a short delay
+  setTimeout(() => showFeedback(recipeId, recipeName), 300);
+
+  function showFeedback(id, name) {
+    if (!feedbackSection || sessionFeedback.has(id)) return;
+
+    feedbackSection.hidden = false;
+    feedbackSection.innerHTML = `
+      <div class="feedback-prompt">
+        <p class="feedback-prompt__question">Did you make this?</p>
+        <div class="feedback-prompt__actions">
+          <button type="button" class="btn feedback-btn feedback-btn--yes" data-value="yes_made">
+            Yes, I made it!
+          </button>
+          <button type="button" class="btn feedback-btn feedback-btn--no" data-value="not_for_me">
+            Not for me
+          </button>
+        </div>
+      </div>
+    `;
+
+    feedbackSection.querySelector('.feedback-btn--yes').addEventListener('click', () => {
+      submitFeedback(id, 'yes_made', null);
+    });
+
+    feedbackSection.querySelector('.feedback-btn--no').addEventListener('click', () => {
+      showSkipReasons(id);
+    });
+  }
+
+  function showSkipReasons(id) {
+    feedbackSection.innerHTML = `
+      <div class="feedback-prompt">
+        <p class="feedback-prompt__question">What put you off?</p>
+        <div class="feedback-prompt__reasons">
+          <button type="button" class="btn feedback-reason-btn" data-reason="too_complex">Too complex</button>
+          <button type="button" class="btn feedback-reason-btn" data-reason="missing_key_ingredient">Missing key ingredient</button>
+          <button type="button" class="btn feedback-reason-btn" data-reason="not_my_taste">Not my taste</button>
+          <button type="button" class="btn feedback-reason-btn feedback-reason-btn--skip" data-reason="">Skip</button>
+        </div>
+      </div>
+    `;
+
+    feedbackSection.querySelectorAll('.feedback-reason-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const reason = btn.dataset.reason || null;
+        submitFeedback(id, 'not_for_me', reason);
+      });
+    });
+  }
+
+  async function submitFeedback(id, feedback, skipReason) {
+    sessionFeedback.add(id);
+    if (feedback === 'not_for_me') {
+      SKIPPED.add(id);
+    }
+
+    feedbackSection.innerHTML = `<p class="feedback-thanks">${
+      feedback === 'yes_made' ? 'Great! Enjoy your meal.' : 'Got it. We won\'t push this one.'
+    }</p>`;
+
+    try {
+      await fetch(`/recipes/${encodeURIComponent(id)}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrf(),
+        },
+        body: JSON.stringify({ feedback, skip_reason: skipReason }),
+      });
+    } catch (_) {}
+  }
+
+  function getCsrf() {
+    const el = document.querySelector('input[name="csrf_token"]');
+    if (el) return el.value;
+    const m = document.cookie.match(/csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+})();
+</script>
+
+<!-- CSRF token for JS fetch calls -->
+<input type="hidden" id="csrf-token" name="csrf_token" value="{{ csrf_token() }}" style="display:none">
+
+{% endblock %}

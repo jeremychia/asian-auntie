@@ -123,6 +123,45 @@ _VALID_SKIP_REASONS = {"too_complex", "missing_key_ingredient", "not_my_taste"}
 _RECIPE_IDS = {r["id"] for r in RECIPES}
 
 
+@recipes_bp.route("/recipes/<recipe_id>")
+@login_required
+def detail(recipe_id: str):
+    recipe = None
+    for r in RECIPES:
+        if r["id"] == recipe_id:
+            recipe = r
+            break
+
+    if not recipe:
+        return "Recipe not found", 404
+
+    today = date.today()
+    pantry_items = (
+        Item.query.filter_by(user_id=current_user.id)
+        .filter(Item.removed_at.is_(None))
+        .filter(Item.expiry_date >= today)
+        .all()
+    )
+    user_ingredients = [item.standard_name or item.name for item in pantry_items]
+    scored_recipe = score_recipe(recipe, user_ingredients)
+
+    if not scored_recipe:
+        scored_recipe = recipe
+
+    skipped_ids = [
+        e.recipe_id
+        for e in RecipeEngagement.query.filter_by(
+            user_id=current_user.id, feedback="not_for_me"
+        ).all()
+    ]
+
+    return render_template(
+        "recipes/detail.html",
+        recipe=scored_recipe,
+        skipped_ids=skipped_ids,
+    )
+
+
 @recipes_bp.route("/recipes/<recipe_id>/feedback", methods=["POST"])
 @login_required
 def feedback(recipe_id: str):

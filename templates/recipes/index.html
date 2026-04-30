@@ -159,12 +159,6 @@
 
 </div>
 
-<!-- ── Recipe detail sheet ───────────────────────────────────── -->
-<dialog id="recipe-dialog" class="recipe-dialog">
-  <button type="button" class="recipe-dialog__close" id="dialog-close" aria-label="Close">✕</button>
-  <div id="recipe-dialog-content"></div>
-</dialog>
-
 <script>
 (function () {
   // ── Autocomplete ingredient list ────────────────────────────
@@ -215,8 +209,6 @@
   let currentCookTimeMax = 120;
   let totalResults = 0;
   let searchDebounce = null;
-  // Track which recipes got feedback this session (to avoid re-prompting)
-  const sessionFeedback = new Set();
 
   // ── DOM refs ────────────────────────────────────────────────
   const loadPantryBtn      = document.getElementById('load-pantry-btn');
@@ -240,9 +232,6 @@
   const cookTimeMinFilter  = document.getElementById('cook-time-min');
   const cookTimeMaxFilter  = document.getElementById('cook-time-max');
   const cookTimeValue      = document.getElementById('cook-time-value');
-  const dialog             = document.getElementById('recipe-dialog');
-  const dialogContent      = document.getElementById('recipe-dialog-content');
-  const dialogClose        = document.getElementById('dialog-close');
 
   // ── Load pantry ─────────────────────────────────────────────
   if (loadPantryBtn) {
@@ -479,8 +468,8 @@
   });
 
   function makeCard(r) {
-    const card = document.createElement('button');
-    card.type = 'button';
+    const card = document.createElement('a');
+    card.href = `/recipes/${encodeURIComponent(r.id)}`;
     card.className = 'recipe-card';
     card.setAttribute('aria-label', `View ${r.name}`);
 
@@ -512,160 +501,9 @@
       </div>
     `;
 
-    card.addEventListener('click', () => openRecipe(r));
     return card;
   }
 
-  // ── Recipe detail dialog ─────────────────────────────────────
-  function openRecipe(r) {
-    const matchClass = r.match_pct >= 80 ? 'match--high'
-                     : r.match_pct >= 50 ? 'match--mid'
-                                         : 'match--low';
-
-    const matchNote = r.match_pct >= 80
-      ? `<span class="recipe-detail__match-note">You have most of what you need.</span>`
-      : '';
-
-    const ingredientRows = r.ingredients.map(ing => {
-      const have = r.matched.includes(ing);
-      return `<li class="ing-row${have ? ' ing-row--have' : ' ing-row--need'}">
-        <span class="ing-row__dot">${have ? '✓' : '·'}</span>
-        <span class="ing-row__name">${esc(ing)}</span>
-        <span class="ing-row__status">${have ? 'you have it' : "you'll need this"}</span>
-      </li>`;
-    }).join('');
-
-    dialogContent.innerHTML = `
-      <div class="recipe-detail">
-        <button type="button" class="recipe-detail__back" id="back-to-recipes" aria-label="Back to recipes">← Back</button>
-        <div class="recipe-detail__header">
-          <h2 class="recipe-detail__title">${esc(r.name)}</h2>
-          <div class="recipe-detail__meta">
-            <span class="recipe-card__source">${esc(r.source)}</span>
-            <span class="recipe-card__dot">·</span>
-            <span class="recipe-card__cuisine">${esc(r.cuisine)}</span>
-            ${r.cook_time ? `<span class="recipe-card__dot">·</span><span class="recipe-card__time">${esc(r.cook_time)}</span>` : ''}
-            ${r.difficulty ? `<span class="recipe-card__dot">·</span><span>${esc(r.difficulty)}</span>` : ''}
-          </div>
-          <div class="recipe-detail__match-row">
-            <span class="recipe-card__match ${matchClass} recipe-card__match--lg">${r.match_pct}% match</span>
-            <span class="recipe-detail__summary">
-              ${r.matched_count} of ${r.total_count} ingredients
-              ${r.missing.length === 0 ? '— you have everything!' : `· Missing: ${r.missing.map(esc).join(', ')}`}
-            </span>
-          </div>
-          ${matchNote}
-        </div>
-        <ul class="ing-list">${ingredientRows}</ul>
-        ${r.source_url
-          ? `<a
-              href="${esc(r.source_url)}"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn btn-primary btn-full recipe-detail__cta"
-              id="view-recipe-link"
-              data-recipe-id="${esc(r.id)}"
-              data-recipe-name="${esc(r.name)}"
-            >View full recipe on ${esc(r.source)} ↗</a>`
-          : `<p class="source-unavailable">Source currently unavailable — ingredient list shown above.</p>`
-        }
-        <div id="feedback-section" class="feedback-section" hidden></div>
-      </div>
-    `;
-
-    // Attach feedback trigger on "View full recipe" click
-    const viewLink = dialogContent.querySelector('#view-recipe-link');
-    if (viewLink) {
-      viewLink.addEventListener('click', () => {
-        const recipeId = viewLink.dataset.recipeId;
-        if (!sessionFeedback.has(recipeId)) {
-          setTimeout(() => showFeedback(recipeId, r.name), 800);
-        }
-      });
-    }
-
-    dialog.showModal();
-  }
-
-  // ── Feedback prompt ──────────────────────────────────────────
-  function showFeedback(recipeId, recipeName) {
-    const section = dialogContent.querySelector('#feedback-section');
-    if (!section || sessionFeedback.has(recipeId)) return;
-
-    section.hidden = false;
-    section.innerHTML = `
-      <div class="feedback-prompt">
-        <p class="feedback-prompt__question">Did you make this?</p>
-        <div class="feedback-prompt__actions">
-          <button type="button" class="btn feedback-btn feedback-btn--yes" data-value="yes_made">
-            Yes, I made it!
-          </button>
-          <button type="button" class="btn feedback-btn feedback-btn--no" data-value="not_for_me">
-            Not for me
-          </button>
-        </div>
-      </div>
-    `;
-
-    section.querySelector('.feedback-btn--yes').addEventListener('click', () => {
-      submitFeedback(recipeId, 'yes_made', null, section);
-    });
-
-    section.querySelector('.feedback-btn--no').addEventListener('click', () => {
-      showSkipReasons(recipeId, section);
-    });
-  }
-
-  function showSkipReasons(recipeId, section) {
-    section.innerHTML = `
-      <div class="feedback-prompt">
-        <p class="feedback-prompt__question">What put you off?</p>
-        <div class="feedback-prompt__reasons">
-          <button type="button" class="btn feedback-reason-btn" data-reason="too_complex">Too complex</button>
-          <button type="button" class="btn feedback-reason-btn" data-reason="missing_key_ingredient">Missing key ingredient</button>
-          <button type="button" class="btn feedback-reason-btn" data-reason="not_my_taste">Not my taste</button>
-          <button type="button" class="btn feedback-reason-btn feedback-reason-btn--skip" data-reason="">Skip</button>
-        </div>
-      </div>
-    `;
-
-    section.querySelectorAll('.feedback-reason-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const reason = btn.dataset.reason || null;
-        submitFeedback(recipeId, 'not_for_me', reason, section);
-      });
-    });
-  }
-
-  async function submitFeedback(recipeId, feedback, skipReason, section) {
-    sessionFeedback.add(recipeId);
-    if (feedback === 'not_for_me') {
-      SKIPPED.add(recipeId);
-    }
-
-    section.innerHTML = `<p class="feedback-thanks">${
-      feedback === 'yes_made' ? 'Great! Enjoy your meal.' : 'Got it. We won\'t push this one.'
-    }</p>`;
-
-    try {
-      await fetch(`/recipes/${encodeURIComponent(recipeId)}/feedback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCsrf(),
-        },
-        body: JSON.stringify({ feedback, skip_reason: skipReason }),
-      });
-    } catch (_) {}
-  }
-
-  if (dialogClose) dialogClose.addEventListener('click', () => dialog.close());
-  if (dialog) dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
-
-  // Back to recipes button in detail view
-  dialog.addEventListener('click', e => {
-    if (e.target.id === 'back-to-recipes') dialog.close();
-  });
 
   // ── Helpers ─────────────────────────────────────────────────
   function norm(s) { return s.toLowerCase().trim(); }
