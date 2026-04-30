@@ -173,10 +173,6 @@ flows:
   MARK_AS_USED:
     name: Mark Item as Used
     goal: Remove a finished item from inventory with minimum taps
-    scope_note: |
-      Consumption tracking (partial use progress bar) is deferred to v2.
-      MVP: items are either in inventory or removed. No partial state.
-      This keeps the add→use loop fast and the dashboard unambiguous.
     happy_path:
       - User views item detail
       - User taps "Mark as Used"
@@ -184,18 +180,28 @@ flows:
       - User taps Yes
       - Item removed from inventory, toast shown: "Removed [item name]" with Undo (5s)
       - Returns to dashboard
+    quantity_tracking:
+      - Before marking an item as used, user can track partial consumption on the detail page
+      - User taps one of four buttons: "Full" / "About 3/4" / "About half" / "Nearly gone"
+      - Selection is persisted immediately (no confirmation)
+      - On dashboard card: quantity state is shown as a small 4-pip progress indicator
+        - Pip fills from left to right based on consumption level
+        - Only displayed when quantity_state is set (null = not yet tracked)
+      - Partial consumption does not affect removal flow — user can still mark item as used at any time
     edge_cases:
       - User taps Undo within 5 seconds: item restored to inventory, removal cancelled
       - User marks item as used via swipe on dashboard card (shortcut): same confirmation + undo
       - Item had already expired: removal proceeds normally, no extra warning needed
+      - Item marked as used with no quantity_state set: behavior unchanged, item simply removed
     data_collected:
       - Item ID
       - Removal timestamp
       - Intent: used (vs. discarded — see REMOVE_ITEM)
+      - Quantity state (full, three_quarters, half, nearly_gone, or null) — tracked at button-tap time
     deferred_to_v2:
-      - Partial consumption tracking (progress bar, slider, "About half" buttons)
-      - Consumption history per item
+      - Consumption history per item (graph of when quantity changed)
       - "This expires today but you still have some left" partial-use warning
+      - Predictive: "Based on your usage, this will last N more days"
 
   REMOVE_ITEM:
     name: Remove Item from Pantry

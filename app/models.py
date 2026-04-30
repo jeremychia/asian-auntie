@@ -78,6 +78,9 @@ class Item(db.Model):
     # Barcode value if item was identified via barcode scan
     barcode = db.Column(db.String(64), nullable=True)
 
+    # Partial consumption: full, three_quarters, half, nearly_gone; null = unknown/full
+    quantity_state = db.Column(db.String(16), nullable=True)
+
     # Soft delete — set on removal, null while in inventory
     removed_at = db.Column(db.DateTime, nullable=True)
     removal_reason = db.Column(

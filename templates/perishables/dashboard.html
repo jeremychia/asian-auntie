@@ -166,6 +166,14 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
           <span class="item-card__name">{{ item.name }}</span>
           <span class="item-card__badge">{{ urgency_label }}</span>
           {% endif %}
+          {% if item.quantity_state %}
+          <div class="item-card__quantity-pips">
+            <span class="quantity-pip {% if item.quantity_state in ('full', 'three_quarters', 'half', 'nearly_gone') %}quantity-pip--filled{% endif %}"></span>
+            <span class="quantity-pip {% if item.quantity_state in ('full', 'three_quarters', 'half') %}quantity-pip--filled{% endif %}"></span>
+            <span class="quantity-pip {% if item.quantity_state in ('full', 'three_quarters') %}quantity-pip--filled{% endif %}"></span>
+            <span class="quantity-pip {% if item.quantity_state == 'full' %}quantity-pip--filled{% endif %}"></span>
+          </div>
+          {% endif %}
         </a>
         <button
           class="swipe-reveal-btn"

@@ -610,6 +610,22 @@ def update_location(item_id):
     return redirect(url_for("perishables.item_detail", item_id=item_id))
 
 
+_VALID_QUANTITY_STATES = {"full", "three_quarters", "half", "nearly_gone"}
+
+
+@perishables_bp.route("/items/<int:item_id>/quantity", methods=["POST"])
+@login_required
+def update_quantity_state(item_id):
+    item = _get_user_item(item_id)
+    new_state = request.form.get("quantity_state", "").strip()
+    if new_state not in _VALID_QUANTITY_STATES:
+        flash("Invalid quantity state.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    item.quantity_state = new_state
+    db.session.commit()
+    return redirect(url_for("perishables.item_detail", item_id=item_id))
+
+
 @perishables_bp.route("/items/<int:item_id>/edit", methods=["POST"])
 @login_required
 def update_item(item_id):

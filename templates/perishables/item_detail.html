@@ -180,6 +180,47 @@ today).days %}
     {% endif %}
   </div>
 
+  {% if not is_editing %}
+  <div class="quantity-tracker">
+    <h3 class="quantity-tracker__label">How much is left?</h3>
+    <form method="post" action="{{ url_for('perishables.update_quantity_state', item_id=item.id) }}" class="quantity-buttons">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button
+        type="submit"
+        name="quantity_state"
+        value="full"
+        class="quantity-btn {% if item.quantity_state == 'full' %}quantity-btn--active{% endif %}"
+      >
+        Full
+      </button>
+      <button
+        type="submit"
+        name="quantity_state"
+        value="three_quarters"
+        class="quantity-btn {% if item.quantity_state == 'three_quarters' %}quantity-btn--active{% endif %}"
+      >
+        About 3/4
+      </button>
+      <button
+        type="submit"
+        name="quantity_state"
+        value="half"
+        class="quantity-btn {% if item.quantity_state == 'half' %}quantity-btn--active{% endif %}"
+      >
+        About half
+      </button>
+      <button
+        type="submit"
+        name="quantity_state"
+        value="nearly_gone"
+        class="quantity-btn {% if item.quantity_state == 'nearly_gone' %}quantity-btn--active{% endif %}"
+      >
+        Nearly gone
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
   {% if is_editing %}
   <form
     id="edit-form"
