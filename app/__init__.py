@@ -76,7 +76,9 @@ def create_app():
 
     @app.after_request
     def after_request(response):
-        duration_ms = round((time.monotonic() - g.start_time) * 1000, 1)
+        duration_ms = None
+        if hasattr(g, "start_time"):
+            duration_ms = round((time.monotonic() - g.start_time) * 1000, 1)
         user_id = current_user.id if current_user.is_authenticated else None
         logger.info(
             "request",

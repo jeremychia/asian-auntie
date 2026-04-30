@@ -573,6 +573,21 @@ def item_detail(item_id):
         "perishables/item_detail.html",
         item=item,
         today=today,
+        is_editing=False,
+        pantry_items_list=PANTRY_ITEMS,
+    )
+
+
+@perishables_bp.route("/items/<int:item_id>/edit", methods=["GET"])
+@login_required
+def edit_item(item_id):
+    item = _get_user_item(item_id)
+    today = date.today()
+    return render_template(
+        "perishables/item_detail.html",
+        item=item,
+        today=today,
+        is_editing=True,
         pantry_items_list=PANTRY_ITEMS,
     )
 

@@ -563,6 +563,7 @@ nav.container {
   color: var(--text);
   margin: 0;
   letter-spacing: -0.02em;
+  line-height: 1.6;
 }
 
 .btn-icon {
@@ -582,22 +583,20 @@ nav.container {
   background: var(--surface-alt, var(--border));
 }
 
-#item-detail .edit-only {
-  display: none !important;
-}
-#item-detail.is-editing .edit-only {
-  display: revert !important;
-}
-#item-detail.is-editing .view-only {
-  display: none !important;
-}
-
 .edit-name-input {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  padding: 0.2rem 0.5rem;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  padding: 0 0.5rem !important;
   width: 100%;
+  line-height: 1.6 !important;
+  height: auto !important;
+  margin: 0 !important;
+  border: none !important;
+  background: var(--surface) !important;
+  box-sizing: border-box !important;
+  outline: 1px solid var(--border) !important;
+  outline-offset: 2px !important;
 }
 
 .edit-actions-form {
@@ -605,9 +604,6 @@ nav.container {
   flex-direction: column;
   gap: 0.625rem;
   margin-bottom: 1rem;
-}
-#item-detail.is-editing .edit-actions-form {
-  display: flex;
 }
 
 .item-photo {
@@ -653,17 +649,34 @@ nav.container {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  justify-content: flex-end;
+  width: 50%;
 }
 
-.inline-edit__select {
+input.inline-edit__select,
+select.inline-edit__select {
   font-size: var(--font-md);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  padding: 0.25rem 0.5rem;
+  padding: 0.375rem 0.5rem !important;
   background: var(--surface);
   color: var(--text);
-  width: auto;
-  align-self: center;
+  width: 100%;
+  box-sizing: border-box !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
+select.inline-edit__select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  padding-right: 2rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
 }
 
 /* Inline urgency badges */

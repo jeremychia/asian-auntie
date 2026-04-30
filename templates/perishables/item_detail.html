@@ -9,7 +9,7 @@ today).days %}
 
   <div class="detail-header">
     <div class="detail-header__title-row">
-      <h1 class="view-only">{{ item.name }}</h1>
+      {% if is_editing %}
       <input
         type="text"
         form="edit-form"
@@ -17,8 +17,11 @@ today).days %}
         value="{{ item.name }}"
         maxlength="256"
         required
-        class="edit-only manual-input edit-name-input"
+        class="manual-input edit-name-input"
       />
+      {% else %}
+      <h1>{{ item.name }}</h1>
+      {% endif %}
     </div>
     <div class="detail-header__right">
       {% if days_left == 0 %}
@@ -30,17 +33,14 @@ today).days %}
         >{{ days_left }} day{{ "s" if days_left != 1 }}</span
       >
       {% endif %}
-      <button
-        type="button"
-        class="btn-icon view-only"
-        id="edit-btn"
-        aria-label="Edit item details"
-      >
+      {% if not is_editing %}
+      <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}" class="btn-icon" aria-label="Edit item details">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
-      </button>
+      </a>
+      {% endif %}
     </div>
   </div>
 
@@ -67,7 +67,7 @@ today).days %}
     <div class="meta-row">
       <span class="meta-label">Ingredient</span>
       <div class="meta-value">
-        <span class="view-only">{{ item.standard_name or '—' }}</span>
+        {% if is_editing %}
         <input
           type="text"
           form="edit-form"
@@ -76,20 +76,23 @@ today).days %}
           value="{{ item.standard_name or '' }}"
           placeholder="e.g. Coconut milk"
           maxlength="256"
-          class="edit-only inline-edit__select"
+          class="inline-edit__select"
         />
         <datalist id="standard-name-options">
           {% for pantry_item in pantry_items_list %}
           <option value="{{ pantry_item }}" />
           {% endfor %}
         </datalist>
+        {% else %}
+        <span>{{ item.standard_name or '—' }}</span>
+        {% endif %}
       </div>
     </div>
     <div class="meta-row">
       <span class="meta-label">Type</span>
       <div class="meta-value">
-        <span class="view-only">{{ item.item_type | capitalize }}</span>
-        <select form="edit-form" name="item_type" class="edit-only inline-edit__select">
+        {% if is_editing %}
+        <select form="edit-form" name="item_type" class="inline-edit__select">
           <option value="unknown" {% if item.item_type == "unknown" %}selected{% endif %}>Unknown</option>
           <option value="sauce" {% if item.item_type == "sauce" %}selected{% endif %}>Sauce</option>
           <option value="oil" {% if item.item_type == "oil" %}selected{% endif %}>Oil</option>
@@ -102,12 +105,15 @@ today).days %}
           <option value="dairy" {% if item.item_type == "dairy" %}selected{% endif %}>Dairy</option>
           <option value="other" {% if item.item_type == "other" %}selected{% endif %}>Other</option>
         </select>
+        {% else %}
+        <span>{{ item.item_type | capitalize }}</span>
+        {% endif %}
       </div>
     </div>
     <div class="meta-row">
       <span class="meta-label">Location</span>
       <div class="meta-value">
-        <span class="view-only">{{ item.location | capitalize if item.location else "Not specified" }}</span>
+        {% if is_editing %}
         <input
           type="text"
           form="edit-form"
@@ -116,7 +122,7 @@ today).days %}
           value="{{ item.location | capitalize if item.location else '' }}"
           placeholder="e.g. Fridge"
           maxlength="32"
-          class="edit-only inline-edit__select"
+          class="inline-edit__select"
         />
         <datalist id="location-options">
           <option value="Fridge">
@@ -125,20 +131,26 @@ today).days %}
           <option value="Cupboard">
           <option value="Counter">
         </datalist>
+        {% else %}
+        <span>{{ item.location | capitalize if item.location else "Not specified" }}</span>
+        {% endif %}
       </div>
     </div>
     <div class="meta-row">
       <span class="meta-label">Expires</span>
       <div class="meta-value">
-        <span class="view-only">{{ item.expiry_date.strftime("%-d %b %Y") }}</span>
+        {% if is_editing %}
         <input
           type="date"
           form="edit-form"
           name="expiry_date"
           value="{{ item.expiry_date.strftime('%Y-%m-%d') }}"
           required
-          class="edit-only inline-edit__select"
+          class="inline-edit__select"
         />
+        {% else %}
+        <span>{{ item.expiry_date.strftime("%-d %b %Y") }}</span>
+        {% endif %}
       </div>
     </div>
     <div class="meta-row">
@@ -153,18 +165,19 @@ today).days %}
     {% endif %}
   </div>
 
+  {% if is_editing %}
   <form
     id="edit-form"
     method="post"
     action="{{ url_for('perishables.update_item', item_id=item.id) }}"
-    class="edit-only edit-actions-form"
+    class="edit-actions-form"
   >
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <button type="submit" class="btn btn-primary btn-full">Save changes</button>
-    <button type="button" class="btn btn-secondary btn-full" id="cancel-edit-btn">Cancel</button>
+    <a href="{{ url_for('perishables.item_detail', item_id=item.id) }}" class="btn btn-secondary btn-full" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">Cancel</a>
   </form>
-
-  <div class="item-actions view-only">
+  {% else %}
+  <div class="item-actions">
     <button
       type="button"
       class="btn btn-primary btn-full"
@@ -290,16 +303,7 @@ today).days %}
       </div>
     </details>
   </div>
+  {% endif %}
 </div>
 
-<script>
-  const detail = document.getElementById('item-detail');
-  document.getElementById('edit-btn').addEventListener('click', () => {
-    detail.classList.add('is-editing');
-    detail.querySelector('.edit-name-input').focus();
-  });
-  document.getElementById('cancel-edit-btn').addEventListener('click', () => {
-    detail.classList.remove('is-editing');
-  });
-</script>
 {% endblock %}
