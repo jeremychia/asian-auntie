@@ -474,7 +474,9 @@ def add_item():
                 expiry_date=form.expiry_date.data,
                 confidence_score=confidence_score,
                 cache_hit=cache_hit,
-                location=form.location.data or None,
+                location=(
+                    form.location.data.strip().lower() if form.location.data else None
+                ),
                 standard_name=form.standard_name.data
                 or normalize_ingredient(form.name.data.strip()),
                 barcode=form.barcode.data or None,

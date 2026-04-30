@@ -137,13 +137,15 @@ ITEM_TYPES = [
 
 class AddItemForm(FlaskForm):
     name = StringField("Item name", validators=[DataRequired(), Length(min=1, max=256)])
+    standard_name = StringField(
+        "Standard ingredient name", validators=[Length(max=256)]
+    )
     item_type = SelectField("Type", choices=ITEM_TYPES, default="unknown")
-    location = SelectField("Location", choices=LOCATIONS, default="")
+    location = StringField("Location", validators=[Length(max=32)])
     expiry_date = DateField("Expiry date", validators=[DataRequired()])
     photo = FileField(
         "Photo (optional)", validators=[FileAllowed(["jpg", "jpeg", "png", "webp"])]
     )
-    standard_name = HiddenField()  # canonical pantry name for recipe matching
     barcode = HiddenField()
     photo_paths_json = (
         HiddenField()

@@ -405,7 +405,6 @@ function handleDoneClick(event) {
   <p class="step-hint">
     {% if high_conf %}Looking good — confirm or edit below.{% endif %}
     {% if mid_conf %}Check the expiry date looks right.{% endif %}
-    {% if low_conf %}Hard to read — please fill in the details.{% endif %}
   </p>
 </div>
 
@@ -461,17 +460,32 @@ function handleDoneClick(event) {
     </div>
 
     <div class="autocomplete-wrap">
-      <label for="standard_name">Standard ingredient name</label>
-      {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk") }}
+      <label for="standard_name">
+        Standard ingredient name
+        <span class="info-icon-wrapper" data-tooltip="Used to match this item to recipes">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.35rem; vertical-align: text-bottom; opacity: 0.6; cursor: help;" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </span>
+      </label>
+      {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
       <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
-      <small class="field-hint">Used to match this item to recipes</small>
     </div>
 
     <label for="item_type">Type</label>
     {{ form.item_type(id="item_type") }}
 
     <label for="location">Location</label>
-    {{ form.location(id="location") }}
+    {{ form.location(id="location", list="location-options", placeholder="e.g. Fridge", maxlength="32") }}
+    <datalist id="location-options">
+      <option value="Fridge">
+      <option value="Freezer">
+      <option value="Pantry">
+      <option value="Cupboard">
+      <option value="Counter">
+    </datalist>
 
     <label for="expiry_date">Expiry date
       {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
@@ -512,17 +526,32 @@ function handleDoneClick(event) {
   </div>
 
   <div class="autocomplete-wrap">
-    <label for="standard_name">Standard ingredient name</label>
-    {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk") }}
+    <label for="standard_name">
+      Standard ingredient name
+      <span class="info-icon-wrapper" data-tooltip="Used to match this item to recipes">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.35rem; vertical-align: text-bottom; opacity: 0.6; cursor: help;" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </span>
+    </label>
+    {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
     <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
-    <small class="field-hint">Used to match this item to recipes</small>
   </div>
 
   <label for="item_type">Type</label>
   {{ form.item_type(id="item_type") }}
 
   <label for="location">Location</label>
-  {{ form.location(id="location") }}
+  {{ form.location(id="location", list="location-options", placeholder="e.g. Fridge", maxlength="32") }}
+  <datalist id="location-options">
+    <option value="Fridge">
+    <option value="Freezer">
+    <option value="Pantry">
+    <option value="Cupboard">
+    <option value="Counter">
+  </datalist>
 
   <label for="expiry_date">Expiry date</label>
   {{ form.expiry_date(id="expiry_date") }}
@@ -706,6 +735,60 @@ function fuzzyScore(item, q) {
 
 
 <script>
+// Map standard ingredient names to their default types
+const ingredientTypeMap = {
+  "Fish sauce": "condiment", "Light soy sauce": "condiment", "Dark soy sauce": "condiment",
+  "Oyster sauce": "sauce", "Hoisin sauce": "sauce", "Sweet soy sauce": "sauce",
+  "Kecap manis": "sauce", "Sesame oil": "oil", "Chilli oil": "oil",
+  "Coconut milk": "dairy", "Coconut cream": "dairy", "Rice vinegar": "condiment",
+  "Black vinegar": "condiment", "Chinkiang vinegar": "condiment", "Mirin": "condiment",
+  "Sake": "other", "Shaoxing wine": "other", "Miso paste": "condiment",
+  "White miso": "condiment", "Red miso": "condiment", "Gochujang": "condiment",
+  "Doenjang": "condiment", "Sambal oelek": "condiment", "Sriracha": "condiment",
+  "XO sauce": "sauce", "Doubanjiang": "condiment", "Chilli bean paste": "condiment",
+  "Black bean sauce": "sauce", "Char siu sauce": "sauce", "Plum sauce": "sauce",
+  "Sweet chilli sauce": "sauce", "Teriyaki sauce": "sauce", "Ponzu": "condiment",
+  "Maggi seasoning": "condiment", "Shrimp paste": "condiment", "Belacan": "condiment",
+  "Tamarind paste": "condiment", "Laksa paste": "condiment", "Pad Thai sauce": "sauce",
+  "Coconut sugar": "other", "Palm sugar": "other", "Rock sugar": "other",
+  "Condensed milk": "dairy", "Evaporated milk": "dairy", "Pandan extract": "other",
+  "Gochugaru": "spice", "Five spice powder": "spice", "Curry powder": "spice",
+  "Turmeric powder": "spice", "White pepper": "spice", "Sichuan peppercorn": "spice",
+  "Star anise": "spice", "Dried chillies": "spice", "Chilli flakes": "spice",
+  "Togarashi": "spice", "Lemongrass paste": "condiment", "Galangal powder": "spice",
+  "Dashi powder": "condiment", "Agar agar": "dried", "Jasmine rice": "dried",
+  "Glutinous rice": "dried", "Brown rice": "dried", "Rice flour": "dried",
+  "Tapioca starch": "dried", "Cornstarch": "dried", "Potato starch": "dried",
+  "Panko breadcrumbs": "dried", "Rice noodles": "dried", "Glass noodles": "dried",
+  "Egg noodles": "dried", "Udon noodles": "dried", "Soba noodles": "dried",
+  "Instant noodles": "dried", "Wonton wrappers": "dried", "Spring roll wrappers": "dried",
+  "Dumpling wrappers": "dried", "Silken tofu": "tofu", "Firm tofu": "tofu",
+  "Tofu puffs": "tofu", "Dried shiitake mushrooms": "dried", "Wood ear mushrooms": "dried",
+  "Dried shrimp": "seafood", "Dried scallops": "seafood", "Fermented black beans": "dried",
+  "Lily buds": "dried", "Bean curd skin": "dried", "Dried red dates": "dried",
+  "Kombu": "dried", "Nori": "dried", "Wakame": "dried", "Bonito flakes": "seafood",
+  "Dashi stock": "condiment", "Fish balls": "seafood", "Fish cakes": "seafood",
+  "Lap cheong": "seafood", "Water chestnuts": "produce", "Bamboo shoots": "produce",
+  "Baby corn": "produce", "Sesame seeds": "spice", "Black sesame seeds": "spice",
+  "Desiccated coconut": "other", "Grated coconut": "other", "Toasted coconut": "other",
+};
+
+function updateTypeFromIngredient() {
+  const standardNameEl = document.getElementById('standard_name');
+  const typeEl = document.getElementById('item_type');
+  if (!standardNameEl || !typeEl) return;
+
+  const ingredient = standardNameEl.value.trim();
+  if (ingredient && ingredientTypeMap[ingredient]) {
+    typeEl.value = ingredientTypeMap[ingredient];
+  }
+}
+
+document.getElementById('standard_name')?.addEventListener('change', updateTypeFromIngredient);
+</script>
+
+
+<script>
 const shelfLifeDefaults = {
   produce: 5, tofu: 7, seafood: 7, dairy: 7,
   sauce: 180, oil: 180, condiment: 180, dried: 180, spice: 180,
@@ -739,6 +822,43 @@ document.getElementById('expiry_date')?.addEventListener('change', checkExpiryWa
 
 applyDateDefault();
 checkExpiryWarning();
+
+// Custom tooltip for info icons
+(function() {
+  const iconWrappers = document.querySelectorAll('.info-icon-wrapper');
+  iconWrappers.forEach(wrapper => {
+    let tooltip = null;
+    const text = wrapper.getAttribute('data-tooltip');
+
+    wrapper.addEventListener('mouseenter', () => {
+      if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.textContent = text;
+        tooltip.style.cssText = `
+          position: absolute;
+          background: rgba(0, 0, 0, 0.85);
+          color: white;
+          padding: 0.5rem 0.75rem;
+          border-radius: 0.375rem;
+          font-size: 0.875rem;
+          white-space: nowrap;
+          z-index: 1000;
+          pointer-events: none;
+        `;
+        document.body.appendChild(tooltip);
+      }
+
+      const rect = wrapper.getBoundingClientRect();
+      tooltip.style.display = 'block';
+      tooltip.style.top = (rect.top + window.scrollY - tooltip.offsetHeight - 8) + 'px';
+      tooltip.style.left = (rect.left + window.scrollX + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+    });
+
+    wrapper.addEventListener('mouseleave', () => {
+      if (tooltip) tooltip.style.display = 'none';
+    });
+  });
+})();
 </script>
 
 </div>
