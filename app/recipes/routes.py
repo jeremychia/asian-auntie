@@ -48,10 +48,15 @@ def search():
     ingredients: list[str] = [str(i).strip() for i in data.get("ingredients", []) if i]
     page: int = max(1, int(data.get("page", 1)))
     show_all: bool = bool(data.get("show_all", False))
+    sort_param: str = str(data.get("sort", "match")).strip()
     cuisine: str = str(data.get("cuisine", "")).strip()
     website: str = str(data.get("website", "")).strip()
     cook_time_min: int = int(data.get("cook_time_min", 0))
     cook_time_max: int = int(data.get("cook_time_max", 120))
+
+    # Parse sort parameter (e.g., "quick_rev" -> sort="quick", reverse=True)
+    sort_reverse = sort_param.endswith("_rev")
+    sort = sort_param.replace("_rev", "")
 
     if not ingredients:
         return jsonify({"results": [], "total": 0, "has_more": False})
@@ -74,8 +79,23 @@ def search():
         if scored:
             results.append(scored)
 
-    # Sort: match % descending, then fewer ingredients first (simpler recipes)
-    results.sort(key=lambda r: (-r["match_pct"], r["total_count"]))
+    # Apply sort strategy
+    if sort == "quick":
+        results.sort(
+            key=lambda r: (
+                parse_cook_time(r.get("cook_time", "")) or 999,
+                -r["match_pct"],
+            ),
+            reverse=sort_reverse,
+        )
+    elif sort == "simple":
+        results.sort(
+            key=lambda r: (r["total_count"], -r["match_pct"]), reverse=sort_reverse
+        )
+    else:  # match (default)
+        results.sort(
+            key=lambda r: (-r["match_pct"], r["total_count"]), reverse=sort_reverse
+        )
 
     total = len(results)
     if show_all:

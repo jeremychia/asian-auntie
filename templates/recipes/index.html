@@ -72,6 +72,17 @@
       <!-- Filters -->
       <div class="results-filters">
         <div class="filter-group">
+          <label for="sort-filter" class="filter-label">Sort by</label>
+          <select id="sort-filter" class="filter-select">
+            <option value="match">Best match</option>
+            <option value="match_rev">Worst match</option>
+            <option value="quick">Quickest</option>
+            <option value="quick_rev">Longest</option>
+            <option value="simple">Simplest</option>
+            <option value="simple_rev">Most ingredients</option>
+          </select>
+        </div>
+        <div class="filter-group">
           <label for="cuisine-filter" class="filter-label">Cuisine</label>
           <select id="cuisine-filter" class="filter-select">
             <option value="">All cuisines</option>
@@ -197,6 +208,7 @@
   let pantryLoaded = false;
   let currentPage = 1;
   let currentIngredients = [];
+  let currentSort = 'match';
   let currentCuisine = '';
   let currentWebsite = '';
   let currentCookTimeMin = 0;
@@ -222,6 +234,7 @@
   const loadMoreBtn        = document.getElementById('load-more-btn');
   const showAllBtn         = document.getElementById('show-all-btn');
   const resultsTitle       = document.getElementById('results-title');
+  const sortFilter         = document.getElementById('sort-filter');
   const cuisineFilter      = document.getElementById('cuisine-filter');
   const websiteFilter      = document.getElementById('website-filter');
   const cookTimeMinFilter  = document.getElementById('cook-time-min');
@@ -344,6 +357,13 @@
   function closeAC() { acList.hidden = true; acList.innerHTML = ''; }
 
   // ── Filters ──────────────────────────────────────────────────
+  if (sortFilter) {
+    sortFilter.addEventListener('change', () => {
+      currentSort = sortFilter.value;
+      markDirty();
+    });
+  }
+
   if (cuisineFilter) {
     cuisineFilter.addEventListener('change', () => {
       currentCuisine = cuisineFilter.value;
@@ -408,7 +428,7 @@
     currentPage = 1;
     recipeList.innerHTML = '';
     try {
-      const { results, total, has_more } = await fetchPage(active, 1, false, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
+      const { results, total, has_more } = await fetchPage(active, 1, false, currentSort, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
       totalResults = total;
       resultsArea.hidden = false;
       noRecipesMsg.hidden = results.length > 0;
@@ -429,11 +449,11 @@
     }
   }
 
-  async function fetchPage(active, page, showAll = false, cuisine = '', website = '', cookTimeMin = 0, cookTimeMax = 120) {
+  async function fetchPage(active, page, showAll = false, sort = 'match', cuisine = '', website = '', cookTimeMin = 0, cookTimeMax = 120) {
     const resp = await fetch('/recipes/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-      body: JSON.stringify({ ingredients: active, page, show_all: showAll, cuisine, website, cook_time_min: cookTimeMin, cook_time_max: cookTimeMax }),
+      body: JSON.stringify({ ingredients: active, page, show_all: showAll, sort, cuisine, website, cook_time_min: cookTimeMin, cook_time_max: cookTimeMax }),
     });
     if (!resp.ok) throw new Error('search failed');
     return resp.json();
@@ -442,7 +462,7 @@
   loadMoreBtn.addEventListener('click', async () => {
     currentPage += 1;
     try {
-      const { results, has_more } = await fetchPage(currentIngredients, currentPage, false, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
+      const { results, has_more } = await fetchPage(currentIngredients, currentPage, false, currentSort, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       updatePaginationButtons(has_more, totalResults - recipeList.children.length);
     } catch (_) {}
@@ -450,7 +470,7 @@
 
   showAllBtn.addEventListener('click', async () => {
     try {
-      const { results } = await fetchPage(currentIngredients, 1, true, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
+      const { results } = await fetchPage(currentIngredients, 1, true, currentSort, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
       recipeList.innerHTML = '';
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       loadMoreBtn.hidden = true;
