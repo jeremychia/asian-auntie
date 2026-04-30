@@ -49,6 +49,15 @@ def create_app():
 
         return db.session.get(User, int(user_id))
 
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        from flask import redirect, url_for
+
+        next_url = request.args.get("next") or request.referrer
+        if next_url:
+            return redirect(url_for("auth.login", next=next_url))
+        return redirect(url_for("auth.login"))
+
     # JWT token revocation check
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):

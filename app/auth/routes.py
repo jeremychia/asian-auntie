@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 
@@ -8,6 +9,11 @@ from app.logging_config import get_logger
 
 auth_bp = Blueprint("auth", __name__)
 logger = get_logger(__name__)
+
+
+def _is_safe_next_url(target):
+    parsed_url = urlparse(target)
+    return not parsed_url.netloc and target.startswith("/")
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -24,7 +30,9 @@ def login():
             if not user.onboarding_done:
                 return redirect(url_for("onboarding.index"))
             next_page = request.args.get("next")
-            return redirect(next_page or url_for("perishables.dashboard"))
+            if next_page and _is_safe_next_url(next_page):
+                return redirect(next_page)
+            return redirect(url_for("perishables.dashboard"))
         else:
             # Generic error — never reveal which field is wrong
             logger.warning("login_failed", username=form.username.data)

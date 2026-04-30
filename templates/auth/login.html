@@ -6,7 +6,7 @@
     <h1>Log in</h1>
     <p class="auth-subtitle">Never let something painful expire or scratch your head over what to make.</p>
 
-    <form method="post" action="{{ url_for('auth.login') }}">
+    <form method="post" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
       {{ form.hidden_tag() }}
 
       <label for="username">{{ form.username.label.text }}</label>
