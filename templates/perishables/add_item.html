@@ -591,6 +591,9 @@ function handleDoneClick(event) {
   {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
   <small id="expiry-warning" class="field-warning" hidden></small>
 
+  <label for="barcode">Barcode (optional)</label>
+  {{ form.barcode(id="barcode", inputmode="numeric", placeholder="e.g. 4902430864602", maxlength="64") }}
+
   <label>Photos (optional)</label>
   <div class="photo-strip" id="manual-photo-strip"></div>
   <div class="manual-photo-inputs" id="manual-photo-inputs"></div>

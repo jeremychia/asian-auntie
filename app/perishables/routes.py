@@ -533,6 +533,9 @@ def add_item():
                 expiry_date=form.expiry_date.data,
                 location=form.location.data or None,
                 standard_name=normalize_ingredient(form.name.data.strip()),
+                barcode=(
+                    form.barcode.data.strip() or None if form.barcode.data else None
+                ),
             )
             db.session.add(item)
             db.session.flush()
@@ -616,11 +619,15 @@ def update_item(item_id):
     new_item_type = request.form.get("item_type", "").strip()
     new_location = request.form.get("location", "").strip().lower()
     new_standard_name = request.form.get("standard_name", "").strip()
+    new_barcode = request.form.get("barcode", "").strip()
     if not new_name or len(new_name) > 256:
         flash("Item name is required and must be under 256 characters.", "error")
         return redirect(url_for("perishables.item_detail", item_id=item_id))
     if new_standard_name and len(new_standard_name) > 256:
         flash("Ingredient name is too long.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    if new_barcode and len(new_barcode) > 64:
+        flash("Barcode is too long.", "error")
         return redirect(url_for("perishables.item_detail", item_id=item_id))
     try:
         parsed_expiry = date.fromisoformat(new_expiry)
@@ -642,6 +649,7 @@ def update_item(item_id):
     item.expiry_date = parsed_expiry
     item.item_type = new_item_type
     item.location = new_location or None
+    item.barcode = new_barcode or None
     db.session.commit()
     return redirect(url_for("perishables.item_detail", item_id=item_id))
 

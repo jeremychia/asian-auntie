@@ -157,10 +157,25 @@ today).days %}
       <span class="meta-label">Added</span>
       <span class="meta-value">{{ item.date_added.strftime("%-d %b %Y") }}</span>
     </div>
-    {% if item.barcode %}
+    {% if is_editing or item.barcode %}
     <div class="meta-row">
       <span class="meta-label">Barcode</span>
-      <span class="meta-value">{{ item.barcode }}</span>
+      <div class="meta-value">
+        {% if is_editing %}
+        <input
+          type="text"
+          form="edit-form"
+          name="barcode"
+          value="{{ item.barcode or '' }}"
+          placeholder="Optional"
+          maxlength="64"
+          inputmode="numeric"
+          class="inline-edit__select"
+        />
+        {% else %}
+        <span>{{ item.barcode }}</span>
+        {% endif %}
+      </div>
     </div>
     {% endif %}
   </div>

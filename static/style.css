@@ -609,11 +609,23 @@ nav.container {
 .item-photo {
   width: 100%;
   border-radius: var(--r-lg);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.25rem;
   object-fit: cover;
   max-height: 260px;
   background: var(--bg);
   display: block;
+}
+
+.item-photo-figure {
+  margin: 0 0 1.5rem 0;
+}
+
+.item-photo-caption {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+  padding: 0.25rem 0;
 }
 
 .meta-list {

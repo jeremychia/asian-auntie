@@ -146,7 +146,7 @@ class AddItemForm(FlaskForm):
     photo = FileField(
         "Photo (optional)", validators=[FileAllowed(["jpg", "jpeg", "png", "webp"])]
     )
-    barcode = HiddenField()
+    barcode = StringField("Barcode (optional)", validators=[Length(max=64)])
     photo_paths_json = (
         HiddenField()
     )  # JSON: [{"path": "...", "type": "appearance"}, ...]
