@@ -2,6 +2,30 @@ import re
 from app.ingredient_normalization import normalize_ingredient
 from app.perishables.forms import PANTRY_ITEMS
 
+
+def parse_cook_time(cook_time_str: str) -> int | None:
+    """Parse cook time string (e.g. '15 min', '1 hour 30 min') to minutes.
+    Returns None if parsing fails.
+    """
+    if not cook_time_str or not isinstance(cook_time_str, str):
+        return None
+
+    cook_time_str = cook_time_str.lower().strip()
+    total_minutes = 0
+
+    # Match hours
+    hours_match = re.search(r"(\d+)\s*(?:hour|hr)", cook_time_str)
+    if hours_match:
+        total_minutes += int(hours_match.group(1)) * 60
+
+    # Match minutes
+    mins_match = re.search(r"(\d+)\s*(?:min|minute)", cook_time_str)
+    if mins_match:
+        total_minutes += int(mins_match.group(1))
+
+    return total_minutes if total_minutes > 0 else None
+
+
 _STOP_WORDS = {
     "a",
     "an",

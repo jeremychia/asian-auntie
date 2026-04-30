@@ -1548,6 +1548,128 @@ select.sort-select:focus {
   box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
 }
 
+.filter-cook-time {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-cook-time-sliders {
+  position: relative;
+  height: 20px;
+}
+
+.filter-slider {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 20px;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  pointer-events: none;
+  background: transparent;
+}
+
+.filter-slider--min {
+  z-index: 10;
+}
+
+.filter-slider--max {
+  z-index: 10;
+}
+
+.filter-slider--min::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  border: none;
+}
+
+.filter-slider--max::-webkit-slider-runnable-track {
+  background: transparent;
+  border: none;
+}
+
+.filter-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--brand);
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+  pointer-events: auto;
+  margin-top: -6px;
+}
+
+.filter-slider::-webkit-slider-thumb:hover {
+  background: var(--brand-dark);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.filter-slider--min::-moz-range-track {
+  background: var(--border);
+  border: none;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.filter-slider--max::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+
+.filter-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--brand);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+  pointer-events: auto;
+  margin-top: -6px;
+}
+
+.filter-slider::-moz-range-thumb:hover {
+  background: var(--brand-dark);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.filter-slider:focus {
+  outline: none;
+}
+
+.filter-slider:focus::-webkit-slider-thumb {
+  background: var(--brand-dark);
+  box-shadow:
+    0 0 0 4px var(--brand-focus),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-slider:focus::-moz-range-thumb {
+  background: var(--brand-dark);
+  box-shadow: 0 0 0 4px var(--brand-focus);
+}
+
+.filter-cook-time__value {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
 .recipe-list {
   display: flex;
   flex-direction: column;

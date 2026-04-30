@@ -8,7 +8,7 @@ from app.extensions import db
 from app.models import Item, RecipeEngagement
 from app.logging_config import get_logger
 from app.recipes.data import RECIPES
-from app.recipes.search import score_recipe
+from app.recipes.search import score_recipe, parse_cook_time
 
 recipes_bp = Blueprint("recipes", __name__)
 logger = get_logger(__name__)
@@ -50,6 +50,8 @@ def search():
     show_all: bool = bool(data.get("show_all", False))
     cuisine: str = str(data.get("cuisine", "")).strip()
     website: str = str(data.get("website", "")).strip()
+    cook_time_min: int = int(data.get("cook_time_min", 0))
+    cook_time_max: int = int(data.get("cook_time_max", 120))
 
     if not ingredients:
         return jsonify({"results": [], "total": 0, "has_more": False})
@@ -62,6 +64,11 @@ def search():
         # Apply website filter
         if website and recipe.get("source", "") != website:
             continue
+        # Apply cooking time filter
+        recipe_time_mins = parse_cook_time(recipe.get("cook_time", ""))
+        if recipe_time_mins is not None:
+            if recipe_time_mins < cook_time_min or recipe_time_mins > cook_time_max:
+                continue
 
         scored = score_recipe(recipe, ingredients)
         if scored:

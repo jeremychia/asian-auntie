@@ -106,6 +106,32 @@
             <option value="What To Cook Today">What To Cook Today</option>
           </select>
         </div>
+        <div class="filter-group">
+          <label class="filter-label">Cooking time</label>
+          <div class="filter-cook-time">
+            <div class="filter-cook-time-sliders">
+              <input
+                type="range"
+                id="cook-time-min"
+                class="filter-slider filter-slider--min"
+                min="0"
+                max="120"
+                value="0"
+                aria-label="Minimum cooking time"
+              />
+              <input
+                type="range"
+                id="cook-time-max"
+                class="filter-slider filter-slider--max"
+                min="0"
+                max="120"
+                value="120"
+                aria-label="Maximum cooking time"
+              />
+            </div>
+            <span class="filter-cook-time__value" id="cook-time-value">0–120 min</span>
+          </div>
+        </div>
       </div>
     </div>
     <div id="recipe-list" class="recipe-list"></div>
@@ -173,6 +199,8 @@
   let currentIngredients = [];
   let currentCuisine = '';
   let currentWebsite = '';
+  let currentCookTimeMin = 0;
+  let currentCookTimeMax = 120;
   let totalResults = 0;
   let searchDebounce = null;
   // Track which recipes got feedback this session (to avoid re-prompting)
@@ -196,6 +224,9 @@
   const resultsTitle       = document.getElementById('results-title');
   const cuisineFilter      = document.getElementById('cuisine-filter');
   const websiteFilter      = document.getElementById('website-filter');
+  const cookTimeMinFilter  = document.getElementById('cook-time-min');
+  const cookTimeMaxFilter  = document.getElementById('cook-time-max');
+  const cookTimeValue      = document.getElementById('cook-time-value');
   const dialog             = document.getElementById('recipe-dialog');
   const dialogContent      = document.getElementById('recipe-dialog-content');
   const dialogClose        = document.getElementById('dialog-close');
@@ -327,6 +358,30 @@
     });
   }
 
+  function updateCookTimeValue() {
+    currentCookTimeMin = parseInt(cookTimeMinFilter.value);
+    currentCookTimeMax = parseInt(cookTimeMaxFilter.value);
+    // Ensure min doesn't exceed max
+    if (currentCookTimeMin > currentCookTimeMax) {
+      currentCookTimeMin = currentCookTimeMax;
+      cookTimeMinFilter.value = currentCookTimeMin;
+    }
+    if (currentCookTimeMax < currentCookTimeMin) {
+      currentCookTimeMax = currentCookTimeMin;
+      cookTimeMaxFilter.value = currentCookTimeMax;
+    }
+    cookTimeValue.textContent = `${currentCookTimeMin}–${currentCookTimeMax} min`;
+    markDirty();
+  }
+
+  if (cookTimeMinFilter) {
+    cookTimeMinFilter.addEventListener('input', updateCookTimeValue);
+  }
+
+  if (cookTimeMaxFilter) {
+    cookTimeMaxFilter.addEventListener('input', updateCookTimeValue);
+  }
+
   // ── Search ───────────────────────────────────────────────────
 
   function markDirty() {
@@ -353,7 +408,7 @@
     currentPage = 1;
     recipeList.innerHTML = '';
     try {
-      const { results, total, has_more } = await fetchPage(active, 1, false, currentCuisine, currentWebsite);
+      const { results, total, has_more } = await fetchPage(active, 1, false, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
       totalResults = total;
       resultsArea.hidden = false;
       noRecipesMsg.hidden = results.length > 0;
@@ -374,11 +429,11 @@
     }
   }
 
-  async function fetchPage(active, page, showAll = false, cuisine = '', website = '') {
+  async function fetchPage(active, page, showAll = false, cuisine = '', website = '', cookTimeMin = 0, cookTimeMax = 120) {
     const resp = await fetch('/recipes/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-      body: JSON.stringify({ ingredients: active, page, show_all: showAll, cuisine, website }),
+      body: JSON.stringify({ ingredients: active, page, show_all: showAll, cuisine, website, cook_time_min: cookTimeMin, cook_time_max: cookTimeMax }),
     });
     if (!resp.ok) throw new Error('search failed');
     return resp.json();
@@ -387,7 +442,7 @@
   loadMoreBtn.addEventListener('click', async () => {
     currentPage += 1;
     try {
-      const { results, has_more } = await fetchPage(currentIngredients, currentPage, false, currentCuisine, currentWebsite);
+      const { results, has_more } = await fetchPage(currentIngredients, currentPage, false, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       updatePaginationButtons(has_more, totalResults - recipeList.children.length);
     } catch (_) {}
@@ -395,7 +450,7 @@
 
   showAllBtn.addEventListener('click', async () => {
     try {
-      const { results } = await fetchPage(currentIngredients, 1, true, currentCuisine, currentWebsite);
+      const { results } = await fetchPage(currentIngredients, 1, true, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
       recipeList.innerHTML = '';
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       loadMoreBtn.hidden = true;
