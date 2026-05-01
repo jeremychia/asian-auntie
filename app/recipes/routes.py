@@ -307,3 +307,11 @@ def update_expired_items_setting():
     )
 
     return jsonify({"ok": True, "days": days})
+
+
+@recipes_bp.route("/recipes/pantry-items", methods=["GET"])
+@login_required
+def get_pantry_items():
+    pantry_items = _get_pantry_items(current_user)
+    items = [item.standard_name or item.name for item in pantry_items]
+    return jsonify({"items": items})

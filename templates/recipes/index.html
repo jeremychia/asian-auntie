@@ -250,6 +250,7 @@
   // ── Expired items preference ────────────────────────────────
   const expiredItemsSelect = document.getElementById('expired-items-select');
   const expiredItemsStatus = document.getElementById('expired-items-status');
+  const pantryCtaCount = document.querySelector('.pantry-cta__count');
 
   if (expiredItemsSelect) {
     expiredItemsSelect.addEventListener('change', async () => {
@@ -262,6 +263,32 @@
           body: JSON.stringify({ days }),
         });
         if (resp.ok) {
+          // Fetch updated pantry items
+          const itemsResp = await fetch('/recipes/pantry-items');
+          if (itemsResp.ok) {
+            const { items } = await itemsResp.json();
+            // Update PANTRY array
+            PANTRY.length = 0;
+            items.forEach(item => PANTRY.push(item));
+            // Update button count
+            if (pantryCtaCount) {
+              pantryCtaCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+            }
+            // Update ingredients if pantry was already loaded
+            if (pantryLoaded) {
+              items.forEach(name => {
+                if (!ingredients.find(i => norm(i.label) === norm(name))) {
+                  ingredients.push({ label: name, active: true, source: 'pantry' });
+                }
+              });
+              // Remove ingredients that are no longer in pantry
+              ingredients = ingredients.filter(ing =>
+                ing.source === 'manual' || items.find(n => norm(n) === norm(ing.label))
+              );
+              renderChips();
+              markDirty();
+            }
+          }
           expiredItemsStatus.textContent = 'Saved';
           setTimeout(() => { expiredItemsStatus.textContent = ''; }, 2000);
         } else {
