@@ -1,9 +1,4 @@
 services:
-  - type: pgsql
-    name: asian-auntie-db
-    plan: free
-    ipAllowList: []
-
   - type: web
     name: asian-auntie
     plan: free
@@ -19,9 +14,7 @@ services:
       - key: JWT_SECRET_KEY
         sync: false
       - key: DATABASE_URL
-        fromDatabase:
-          name: asian-auntie-db
-          property: connectionString
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: LOG_LEVEL
