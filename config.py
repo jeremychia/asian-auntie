@@ -16,7 +16,7 @@ class Config:
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
     # Rate limiting
-    RATELIMIT_DEFAULT = "200 per day;50 per hour"
+    RATELIMIT_DEFAULT = "1000 per day;500 per hour"
     RATELIMIT_STORAGE_URL = "memory://"
 
     # File uploads
