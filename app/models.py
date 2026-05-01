@@ -164,6 +164,8 @@ class RecipeEngagement(db.Model):
     skip_reason = db.Column(
         db.String(64), nullable=True
     )  # "too_complex", "missing_key_ingredient", "not_my_taste"
+    view_count = db.Column(db.Integer, nullable=False, default=0)
+    click_count = db.Column(db.Integer, nullable=True)  # clicks to external recipe link
     engaged_at = db.Column(
         db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )

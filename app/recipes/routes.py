@@ -162,6 +162,66 @@ def detail(recipe_id: str):
     )
 
 
+@recipes_bp.route("/recipes/<recipe_id>/view", methods=["POST"])
+@login_required
+def track_view(recipe_id: str):
+    if recipe_id not in _RECIPE_IDS:
+        return jsonify({"error": "Recipe not found"}), 404
+
+    existing = RecipeEngagement.query.filter_by(
+        user_id=current_user.id, recipe_id=recipe_id
+    ).first()
+
+    if existing:
+        existing.view_count += 1
+        existing.engaged_at = datetime.now(timezone.utc)
+    else:
+        engagement = RecipeEngagement(
+            user_id=current_user.id,
+            recipe_id=recipe_id,
+            view_count=1,
+        )
+        db.session.add(engagement)
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Conflict"}), 409
+
+    return jsonify({"ok": True})
+
+
+@recipes_bp.route("/recipes/<recipe_id>/click", methods=["POST"])
+@login_required
+def track_click(recipe_id: str):
+    if recipe_id not in _RECIPE_IDS:
+        return jsonify({"error": "Recipe not found"}), 404
+
+    existing = RecipeEngagement.query.filter_by(
+        user_id=current_user.id, recipe_id=recipe_id
+    ).first()
+
+    if existing:
+        existing.click_count = (existing.click_count or 0) + 1
+        existing.engaged_at = datetime.now(timezone.utc)
+    else:
+        engagement = RecipeEngagement(
+            user_id=current_user.id,
+            recipe_id=recipe_id,
+            click_count=1,
+        )
+        db.session.add(engagement)
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Conflict"}), 409
+
+    return jsonify({"ok": True})
+
+
 @recipes_bp.route("/recipes/<recipe_id>/feedback", methods=["POST"])
 @login_required
 def feedback(recipe_id: str):
