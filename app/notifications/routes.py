@@ -48,6 +48,7 @@ def settings():
         all_cuisines=ALL_CUISINES,
         cuisine_counts=CUISINE_COUNTS,
         cuisine_prefs=cuisine_prefs,
+        expired_items_days=current_user.expired_items_days,
     )
 
 
@@ -76,6 +77,20 @@ def save_cooking_days():
     ):
         return jsonify({"error": "invalid cooking_days"}), 400
     current_user.cooking_days = json.dumps(days)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@notifications_bp.route("/settings/expired-items", methods=["POST"])
+@login_required
+def save_expired_items():
+    data = request.get_json(silent=True) or {}
+    days = data.get("days")
+    if days is None or not isinstance(days, int):
+        return jsonify({"error": "invalid days value"}), 400
+    if days < 0 or days > 90:
+        return jsonify({"error": "days must be between 0 and 90"}), 400
+    current_user.expired_items_days = days
     db.session.commit()
     return jsonify({"ok": True})
 

@@ -34,6 +34,9 @@ class User(UserMixin, db.Model):
     # Cuisines outside our current corpus that users want to cook — user research signal
     other_cuisine_requests = db.Column(db.Text, nullable=True)  # JSON list of strings
 
+    # Recipe expiry preference: 0 = exclude expired, >0 = include up to N days past expiry
+    expired_items_days = db.Column(db.Integer, nullable=False, default=0)
+
     items = db.relationship("Item", back_populates="user", lazy="dynamic")
     refresh_tokens = db.relationship(
         "RefreshToken", back_populates="user", lazy="dynamic"

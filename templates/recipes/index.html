@@ -15,10 +15,24 @@
     {% if pantry_items %}
     <!-- Primary CTA: use pantry -->
     <div id="pantry-cta" class="pantry-cta">
-      <button type="button" class="btn btn-primary btn-full btn-lg" id="load-pantry-btn">
-        Use my pantry
-        <span class="pantry-cta__count">{{ pantry_items | length }} item{{ 's' if pantry_items | length != 1 }}</span>
-      </button>
+      <div class="pantry-cta__row">
+        <button type="button" class="btn btn-primary btn-lg" id="load-pantry-btn">
+          Use my pantry
+          <span class="pantry-cta__count">{{ pantry_items | length }} item{{ 's' if pantry_items | length != 1 }}</span>
+        </button>
+        <!-- Expired items preference -->
+        <div class="pantry-cta__settings">
+          <label for="expired-items-select" class="pantry-cta__label">Expired:</label>
+          <select id="expired-items-select" class="pantry-cta__select">
+            <option value="0" {% if user_expired_items_days == 0 %}selected{% endif %}>Exclude</option>
+            <option value="7" {% if user_expired_items_days == 7 %}selected{% endif %}>+7d</option>
+            <option value="14" {% if user_expired_items_days == 14 %}selected{% endif %}>+14d</option>
+            <option value="30" {% if user_expired_items_days == 30 %}selected{% endif %}>+30d</option>
+            <option value="90" {% if user_expired_items_days == 90 %}selected{% endif %}>+90d</option>
+          </select>
+          <span id="expired-items-status" class="pantry-cta__status"></span>
+        </div>
+      </div>
     </div>
     {% else %}
     <!-- No pantry items -->
@@ -232,6 +246,32 @@
   const cookTimeMinFilter  = document.getElementById('cook-time-min');
   const cookTimeMaxFilter  = document.getElementById('cook-time-max');
   const cookTimeValue      = document.getElementById('cook-time-value');
+
+  // ── Expired items preference ────────────────────────────────
+  const expiredItemsSelect = document.getElementById('expired-items-select');
+  const expiredItemsStatus = document.getElementById('expired-items-status');
+
+  if (expiredItemsSelect) {
+    expiredItemsSelect.addEventListener('change', async () => {
+      const days = parseInt(expiredItemsSelect.value);
+      expiredItemsStatus.textContent = 'Saving...';
+      try {
+        const resp = await fetch('/recipes/settings/expired-items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+          body: JSON.stringify({ days }),
+        });
+        if (resp.ok) {
+          expiredItemsStatus.textContent = 'Saved';
+          setTimeout(() => { expiredItemsStatus.textContent = ''; }, 2000);
+        } else {
+          expiredItemsStatus.textContent = 'Error saving';
+        }
+      } catch (_) {
+        expiredItemsStatus.textContent = 'Error saving';
+      }
+    });
+  }
 
   // ── Load pantry ─────────────────────────────────────────────
   if (loadPantryBtn) {

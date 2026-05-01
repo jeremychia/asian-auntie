@@ -7,7 +7,8 @@ flows:
     primary_path:
       - User opens Recommend Recipe
       - System shows "Use my pantry" as the primary CTA (large button)
-      - User taps it -> system loads non-expired items from manage-perishables inventory
+      - Beneath button: expired items preference selector (exclude / include up to 7/14/30/90 days)
+      - User taps it -> system loads items from manage-perishables inventory according to preference
       - System displays loaded ingredients as a chip list (e.g., "Fish sauce", "Sesame oil", "Bok choy")
       - User can deselect any item they don't want to cook with (e.g., saving a special ingredient)
       - System shows matched recipes, ranked by match % (highest first)
@@ -20,7 +21,11 @@ flows:
       - User adds ingredients one by one; results update after each addition
       - User can mix: pantry chips + additional manual additions
     decision_points:
-      - Pantry has 0 non-expired items: show manual input directly, with note "Add items to your pantry to use this faster next time"
+      - Expired items preference: user can select to include expired items up to 0/7/14/30/90 days past expiry
+        * Preference persists in user settings across sessions
+        * "Exclude expired" (0 days): default behavior; shows only non-expired items
+        * "Include up to X days": items expired within N days are included; useful for users comfortable with slightly older items
+      - Pantry has 0 items (respecting preference): show manual input directly, with note "Add items to your pantry to use this faster next time"
       - No recipes match any combination: show "No matches found. Try removing an ingredient."
       - Partial matches always shown: never hide recipes just because match is <100%
       - Generic ingredient (e.g., "oil"): accept, but show warning "This matches broadly — add specific ingredients for better results"
@@ -32,11 +37,13 @@ flows:
       - User adds then removes ingredient: results update live
       - Large pantry (40+ items): all chips shown, user scrolls or switches to manual for focused search
     data_collected:
+      - User's expired items preference setting (0/7/14/30/90 days)
       - Ingredient source (pantry / manual / mixed)
       - Ingredient list used in search
       - Recipes shown, recipes tapped
       - Deselected pantry items (signal: what users consciously exclude)
       - Search session (ingredients -> results -> clicked recipe)
+      - Whether items included are expired (days past expiry) — signals user comfort with older items
 
   VIEW_RECIPE_DETAIL:
     name: View Recipe Detail

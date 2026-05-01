@@ -14,17 +14,33 @@ recipes_bp = Blueprint("recipes", __name__)
 logger = get_logger(__name__)
 
 
+def _get_pantry_items(user, include_expired_days=None):
+    """Get pantry items, optionally including expired items within N days."""
+    today = date.today()
+    query = (
+        Item.query.filter_by(user_id=user.id)
+        .filter(Item.removed_at.is_(None))
+        .order_by(Item.name.asc())
+    )
+
+    if include_expired_days is None:
+        include_expired_days = user.expired_items_days
+
+    if include_expired_days > 0:
+        from datetime import timedelta
+
+        cutoff = today - timedelta(days=include_expired_days)
+        query = query.filter(Item.expiry_date >= cutoff)
+    else:
+        query = query.filter(Item.expiry_date >= today)
+
+    return query.all()
+
+
 @recipes_bp.route("/recipes")
 @login_required
 def index():
-    today = date.today()
-    pantry_items = (
-        Item.query.filter_by(user_id=current_user.id)
-        .filter(Item.removed_at.is_(None))
-        .filter(Item.expiry_date >= today)
-        .order_by(Item.name.asc())
-        .all()
-    )
+    pantry_items = _get_pantry_items(current_user)
     skipped_ids = [
         e.recipe_id
         for e in RecipeEngagement.query.filter_by(
@@ -35,6 +51,7 @@ def index():
         "recipes/index.html",
         pantry_items=pantry_items,
         skipped_ids=skipped_ids,
+        user_expired_items_days=current_user.expired_items_days,
     )
 
 
@@ -135,13 +152,7 @@ def detail(recipe_id: str):
     if not recipe:
         return "Recipe not found", 404
 
-    today = date.today()
-    pantry_items = (
-        Item.query.filter_by(user_id=current_user.id)
-        .filter(Item.removed_at.is_(None))
-        .filter(Item.expiry_date >= today)
-        .all()
-    )
+    pantry_items = _get_pantry_items(current_user)
     user_ingredients = [item.standard_name or item.name for item in pantry_items]
     scored_recipe = score_recipe(recipe, user_ingredients)
 
@@ -269,3 +280,30 @@ def feedback(recipe_id: str):
     )
 
     return jsonify({"ok": True})
+
+
+@recipes_bp.route("/recipes/settings/expired-items", methods=["POST"])
+@login_required
+def update_expired_items_setting():
+    data = request.get_json(silent=True) or {}
+    days = data.get("days")
+
+    if days is None or not isinstance(days, int):
+        return jsonify({"error": "Invalid days value"}), 422
+    if days < 0 or days > 90:
+        return jsonify({"error": "Days must be between 0 and 90"}), 422
+
+    current_user.expired_items_days = days
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Failed to update setting"}), 409
+
+    logger.info(
+        "update_expired_items_setting",
+        user_id=current_user.id,
+        days=days,
+    )
+
+    return jsonify({"ok": True, "days": days})

@@ -27,6 +27,28 @@
   </section>
 
   <section class="settings-section">
+    <h2 class="settings-section__title">Expired items in recipes</h2>
+    <p class="settings-section__desc">
+      When searching for recipes, decide whether to include items that have expired.
+      You can choose to include items that are expired up to a certain number of days — useful if you're comfortable cooking with items that are slightly past their date.
+    </p>
+    <div class="expired-items-form">
+      <label for="expired-items-select-settings" class="settings-label">Include expired items:</label>
+      <select id="expired-items-select-settings" class="settings-input">
+        <option value="0" {% if expired_items_days == 0 %}selected{% endif %}>Exclude expired</option>
+        <option value="7" {% if expired_items_days == 7 %}selected{% endif %}>Include up to 7 days</option>
+        <option value="14" {% if expired_items_days == 14 %}selected{% endif %}>Include up to 14 days</option>
+        <option value="30" {% if expired_items_days == 30 %}selected{% endif %}>Include up to 30 days</option>
+        <option value="90" {% if expired_items_days == 90 %}selected{% endif %}>Include up to 90 days</option>
+      </select>
+      <div class="settings-actions" style="margin-top: 1rem">
+        <button class="btn btn-primary" id="save-expired-items-btn">Save preference</button>
+        <span class="save-confirmation" id="expired-items-saved" hidden>Saved</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="settings-section">
     <h2 class="settings-section__title">Expiry notifications</h2>
     <p class="settings-section__desc">
       Asian Auntie can remind you the evening before you cook when something is
@@ -173,6 +195,21 @@ document.getElementById('save-cuisines-btn').addEventListener('click', async () 
   });
   if (res.ok) {
     const savedEl = document.getElementById('cuisine-saved');
+    savedEl.hidden = false;
+    setTimeout(() => { savedEl.hidden = true; }, 2500);
+  }
+});
+
+// Expired items setting
+document.getElementById('save-expired-items-btn').addEventListener('click', async () => {
+  const days = parseInt(document.getElementById('expired-items-select-settings').value);
+  const res = await fetch('/settings/expired-items', {
+    method: 'POST',
+    headers: csrfHeaders(),
+    body: JSON.stringify({ days }),
+  });
+  if (res.ok) {
+    const savedEl = document.getElementById('expired-items-saved');
     savedEl.hidden = false;
     setTimeout(() => { savedEl.hidden = true; }, 2500);
   }
