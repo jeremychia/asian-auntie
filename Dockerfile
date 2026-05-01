@@ -20,5 +20,5 @@ COPY . .
 # Expose port
 EXPOSE 8080
 
-# Run migrations and start app
-CMD ["sh", "-c", "uv run flask --app wsgi db upgrade && uv run gunicorn --bind 0.0.0.0:8080 --workers 4 --timeout 120 wsgi:app"]
+# Start app
+CMD ["sh", "-c", "uv run gunicorn --bind 0.0.0.0:8080 --workers 4 --timeout 120 wsgi:app"]
