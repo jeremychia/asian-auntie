@@ -1,5 +1,5 @@
 services:
-  - type: postgresql
+  - type: pgsql
     name: asian-auntie-db
     plan: free
     ipAllowList: []
