@@ -73,6 +73,22 @@ flows:
       - Has photo flag (for monitoring photo adoption rate)
       - Photo count per item
       - Photo types present (barcode, appearance, label, other)
+      - Product detail fields (barcode path only — sourced from Open Food Facts):
+          - brands: brand name (e.g. "Kikkoman")
+          - quantity: package size (e.g. "500 ml")
+          - ingredients_text: full ingredients list (future: also populated via OCR)
+          - labels_tags: JSON list of certifications (organic, halal, vegan, fair trade, etc.)
+          - product_data_source: "off" when populated from Open Food Facts, "ocr" in future
+      - OFF analytics fields (barcode path only — auto-calculated by Open Food Facts):
+          - off_nutriscore_grade: A–E nutritional quality grade
+          - off_nutriscore_score: numeric Nutri-Score (for ranking and trend analysis)
+          - off_nova_group: food processing level 1–4
+          - off_ecoscore_grade: a–e environmental impact grade
+          - off_ecoscore_score: numeric Eco-Score 0–100
+          - off_categories_tags: JSON list of full OFF category hierarchy (richer than item_type)
+          - off_allergens_tags: JSON list of declared allergens (for future dietary filtering)
+          - off_packaging_tags: JSON list of packaging materials (for sustainability analysis)
+          - off_data_quality_tags: JSON list of OFF quality flags (e.g. "en:missing-brands") — reserved for future contribution back to OFF
     open_questions:
       - Image recognition provider: Ollama (llama3.2-vision) locally, Groq (llama-4-scout) in production — decided
       - Barcode database: Open Food Facts family — decided (see MANAGE-011)

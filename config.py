@@ -42,6 +42,11 @@ class Config:
     )
     VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "admin@asian-auntie.app")
 
+    # Open Food Facts contribution (optional — only needed to contribute data back)
+    OFF_USERNAME = os.environ.get("OFF_USERNAME", "")
+    OFF_PASSWORD = os.environ.get("OFF_PASSWORD", "")
+    OFF_API_URL = os.environ.get("OFF_API_URL", "https://world.openfoodfacts.org")
+
     # Logging
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 

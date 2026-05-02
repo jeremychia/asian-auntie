@@ -84,6 +84,19 @@
     <input type="hidden" name="shelf_life_days" id="bc-shelf-life">
     <input type="hidden" name="off_image_path" id="bc-image-path">
     <input type="hidden" name="barcode" id="bc-barcode">
+    <input type="hidden" name="brands" id="bc-brands">
+    <input type="hidden" name="quantity" id="bc-quantity">
+    <input type="hidden" name="ingredients_text" id="bc-ingredients-text">
+    <input type="hidden" name="labels_tags" id="bc-labels-tags">
+    <input type="hidden" name="off_nutriscore_grade" id="bc-nutriscore-grade">
+    <input type="hidden" name="off_nutriscore_score" id="bc-nutriscore-score">
+    <input type="hidden" name="off_nova_group" id="bc-nova-group">
+    <input type="hidden" name="off_ecoscore_grade" id="bc-ecoscore-grade">
+    <input type="hidden" name="off_ecoscore_score" id="bc-ecoscore-score">
+    <input type="hidden" name="off_categories_tags" id="bc-categories-tags">
+    <input type="hidden" name="off_allergens_tags" id="bc-allergens-tags">
+    <input type="hidden" name="off_packaging_tags" id="bc-packaging-tags">
+    <input type="hidden" name="off_data_quality_tags" id="bc-data-quality-tags">
   </form>
 </div>
 
@@ -250,6 +263,19 @@ function onBarcodeDetected(decodedText) {
       document.getElementById('bc-shelf-life').value = data.shelf_life_days;
       document.getElementById('bc-image-path').value = data.image_path || '';
       document.getElementById('bc-barcode').value = decodedText;
+      document.getElementById('bc-brands').value = data.brands || '';
+      document.getElementById('bc-quantity').value = data.quantity || '';
+      document.getElementById('bc-ingredients-text').value = data.ingredients_text || '';
+      document.getElementById('bc-labels-tags').value = data.labels_tags || '[]';
+      document.getElementById('bc-nutriscore-grade').value = data.off_nutriscore_grade || '';
+      document.getElementById('bc-nutriscore-score').value = data.off_nutriscore_score != null ? data.off_nutriscore_score : '';
+      document.getElementById('bc-nova-group').value = data.off_nova_group != null ? data.off_nova_group : '';
+      document.getElementById('bc-ecoscore-grade').value = data.off_ecoscore_grade || '';
+      document.getElementById('bc-ecoscore-score').value = data.off_ecoscore_score != null ? data.off_ecoscore_score : '';
+      document.getElementById('bc-categories-tags').value = data.off_categories_tags || '[]';
+      document.getElementById('bc-allergens-tags').value = data.off_allergens_tags || '[]';
+      document.getElementById('bc-packaging-tags').value = data.off_packaging_tags || '[]';
+      document.getElementById('bc-data-quality-tags').value = data.off_data_quality_tags || '[]';
       document.getElementById('barcode-submit-form').submit();
     } else {
       document.getElementById('barcode-looking-up').hidden = true;
@@ -428,6 +454,20 @@ function handleDoneClick(event) {
   {{ form.cache_hit() }}
   {{ form.source() }}
   {{ form.barcode() }}
+  {{ form.brands() }}
+  {{ form.quantity() }}
+  {{ form.ingredients_text() }}
+  {{ form.labels_tags() }}
+  {{ form.product_data_source() }}
+  {{ form.off_nutriscore_grade() }}
+  {{ form.off_nutriscore_score() }}
+  {{ form.off_nova_group() }}
+  {{ form.off_ecoscore_grade() }}
+  {{ form.off_ecoscore_score() }}
+  {{ form.off_categories_tags() }}
+  {{ form.off_allergens_tags() }}
+  {{ form.off_packaging_tags() }}
+  {{ form.off_data_quality_tags() }}
 
   {% if high_conf %}
   <div class="confirm-card">

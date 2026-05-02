@@ -153,6 +153,23 @@ class AddItemForm(FlaskForm):
     confidence_score = HiddenField()
     cache_hit = HiddenField()
     source = HiddenField()  # "barcode", "photo", or "manual"
+
+    # Product detail fields — passed through hidden fields from barcode lookup
+    brands = HiddenField()
+    quantity = HiddenField()
+    ingredients_text = HiddenField()
+    labels_tags = HiddenField()  # JSON list
+    product_data_source = HiddenField()  # "off" or "ocr"
+    off_nutriscore_grade = HiddenField()
+    off_nutriscore_score = HiddenField()
+    off_nova_group = HiddenField()
+    off_ecoscore_grade = HiddenField()
+    off_ecoscore_score = HiddenField()
+    off_categories_tags = HiddenField()  # JSON list
+    off_allergens_tags = HiddenField()  # JSON list
+    off_packaging_tags = HiddenField()  # JSON list
+    off_data_quality_tags = HiddenField()  # JSON list
+
     submit = SubmitField("Save item")
 
     def validate_expiry_date(self, field):

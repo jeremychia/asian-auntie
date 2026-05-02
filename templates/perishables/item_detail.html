@@ -178,6 +178,36 @@ today).days %}
       </div>
     </div>
     {% endif %}
+    {% if item.brands or item.quantity or item.off_nutriscore_grade or item.off_nova_group or item.off_ecoscore_grade %}
+    <div class="meta-row">
+      <span class="meta-label">Brand</span>
+      <span class="meta-value">{{ item.brands or '—' }}</span>
+    </div>
+    {% if item.quantity %}
+    <div class="meta-row">
+      <span class="meta-label">Size</span>
+      <span class="meta-value">{{ item.quantity }}</span>
+    </div>
+    {% endif %}
+    {% if item.off_nutriscore_grade %}
+    <div class="meta-row">
+      <span class="meta-label">Nutri-Score</span>
+      <span class="meta-value">{{ item.off_nutriscore_grade | upper }}</span>
+    </div>
+    {% endif %}
+    {% if item.off_nova_group %}
+    <div class="meta-row">
+      <span class="meta-label">NOVA group</span>
+      <span class="meta-value">{{ item.off_nova_group }}</span>
+    </div>
+    {% endif %}
+    {% if item.off_ecoscore_grade %}
+    <div class="meta-row">
+      <span class="meta-label">Eco-Score</span>
+      <span class="meta-value">{{ item.off_ecoscore_grade | upper }}</span>
+    </div>
+    {% endif %}
+    {% endif %}
   </div>
 
   {% if not is_editing %}

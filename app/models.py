@@ -90,6 +90,26 @@ class Item(db.Model):
         db.String(32), nullable=True
     )  # "used", "discarded", "unwanted", "mistake"
 
+    # Product detail fields — populated from OFF barcode lookup or future OCR
+    brands = db.Column(db.String(256), nullable=True)
+    quantity = db.Column(db.String(64), nullable=True)
+    ingredients_text = db.Column(db.Text, nullable=True)
+    labels_tags = db.Column(db.Text, nullable=True)  # JSON list
+    product_data_source = db.Column(db.String(16), nullable=True)  # "off" or "ocr"
+
+    # OFF analytics fields — scores and classifications from Open Food Facts
+    off_nutriscore_grade = db.Column(db.String(1), nullable=True)
+    off_nutriscore_score = db.Column(db.Integer, nullable=True)
+    off_nova_group = db.Column(db.Integer, nullable=True)
+    off_ecoscore_grade = db.Column(db.String(1), nullable=True)
+    off_ecoscore_score = db.Column(db.Integer, nullable=True)
+    off_categories_tags = db.Column(db.Text, nullable=True)  # JSON list
+    off_allergens_tags = db.Column(db.Text, nullable=True)  # JSON list
+    off_packaging_tags = db.Column(db.Text, nullable=True)  # JSON list
+    off_data_quality_tags = db.Column(
+        db.Text, nullable=True
+    )  # JSON list — drives future contribution
+
     user = db.relationship("User", back_populates="items")
     photos = db.relationship(
         "ItemPhoto",

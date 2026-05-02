@@ -275,6 +275,31 @@ def barcode_lookup():
         except Exception:
             image_path = None
 
+    brands = (product.get("brands") or "").strip() or None
+    quantity = (product.get("quantity") or "").strip() or None
+    ingredients_text = (product.get("ingredients_text") or "").strip() or None
+    labels_tags = json.dumps(product.get("labels_tags") or [])
+    categories_tags = json.dumps(product.get("categories_tags") or [])
+    allergens_tags = json.dumps(product.get("allergens_tags") or [])
+    packaging_tags = json.dumps(product.get("packaging_tags") or [])
+    data_quality_tags = json.dumps(product.get("data_quality_tags") or [])
+    nutriscore_grade = (
+        product.get("nutriscore_grade") or product.get("nutrition_grades") or ""
+    ).upper()[:1] or None
+    nutriscore_score_raw = product.get("nutriscore_score")
+    nutriscore_score = (
+        int(nutriscore_score_raw) if nutriscore_score_raw is not None else None
+    )
+    nova_group_raw = product.get("nova_group")
+    nova_group = (
+        int(nova_group_raw)
+        if nova_group_raw is not None and str(nova_group_raw).isdigit()
+        else None
+    )
+    ecoscore_grade = (product.get("ecoscore_grade") or "").lower()[:1] or None
+    ecoscore_score_raw = product.get("ecoscore_score")
+    ecoscore_score = int(ecoscore_score_raw) if ecoscore_score_raw is not None else None
+
     logger.info(
         "barcode_lookup",
         user_id=current_user.id,
@@ -290,6 +315,19 @@ def barcode_lookup():
             "item_type": item_type,
             "shelf_life_days": shelf_life_days,
             "image_path": image_path,
+            "brands": brands,
+            "quantity": quantity,
+            "ingredients_text": ingredients_text,
+            "labels_tags": labels_tags,
+            "off_categories_tags": categories_tags,
+            "off_allergens_tags": allergens_tags,
+            "off_packaging_tags": packaging_tags,
+            "off_data_quality_tags": data_quality_tags,
+            "off_nutriscore_grade": nutriscore_grade,
+            "off_nutriscore_score": nutriscore_score,
+            "off_nova_group": nova_group,
+            "off_ecoscore_grade": ecoscore_grade,
+            "off_ecoscore_score": ecoscore_score,
         }
     )
 
@@ -443,6 +481,22 @@ def add_item():
         form.source.data = "barcode"
         form.barcode.data = barcode_value
         form.standard_name.data = normalize_ingredient(name)
+        form.brands.data = request.form.get("brands", "")
+        form.quantity.data = request.form.get("quantity", "")
+        form.ingredients_text.data = request.form.get("ingredients_text", "")
+        form.labels_tags.data = request.form.get("labels_tags", "[]")
+        form.product_data_source.data = "off"
+        form.off_nutriscore_grade.data = request.form.get("off_nutriscore_grade", "")
+        form.off_nutriscore_score.data = request.form.get("off_nutriscore_score", "")
+        form.off_nova_group.data = request.form.get("off_nova_group", "")
+        form.off_ecoscore_grade.data = request.form.get("off_ecoscore_grade", "")
+        form.off_ecoscore_score.data = request.form.get("off_ecoscore_score", "")
+        form.off_categories_tags.data = request.form.get("off_categories_tags", "[]")
+        form.off_allergens_tags.data = request.form.get("off_allergens_tags", "[]")
+        form.off_packaging_tags.data = request.form.get("off_packaging_tags", "[]")
+        form.off_data_quality_tags.data = request.form.get(
+            "off_data_quality_tags", "[]"
+        )
 
         return render_template(
             "perishables/add_item.html",
@@ -467,6 +521,12 @@ def add_item():
                 (form.cache_hit.data == "1") if confidence_score is not None else None
             )
 
+            def _int_or_none(val):
+                try:
+                    return int(val) if val else None
+                except (TypeError, ValueError):
+                    return None
+
             item = Item(
                 user_id=current_user.id,
                 name=form.name.data.strip(),
@@ -480,6 +540,20 @@ def add_item():
                 standard_name=form.standard_name.data
                 or normalize_ingredient(form.name.data.strip()),
                 barcode=form.barcode.data or None,
+                brands=form.brands.data or None,
+                quantity=form.quantity.data or None,
+                ingredients_text=form.ingredients_text.data or None,
+                labels_tags=form.labels_tags.data or None,
+                product_data_source=form.product_data_source.data or None,
+                off_nutriscore_grade=form.off_nutriscore_grade.data or None,
+                off_nutriscore_score=_int_or_none(form.off_nutriscore_score.data),
+                off_nova_group=_int_or_none(form.off_nova_group.data),
+                off_ecoscore_grade=form.off_ecoscore_grade.data or None,
+                off_ecoscore_score=_int_or_none(form.off_ecoscore_score.data),
+                off_categories_tags=form.off_categories_tags.data or None,
+                off_allergens_tags=form.off_allergens_tags.data or None,
+                off_packaging_tags=form.off_packaging_tags.data or None,
+                off_data_quality_tags=form.off_data_quality_tags.data or None,
             )
             db.session.add(item)
             db.session.flush()  # get item.id before creating photos
