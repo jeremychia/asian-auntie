@@ -98,19 +98,19 @@ cp -n .env.example .env
 
 Key environment variables:
 
-| Variable               | Required in prod | Description                                                   |
-| ---------------------- | ---------------- | ------------------------------------------------------------- |
-| `FLASK_SECRET_KEY`     | Yes              | Flask session signing key                                     |
-| `JWT_SECRET_KEY`       | Yes              | JWT signing key (different from above)                        |
-| `DATABASE_URL`         | Yes              | Postgres connection string                                    |
-| `GROQ_API_KEY`         | Recommended      | Groq API key for item recognition                             |
-| `OPENAI_API_KEY`       | Fallback         | OpenAI key if Groq not set                                    |
-| `OLLAMA_BASE_URL`      | Local dev        | Ollama server URL, e.g. `http://localhost:11434`              |
-| `GCS_BUCKET_NAME`      | Yes              | GCS bucket for photo uploads (e.g. `asian-auntie-items-prod`) |
-| `GCS_CREDENTIALS_JSON` | Yes              | Service account key JSON as a single-line string              |
-| `LOG_LEVEL`            | No               | `DEBUG`, `INFO`, `WARNING`, or `ERROR` (default: `INFO`)      |
-| `FLASK_ENV`            | No               | `development` or `production`                                 |
-| `ALLOWED_ORIGINS`      | Yes              | Comma-separated CORS origins                                  |
+| Variable                         | Required in prod | Description                                                                                                         |
+| -------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `FLASK_SECRET_KEY`               | Yes              | Flask session signing key                                                                                           |
+| `JWT_SECRET_KEY`                 | Yes              | JWT signing key (different from above)                                                                              |
+| `DATABASE_URL`                   | Yes              | Postgres connection string                                                                                          |
+| `GROQ_API_KEY`                   | Recommended      | Groq API key for item recognition                                                                                   |
+| `OPENAI_API_KEY`                 | Fallback         | OpenAI key if Groq not set                                                                                          |
+| `OLLAMA_BASE_URL`                | Local dev        | Ollama server URL, e.g. `http://localhost:11434`                                                                    |
+| `GCS_BUCKET_NAME`                | Yes              | GCS bucket for photo uploads (e.g. `asian-auntie-items-prod`)                                                       |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Yes              | Path to service account key file (local: `gcp-service-account.json`, prod: `/etc/secrets/gcp-service-account.json`) |
+| `LOG_LEVEL`                      | No               | `DEBUG`, `INFO`, `WARNING`, or `ERROR` (default: `INFO`)                                                            |
+| `FLASK_ENV`                      | No               | `development` or `production`                                                                                       |
+| `ALLOWED_ORIGINS`                | Yes              | Comma-separated CORS origins                                                                                        |
 
 ## Development Commands
 
@@ -167,13 +167,7 @@ For each bucket:
 1. Set access control to **uniform**.
 2. Grant `allUsers` the **Storage Object Viewer** role so photos are publicly readable.
 
-Then create a single service account with the **Storage Object Creator** role on both buckets:
-
-1. Generate a JSON key and download it.
-2. Minify it to a single line (removes embedded newlines):
-   ```bash
-   python -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1]))))" key.json
-   ```
+Then create a single service account with the **Storage Object Admin** role on both buckets and generate a JSON key.
 
 ### 2. Create a Postgres database on Render
 
@@ -182,19 +176,19 @@ In the Render dashboard, create a new **PostgreSQL** service. Copy the **Interna
 ### 3. Deploy the web service
 
 1. In the Render dashboard, click **New → Blueprint** and connect your GitHub repo. Render picks up `render.yaml` automatically.
-2. Set the following environment variables in the Render dashboard (marked `sync: false` in `render.yaml`, so they must be set manually):
+2. Under **Secret Files**, upload your `gcp-service-account.json` key file with the filename `gcp-service-account.json`. Render makes it available at `/etc/secrets/gcp-service-account.json`.
+3. Set the following environment variables in the Render dashboard (marked `sync: false` in `render.yaml`, so they must be set manually):
 
-   | Variable               | Value                                              |
-   | ---------------------- | -------------------------------------------------- |
-   | `FLASK_SECRET_KEY`     | A random 32-byte hex string                        |
-   | `JWT_SECRET_KEY`       | A different random 32-byte hex string              |
-   | `DATABASE_URL`         | Internal Database URL from step 2                  |
-   | `GROQ_API_KEY`         | Groq API key (preferred — free tier)               |
-   | `OPENAI_API_KEY`       | OpenAI key (fallback if Groq not set)              |
-   | `GCS_CREDENTIALS_JSON` | The single-line JSON key string from step 1        |
-   | `VAPID_PRIVATE_KEY`    | VAPID private key for push notifications           |
-   | `VAPID_PUBLIC_KEY`     | VAPID public key for push notifications            |
-   | `VAPID_CLAIMS_EMAIL`   | Contact email sent with push notification requests |
+   | Variable             | Value                                              |
+   | -------------------- | -------------------------------------------------- |
+   | `FLASK_SECRET_KEY`   | A random 32-byte hex string                        |
+   | `JWT_SECRET_KEY`     | A different random 32-byte hex string              |
+   | `DATABASE_URL`       | Internal Database URL from step 2                  |
+   | `GROQ_API_KEY`       | Groq API key (preferred — free tier)               |
+   | `OPENAI_API_KEY`     | OpenAI key (fallback if Groq not set)              |
+   | `VAPID_PRIVATE_KEY`  | VAPID private key for push notifications           |
+   | `VAPID_PUBLIC_KEY`   | VAPID public key for push notifications            |
+   | `VAPID_CLAIMS_EMAIL` | Contact email sent with push notification requests |
 
    Generate Flask/JWT secret keys with:
 
@@ -208,7 +202,7 @@ In the Render dashboard, create a new **PostgreSQL** service. Copy the **Interna
    uv run python -m py_vapid --gen
    ```
 
-3. Trigger a deploy. Render runs `flask db upgrade` on startup (configured in the Dockerfile).
+4. Trigger a deploy. Render runs `flask db upgrade` on startup (configured in the Dockerfile).
 
 ### 4. Verify
 

@@ -35,8 +35,9 @@ services:
       # Photo storage (GCS)
       - key: GCS_BUCKET_NAME
         value: asian-auntie-items-prod
-      - key: GCS_CREDENTIALS_JSON
-        sync: false
+      # Upload gcp-service-account.json as a Secret File in the Render dashboard
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/gcp-service-account.json
 
       # Web Push notifications
       # Generate a fresh key pair with: python -m py_vapid --gen
