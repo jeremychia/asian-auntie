@@ -63,11 +63,14 @@
       onclick="document.getElementById('barcode-manual-form').hidden = !document.getElementById('barcode-manual-form').hidden">
       Enter barcode manually
     </button>
-    <div id="barcode-manual-form" hidden style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center;">
-      <input type="text" id="barcode-manual-input" inputmode="numeric" pattern="[0-9]*"
-        placeholder="e.g. 4902430864602"
-        style="padding:0.4rem 0.6rem; border:1px solid var(--border); border-radius:var(--r-sm); font-size:var(--font-secondary); width:12rem;">
-      <button type="button" class="btn btn-primary" onclick="submitManualBarcode()">Look up</button>
+    <div id="barcode-manual-form" hidden style="margin-top:0.75rem;">
+      <label for="barcode-manual-input" style="font-size:var(--font-secondary); display:block; margin-bottom:0.35rem;">Enter the barcode number from the packaging</label>
+      <div style="display:flex; gap:0.5rem; justify-content:center;">
+        <input type="text" id="barcode-manual-input" inputmode="numeric" pattern="[0-9]*"
+          placeholder="e.g. 4902430864602"
+          style="padding:0.4rem 0.6rem; border:1px solid var(--border); border-radius:var(--r-sm); font-size:var(--font-secondary); width:12rem;">
+        <button type="button" class="btn btn-primary" onclick="submitManualBarcode()">Look up</button>
+      </div>
     </div>
   </div>
 
@@ -378,6 +381,9 @@ function handlePhotoSelected(input) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const strip = document.getElementById('photo-strip');
+    const existingThumb = document.getElementById('thumb-' + idx);
+    if (existingThumb) existingThumb.remove();
+
     const thumb = document.createElement('div');
     thumb.className = 'photo-thumb';
     thumb.id = 'thumb-' + idx;
@@ -388,11 +394,15 @@ function handlePhotoSelected(input) {
         '<option value="barcode"' + (typeSelect.value === 'barcode' ? ' selected' : '') + '>Barcode</option>' +
         '<option value="label"' + (typeSelect.value === 'label' ? ' selected' : '') + '>Label</option>' +
         '<option value="other"' + (typeSelect.value === 'other' ? ' selected' : '') + '>Other</option>' +
-      '</select>';
+      '</select>' +
+      '<button type="button" onclick="removePhoto(' + idx + ')" aria-label="Remove" ' +
+        'style="position:absolute;top:0.25rem;right:0.25rem;padding:0.2rem 0.45rem;font-size:0.75rem;' +
+               'background:rgba(0,0,0,0.6);color:white;border:none;border-radius:0.25rem;cursor:pointer;">×</button>';
     strip.appendChild(thumb);
     photoCount++;
     document.getElementById('capture-zone').hidden = true;
     document.getElementById('photo-actions').hidden = false;
+    document.getElementById('add-more-btn').hidden = false;
   };
   reader.readAsDataURL(file);
 }
@@ -402,8 +412,20 @@ function syncTypeSelect(thumbSelect, idx) {
   if (typeSelect) typeSelect.value = thumbSelect.value;
 }
 
+function removePhoto(idx) {
+  const thumb = document.getElementById('thumb-' + idx);
+  if (thumb) thumb.remove();
+  const entry = document.getElementById('entry-' + idx);
+  if (entry) entry.remove();
+  if (document.getElementById('photo-strip').children.length === 0) {
+    document.getElementById('capture-zone').hidden = false;
+    document.getElementById('photo-actions').hidden = true;
+  }
+}
+
 function addAnotherPhoto() {
   document.getElementById('capture-zone').hidden = false;
+  document.getElementById('add-more-btn').hidden = true;
 }
 
 function handleDoneClick(event) {
@@ -422,38 +444,19 @@ function handleDoneClick(event) {
 
 {% elif step == 'confirm' %}
 {# ── Step 2: Confirmation ────────────────────────────────────────── #}
-{% set high_conf = confidence >= 0.85 and form.name.data %}
-{% set mid_conf  = confidence >= 0.60 and confidence < 0.85 %}
-{% set low_conf  = confidence < 0.60 %}
 
 <div class="step-header">
   <span class="step-label">Step 2 of 2</span>
-  <p class="step-hint">
-    {% if high_conf %}Looking good — confirm or edit below.{% endif %}
-    {% if mid_conf %}Check the expiry date looks right.{% endif %}
-  </p>
+  <p class="step-hint">Check the details below and make any changes.</p>
 </div>
 
-{% if photo_items %}
-<div class="photo-strip photo-strip--static">
-  {% for photo in photo_items %}
-  <div class="photo-thumb">
-    <img src="{{ url_for('uploaded_file', filename=photo['path']) }}"
-         alt="{{ photo['type'] | capitalize }}">
-    <span class="photo-type-label photo-type-label--static">{{ photo['type'] | capitalize }}</span>
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
-<form method="post" action="{{ url_for('perishables.add_item') }}">
+<form method="post" action="{{ url_for('perishables.add_item') }}" enctype="multipart/form-data">
   {{ form.hidden_tag() }}
   <input type="hidden" name="step" value="confirm">
   {{ form.photo_paths_json() }}
   {{ form.confidence_score() }}
   {{ form.cache_hit() }}
   {{ form.source() }}
-  {{ form.barcode() }}
   {{ form.brands() }}
   {{ form.quantity() }}
   {{ form.ingredients_text() }}
@@ -469,114 +472,91 @@ function handleDoneClick(event) {
   {{ form.off_packaging_tags() }}
   {{ form.off_data_quality_tags() }}
 
-  {% if high_conf %}
-  <div class="confirm-card">
-    <p class="confirm-card__summary">
-      <strong>{{ form.name.data }}</strong>
-      {% if form.expiry_date.data %}&nbsp;· expires {{ form.expiry_date.data.strftime("%-d %b %Y") }}
-        {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
-      {% endif %}
-    </p>
-    <div class="confirm-card__actions">
-      <button type="submit" class="btn btn-primary">Looks good</button>
-      <a href="#" class="btn-ghost btn"
-         onclick="document.getElementById('edit-section').hidden=false;this.style.display='none';return false">
-        Edit
-      </a>
+  <div class="photo-strip" id="confirm-all-photos">
+    {% for photo in photo_items %}
+    <div class="photo-thumb">
+      <img src="{{ url_for('uploaded_file', filename=photo['path']) }}" alt="{{ photo['type'] | capitalize }}">
+      <span class="photo-type-label photo-type-label--static">{{ photo['type'] | capitalize }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <div id="confirm-photo-entries"></div>
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="addConfirmPhoto()">+ Add photo</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="openConfirmCamera()">📷 Take photo</button>
+  </div>
+
+  <div id="confirm-camera-panel" hidden>
+    <div style="width:100%; border-radius:var(--r-lg); overflow:hidden; margin-bottom:1rem; background:#000;">
+      <video id="confirm-camera-video" autoplay playsinline style="width:100%; display:block; max-height:60vh; object-fit:cover;"></video>
+    </div>
+    <canvas id="confirm-camera-canvas" hidden></canvas>
+    <div class="form-actions" style="justify-content:center; margin-bottom:0.5rem;">
+      <button type="button" class="btn btn-primary btn-lg" onclick="captureConfirmPhoto()">Capture</button>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" onclick="closeConfirmCamera()">Cancel</button>
     </div>
   </div>
-  <div id="edit-section" hidden>
-  {% else %}
-  <div id="edit-section">
-    {% if low_conf %}<span class="hint">Hard to read — please fill in the details below.</span>{% endif %}
-    {% if mid_conf %}<span class="hint">Check the expiry date looks right.</span>{% endif %}
+
+  <div class="autocomplete-wrap">
+    <label for="name">Item name</label>
+    {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce") }}
+    <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
+    {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The name as it appears on the packaging, including the brand (e.g. "Creamises Kokomilch").</small>
+  </div>
+
+  <div class="autocomplete-wrap">
+    <label for="standard_name">
+      Standard ingredient name
+      <span class="info-icon-wrapper" data-tooltip="The generic ingredient name (e.g. 'Coconut milk') used to find matching recipes — not the brand name">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.35rem; vertical-align: text-bottom; opacity: 0.6; cursor: help;" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </span>
+    </label>
+    {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
+    <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
+    <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The generic ingredient name used to find recipes. For a branded product, pick the closest match (e.g. "Coconut milk").</small>
+  </div>
+
+  <label for="item_type">Type</label>
+  {{ form.item_type(id="item_type") }}
+
+  <label for="location">Location</label>
+  {{ form.location(id="location", list="location-options", placeholder="e.g. Fridge", maxlength="32") }}
+  <datalist id="location-options">
+    <option value="Fridge">
+    <option value="Freezer">
+    <option value="Pantry">
+    <option value="Cupboard">
+    <option value="Counter">
+  </datalist>
+
+  <label for="expiry_date">Expiry date
+    {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
+  </label>
+  {{ form.expiry_date(id="expiry_date") }}
+  {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+  <small id="expiry-warning" class="field-warning" hidden></small>
+
+  <label for="confirm_barcode">Barcode (optional)</label>
+  {{ form.barcode(id="confirm_barcode", inputmode="numeric", placeholder="e.g. 4902430864602", maxlength="64") }}
+  <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The number printed below the barcode on the packaging (8–14 digits).</small>
+
+  {% if source == "barcode" %}
+  <p style="font-size:var(--font-xs); color:var(--text-muted); margin:0.25rem 0 0.75rem;">
+    Product info from <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>
+  </p>
   {% endif %}
 
-    <div class="autocomplete-wrap">
-      <label for="name">Item name</label>
-      {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce") }}
-      <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
-      {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
-    </div>
-
-    <div class="autocomplete-wrap">
-      <label for="standard_name">
-        Standard ingredient name
-        <span class="info-icon-wrapper" data-tooltip="Used to match this item to recipes">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.35rem; vertical-align: text-bottom; opacity: 0.6; cursor: help;" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-        </span>
-      </label>
-      {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
-      <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
-    </div>
-
-    <label for="item_type">Type</label>
-    {{ form.item_type(id="item_type") }}
-
-    <label for="location">Location</label>
-    {{ form.location(id="location", list="location-options", placeholder="e.g. Fridge", maxlength="32") }}
-    <datalist id="location-options">
-      <option value="Fridge">
-      <option value="Freezer">
-      <option value="Pantry">
-      <option value="Cupboard">
-      <option value="Counter">
-    </datalist>
-
-    <label for="expiry_date">Expiry date
-      {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
-    </label>
-    {{ form.expiry_date(id="expiry_date", class=("field-highlight" if mid_conf else "")) }}
-    {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
-    <small id="expiry-warning" class="field-warning" hidden></small>
-
-    {% if source == "barcode" %}
-    <p style="font-size:var(--font-xs); color:var(--text-muted); margin:0.25rem 0 0.75rem;">
-      Product info from <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>
-    </p>
-    {% endif %}
-
-    <label>Photos</label>
-    <div class="photo-strip" id="confirm-all-photos">
-      {% if photo_items %}
-        {% for photo in photo_items %}
-        <div class="photo-thumb">
-          <img src="{{ url_for('uploaded_file', filename=photo['path']) }}" alt="{{ photo['type'] | capitalize }}">
-          <span class="photo-type-label photo-type-label--static">{{ photo['type'] | capitalize }}</span>
-        </div>
-        {% endfor %}
-      {% endif %}
-    </div>
-
-    <div style="margin-top: 1rem;">
-      <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">Add more photos (optional)</label>
-      <div class="confirm-photo-inputs" id="confirm-photo-inputs"></div>
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="addConfirmPhotoInput()" id="add-confirm-photo-btn">+ Add photo</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="openConfirmCamera()" id="take-confirm-photo-btn">📷 Take photo</button>
-      </div>
-    </div>
-    <div id="confirm-camera-panel" hidden>
-      <div style="width:100%; border-radius:var(--r-lg); overflow:hidden; margin-bottom:1rem; background:#000;">
-        <video id="confirm-camera-video" autoplay playsinline style="width:100%; display:block; max-height:60vh; object-fit:cover;"></video>
-      </div>
-      <canvas id="confirm-camera-canvas" hidden></canvas>
-      <div class="form-actions" style="justify-content:center; margin-bottom:0.5rem;">
-        <button type="button" class="btn btn-primary btn-lg" onclick="captureConfirmPhoto()">Capture</button>
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn btn-ghost" onclick="closeConfirmCamera()">Cancel</button>
-      </div>
-    </div>
-
-    <div class="form-actions">
-      {{ form.submit(class="btn btn-primary") }}
-      <a href="{{ url_for('perishables.add_item') }}" class="btn btn-secondary">Cancel</a>
-    </div>
+  <div class="form-actions">
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('perishables.add_item') }}" class="btn btn-secondary">Cancel</a>
+  </div>
 </form>
 
 
@@ -596,12 +576,13 @@ function handleDoneClick(event) {
     {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce", autofocus=true) }}
     <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
     {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The name as it appears on the packaging, including the brand (e.g. "Creamises Kokomilch").</small>
   </div>
 
   <div class="autocomplete-wrap">
     <label for="standard_name">
       Standard ingredient name
-      <span class="info-icon-wrapper" data-tooltip="Used to match this item to recipes">
+      <span class="info-icon-wrapper" data-tooltip="The generic ingredient name (e.g. 'Coconut milk') used to find matching recipes — not the brand name">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.35rem; vertical-align: text-bottom; opacity: 0.6; cursor: help;" aria-hidden="true">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -611,6 +592,7 @@ function handleDoneClick(event) {
     </label>
     {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
     <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
+    <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The generic ingredient name used to find recipes. For a branded product, pick the closest match (e.g. "Coconut milk").</small>
   </div>
 
   <label for="item_type">Type</label>
@@ -633,11 +615,27 @@ function handleDoneClick(event) {
 
   <label for="barcode">Barcode (optional)</label>
   {{ form.barcode(id="barcode", inputmode="numeric", placeholder="e.g. 4902430864602", maxlength="64") }}
+  <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The number printed below the barcode on the packaging (8–14 digits).</small>
 
   <label>Photos (optional)</label>
   <div class="photo-strip" id="manual-photo-strip"></div>
-  <div class="manual-photo-inputs" id="manual-photo-inputs"></div>
-  <button type="button" class="btn btn-secondary btn-sm" onclick="addManualPhotoInput()" id="add-photo-btn">+ Add photo</button>
+  <div id="manual-photo-entries"></div>
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="addManualPhoto()">+ Add photo</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="openManualCamera()">📷 Take photo</button>
+  </div>
+  <div id="manual-camera-panel" hidden>
+    <div style="width:100%; border-radius:var(--r-lg); overflow:hidden; margin-bottom:1rem; background:#000;">
+      <video id="manual-camera-video" autoplay playsinline style="width:100%; display:block; max-height:60vh; object-fit:cover;"></video>
+    </div>
+    <canvas id="manual-camera-canvas" hidden></canvas>
+    <div class="form-actions" style="justify-content:center; margin-bottom:0.5rem;">
+      <button type="button" class="btn btn-primary btn-lg" onclick="captureManualPhoto()">Capture</button>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" onclick="closeManualCamera()">Cancel</button>
+    </div>
+  </div>
 
   <div class="form-actions">
     {{ form.submit(class="btn btn-primary") }}
@@ -940,19 +938,26 @@ checkExpiryWarning();
 
 // Manual photo upload
 let manualPhotoCount = 0;
-function addManualPhotoInput() {
-  const inputsDiv = document.getElementById('manual-photo-inputs');
-  const strip = document.getElementById('manual-photo-strip');
-  const idx = manualPhotoCount;
+let manualCameraStream = null;
+let manualPhotoIdx = 0;
 
+function _createManualEntry(idx) {
+  const entries = document.getElementById('manual-photo-entries');
+  if (!entries) return;
   const wrap = document.createElement('div');
   wrap.id = 'manual-entry-' + idx;
-  wrap.style.marginBottom = '0.5rem';
   wrap.innerHTML =
-    '<input type="file" name="manual_photos" accept="image/*" id="manual-photo-' + idx + '" data-idx="' + idx + '" onchange="handleManualPhotoSelected(this)" style="font-size: 0.9rem;">' +
-    (manualPhotoCount > 0 ? '<button type="button" class="btn btn-ghost btn-sm" style="margin-left:0.5rem;" onclick="removeManualPhoto(' + idx + ')">Remove</button>' : '');
-  inputsDiv.appendChild(wrap);
+    '<input type="file" name="manual_photos" accept="image/*" ' +
+           'class="visually-hidden" id="manual-photo-' + idx + '" data-idx="' + idx + '" ' +
+           'onchange="handleManualPhotoSelected(this)">';
+  entries.appendChild(wrap);
+}
+
+function addManualPhoto() {
+  const idx = manualPhotoCount;
+  _createManualEntry(idx);
   manualPhotoCount++;
+  document.getElementById('manual-photo-' + idx).click();
 }
 
 function handleManualPhotoSelected(input) {
@@ -970,66 +975,132 @@ function handleManualPhotoSelected(input) {
     thumb.className = 'photo-thumb';
     thumb.id = 'manual-thumb-' + idx;
     thumb.innerHTML =
-      '<img src="' + e.target.result + '" alt="Photo ' + (idx + 1) + '" style="width:100%; height:100%; object-fit:cover;">' +
-      '<button type="button" class="btn btn-ghost" style="position:absolute; top:0.25rem; right:0.25rem; padding:0.25rem 0.5rem; font-size:0.75rem; opacity:0.8;" onclick="removeManualPhotoThumb(' + idx + ')">×</button>';
+      '<img src="' + e.target.result + '" alt="Photo ' + (idx + 1) + '">' +
+      '<button type="button" onclick="removeManualPhoto(' + idx + ')" aria-label="Remove" ' +
+        'style="position:absolute;top:0.25rem;right:0.25rem;padding:0.2rem 0.45rem;font-size:0.75rem;' +
+               'background:rgba(0,0,0,0.6);color:white;border:none;border-radius:0.25rem;cursor:pointer;">×</button>';
     strip.appendChild(thumb);
   };
   reader.readAsDataURL(file);
 }
 
 function removeManualPhoto(idx) {
-  const entry = document.getElementById('manual-entry-' + idx);
-  if (entry) entry.remove();
-  removeManualPhotoThumb(idx);
-}
-
-function removeManualPhotoThumb(idx) {
   const thumb = document.getElementById('manual-thumb-' + idx);
   if (thumb) thumb.remove();
+  const entry = document.getElementById('manual-entry-' + idx);
+  if (entry) entry.remove();
 }
 
-// Form data persistence for confirm step
-function saveConfirmFormData() {
-  const formData = {
-    name: document.getElementById('name')?.value,
-    standard_name: document.getElementById('standard_name')?.value,
-    item_type: document.getElementById('item_type')?.value,
-    location: document.getElementById('location')?.value,
-    expiry_date: document.getElementById('expiry_date')?.value,
-  };
-  localStorage.setItem('confirmFormData', JSON.stringify(formData));
+function openManualCamera() {
+  manualPhotoIdx = manualPhotoCount;
+  _createManualEntry(manualPhotoIdx);
+  manualPhotoCount++;
+  document.getElementById('manual-camera-panel').hidden = false;
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    .then(function(stream) {
+      manualCameraStream = stream;
+      document.getElementById('manual-camera-video').srcObject = stream;
+    })
+    .catch(function() {
+      closeManualCamera();
+      document.getElementById('manual-photo-' + manualPhotoIdx).click();
+    });
 }
 
-function restoreConfirmFormData() {
-  const saved = localStorage.getItem('confirmFormData');
-  if (!saved) return;
-  const formData = JSON.parse(saved);
-  if (formData.name) document.getElementById('name').value = formData.name;
-  if (formData.standard_name) document.getElementById('standard_name').value = formData.standard_name;
-  if (formData.item_type) document.getElementById('item_type').value = formData.item_type;
-  if (formData.location) document.getElementById('location').value = formData.location;
-  if (formData.expiry_date) document.getElementById('expiry_date').value = formData.expiry_date;
-  localStorage.removeItem('confirmFormData');
+function captureManualPhoto() {
+  const video = document.getElementById('manual-camera-video');
+  const canvas = document.getElementById('manual-camera-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  closeManualCamera();
+  canvas.toBlob(function(blob) {
+    const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    const input = document.getElementById('manual-photo-' + manualPhotoIdx);
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    handleManualPhotoSelected(input);
+  }, 'image/jpeg', 0.92);
 }
 
-// Save form data periodically while editing
-document.addEventListener('DOMContentLoaded', function() {
-  restoreConfirmFormData();
-  document.getElementById('name')?.addEventListener('change', saveConfirmFormData);
-  document.getElementById('standard_name')?.addEventListener('change', saveConfirmFormData);
-  document.getElementById('item_type')?.addEventListener('change', saveConfirmFormData);
-  document.getElementById('location')?.addEventListener('change', saveConfirmFormData);
-  document.getElementById('expiry_date')?.addEventListener('change', saveConfirmFormData);
-});
+function closeManualCamera() {
+  if (manualCameraStream) {
+    manualCameraStream.getTracks().forEach(function(t) { t.stop(); });
+    manualCameraStream = null;
+  }
+  document.getElementById('manual-camera-panel').hidden = true;
+}
 
-// Confirm step camera
+// Confirm step camera + photo upload
 let confirmCameraStream = null;
+let confirmPhotoCount = 0;
 let confirmPhotoIdx = 0;
 
+function _createConfirmEntry(idx) {
+  const entries = document.getElementById('confirm-photo-entries');
+  if (!entries) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'confirm-entry-' + idx;
+  wrap.innerHTML =
+    '<input type="file" name="confirm_photos" accept="image/*" ' +
+           'class="visually-hidden" id="confirm-photo-' + idx + '" data-idx="' + idx + '" ' +
+           'onchange="handleConfirmPhotoSelected(this)">' +
+    '<select name="confirm_photo_types" id="confirm-photo-type-' + idx + '" class="visually-hidden">' +
+      '<option value="appearance" selected>Appearance</option>' +
+      '<option value="barcode">Barcode</option>' +
+      '<option value="label">Label</option>' +
+      '<option value="other">Other</option>' +
+    '</select>';
+  entries.appendChild(wrap);
+}
+
+function addConfirmPhoto() {
+  const idx = confirmPhotoCount;
+  _createConfirmEntry(idx);
+  confirmPhotoCount++;
+  document.getElementById('confirm-photo-' + idx).click();
+}
+
+function handleConfirmPhotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const idx = parseInt(input.dataset.idx);
+  const typeSelect = document.getElementById('confirm-photo-type-' + idx);
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const strip = document.getElementById('confirm-all-photos');
+    const existingThumb = document.getElementById('confirm-thumb-' + idx);
+    if (existingThumb) existingThumb.remove();
+
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    thumb.id = 'confirm-thumb-' + idx;
+    thumb.innerHTML =
+      '<img src="' + e.target.result + '" alt="Photo ' + (idx + 1) + '">' +
+      '<select class="photo-type-label" onchange="syncConfirmTypeSelect(this, ' + idx + ')">' +
+        '<option value="appearance"' + (typeSelect.value === 'appearance' ? ' selected' : '') + '>Appearance</option>' +
+        '<option value="barcode"' + (typeSelect.value === 'barcode' ? ' selected' : '') + '>Barcode</option>' +
+        '<option value="label"' + (typeSelect.value === 'label' ? ' selected' : '') + '>Label</option>' +
+        '<option value="other"' + (typeSelect.value === 'other' ? ' selected' : '') + '>Other</option>' +
+      '</select>';
+    strip.appendChild(thumb);
+  };
+  reader.readAsDataURL(file);
+}
+
+function syncConfirmTypeSelect(thumbSelect, idx) {
+  const typeSelect = document.getElementById('confirm-photo-type-' + idx);
+  if (typeSelect) typeSelect.value = thumbSelect.value;
+}
+
 function openConfirmCamera() {
-  saveConfirmFormData();
-  document.getElementById('confirm-camera-panel').hidden = false;
   confirmPhotoIdx = confirmPhotoCount;
+  _createConfirmEntry(confirmPhotoIdx);
+  confirmPhotoCount++;
+  document.getElementById('confirm-camera-panel').hidden = false;
 
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
     .then(function(stream) {
@@ -1038,7 +1109,6 @@ function openConfirmCamera() {
     })
     .catch(function() {
       closeConfirmCamera();
-      addConfirmPhotoInput();
       document.getElementById('confirm-photo-' + confirmPhotoIdx).click();
     });
 }
@@ -1053,7 +1123,6 @@ function captureConfirmPhoto() {
   closeConfirmCamera();
 
   canvas.toBlob(function(blob) {
-    addConfirmPhotoInput();
     const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
     const input = document.getElementById('confirm-photo-' + confirmPhotoIdx);
     const dt = new DataTransfer();
@@ -1071,86 +1140,6 @@ function closeConfirmCamera() {
   document.getElementById('confirm-camera-panel').hidden = true;
 }
 
-// Confirm step photo upload
-let confirmPhotoCount = 0;
-function addConfirmPhotoInput() {
-  const inputsDiv = document.getElementById('confirm-photo-inputs');
-  if (!inputsDiv) return;
-  const idx = confirmPhotoCount;
-
-  const wrap = document.createElement('div');
-  wrap.id = 'confirm-entry-' + idx;
-  wrap.style.marginBottom = '1rem';
-  wrap.style.display = 'flex';
-  wrap.style.gap = '0.5rem';
-  wrap.style.alignItems = 'flex-start';
-  wrap.innerHTML =
-    '<input type="file" name="confirm_photos" accept="image/*" id="confirm-photo-' + idx + '" data-idx="' + idx + '" onchange="handleConfirmPhotoSelected(this)" style="font-size: 0.9rem; flex:1;">' +
-    '<select id="confirm-photo-type-' + idx + '" onchange="updateConfirmPhotoType(' + idx + ')" style="padding:0.4rem; border:1px solid var(--border); border-radius:var(--r-sm);"><option value="appearance">Appearance</option><option value="barcode">Barcode</option><option value="label">Label</option><option value="other">Other</option></select>' +
-    (confirmPhotoCount > 0 ? '<button type="button" class="btn btn-ghost btn-sm" onclick="removeConfirmPhoto(' + idx + ')" style="white-space:nowrap;">Remove</button>' : '');
-  inputsDiv.appendChild(wrap);
-  confirmPhotoCount++;
-}
-
-function handleConfirmPhotoSelected(input) {
-  const file = input.files[0];
-  if (!file) return;
-
-  const idx = parseInt(input.dataset.idx);
-  const typeSelect = document.getElementById('confirm-photo-type-' + idx);
-  const photoType = typeSelect ? typeSelect.value : 'appearance';
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const strip = document.getElementById('confirm-all-photos');
-    const existingThumb = document.getElementById('confirm-thumb-' + idx);
-    if (existingThumb) existingThumb.remove();
-
-    const thumb = document.createElement('div');
-    thumb.className = 'photo-thumb';
-    thumb.id = 'confirm-thumb-' + idx;
-    thumb.innerHTML =
-      '<img src="' + e.target.result + '" alt="Photo" style="width:100%; height:100%; object-fit:cover;">' +
-      '<span class="photo-type-label" style="background:rgba(0,0,0,0.7); color:white; padding:0.25rem 0.5rem; border-radius:0.25rem;">' + (photoType.charAt(0).toUpperCase() + photoType.slice(1)) + '</span>' +
-      '<button type="button" class="btn btn-ghost" style="position:absolute; top:0.25rem; right:0.25rem; padding:0.25rem 0.5rem; font-size:0.75rem; opacity:0.8; background:rgba(0,0,0,0.5);" onclick="removeConfirmPhotoThumb(' + idx + ')">×</button>';
-    strip.appendChild(thumb);
-  };
-  reader.readAsDataURL(file);
-}
-
-function updateConfirmPhotoType(idx) {
-  const typeSelect = document.getElementById('confirm-photo-type-' + idx);
-  const thumb = document.getElementById('confirm-thumb-' + idx);
-  if (thumb && typeSelect) {
-    const label = thumb.querySelector('.photo-type-label');
-    if (label) {
-      label.textContent = typeSelect.value.charAt(0).toUpperCase() + typeSelect.value.slice(1);
-    }
-  }
-}
-
-function removeConfirmPhoto(idx) {
-  const entry = document.getElementById('confirm-entry-' + idx);
-  if (entry) entry.remove();
-  removeConfirmPhotoThumb(idx);
-}
-
-function removeConfirmPhotoThumb(idx) {
-  const thumb = document.getElementById('confirm-thumb-' + idx);
-  if (thumb) thumb.remove();
-}
-
-// Initialize with one photo input
-(function() {
-  const inputsDiv = document.getElementById('manual-photo-inputs');
-  if (inputsDiv && inputsDiv.children.length === 0) {
-    addManualPhotoInput();
-  }
-  const confirmInputsDiv = document.getElementById('confirm-photo-inputs');
-  if (confirmInputsDiv && confirmInputsDiv.children.length === 0) {
-    addConfirmPhotoInput();
-  }
-})();
 </script>
 
 </div>

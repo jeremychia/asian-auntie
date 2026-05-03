@@ -562,6 +562,25 @@ def add_item():
                 photo_data = json.loads(form.photo_paths_json.data or "[]")
             except (json.JSONDecodeError, TypeError):
                 photo_data = []
+
+            confirm_photo_files = request.files.getlist("confirm_photos")
+            confirm_photo_types = request.form.getlist("confirm_photo_types")
+            for i, photo_file in enumerate(confirm_photo_files):
+                if not (photo_file and photo_file.filename):
+                    continue
+                image_bytes = photo_file.read()
+                if not image_bytes:
+                    continue
+                photo_type = (
+                    confirm_photo_types[i]
+                    if i < len(confirm_photo_types)
+                    else "appearance"
+                )
+                if photo_type not in ItemPhoto.VALID_TYPES:
+                    photo_type = "appearance"
+                path = _save_photo_bytes(image_bytes, photo_file.filename)
+                photo_data.append({"path": path, "type": photo_type})
+
             _save_item_photos(item.id, photo_data)
             db.session.commit()
 
@@ -614,17 +633,17 @@ def add_item():
             db.session.add(item)
             db.session.flush()
 
-            if form.photo.data and form.photo.data.filename:
-                image_bytes = form.photo.data.read()
-                path = _save_photo_bytes(image_bytes, form.photo.data.filename)
-                db.session.add(
-                    ItemPhoto(
-                        item_id=item.id,
-                        photo_path=path,
-                        photo_type="appearance",
-                        display_order=0,
-                    )
-                )
+            manual_photo_files = request.files.getlist("manual_photos")
+            manual_photo_data = []
+            for photo_file in manual_photo_files:
+                if not (photo_file and photo_file.filename):
+                    continue
+                image_bytes = photo_file.read()
+                if not image_bytes:
+                    continue
+                path = _save_photo_bytes(image_bytes, photo_file.filename)
+                manual_photo_data.append({"path": path, "type": "appearance"})
+            _save_item_photos(item.id, manual_photo_data)
             db.session.commit()
 
             logger.info(
