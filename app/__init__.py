@@ -22,8 +22,9 @@ def create_app():
     )
     app.config.from_object(get_config())
 
-    # Ensure upload and instance folders exist
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    # Create local upload folder only when GCS is not configured
+    if not app.config.get("GCS_BUCKET_NAME"):
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.instance_path, exist_ok=True)
 
     # Initialise extensions
@@ -97,7 +98,7 @@ def create_app():
         )
         return response
 
-    # Serve uploaded files
+    # Serve uploaded files (local dev only — GCS serves directly in production)
     from flask import send_from_directory
     from flask_login import login_required
 

@@ -75,11 +75,8 @@ def _item_to_dict(item: Item) -> dict:
         "item_type": item.item_type,
         "expiry_date": item.expiry_date.isoformat(),
         "has_photo": item.has_photo,
-        "photo_url": f"/uploads/{display.photo_path}" if display else None,
-        "photos": [
-            {"url": f"/uploads/{p.photo_path}", "type": p.photo_type}
-            for p in item.photos
-        ],
+        "photo_url": display.photo_url if display else None,
+        "photos": [{"url": p.photo_url, "type": p.photo_type} for p in item.photos],
         "confidence_score": item.confidence_score,
         "date_added": item.date_added.isoformat(),
     }

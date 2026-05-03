@@ -9,6 +9,7 @@ build/
 
 # Environment
 .env
+gcp-service-account.*
 
 # Database
 instance/

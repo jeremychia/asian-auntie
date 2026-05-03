@@ -213,8 +213,21 @@ def _save_photo_bytes(image_bytes: bytes, original_filename: str) -> str:
         )
 
     content_hash = hashlib.sha256(compressed_bytes).hexdigest()[:16]
-    unique_name = f"{current_user.id}_{content_hash}_{filename}"
+    unique_name = f"users/{current_user.id}/{content_hash}_{filename}"
+
+    bucket_name = current_app.config.get("GCS_BUCKET_NAME")
+    if bucket_name:
+        from app.storage import upload_photo
+
+        return upload_photo(
+            compressed_bytes,
+            unique_name,
+            bucket_name,
+            current_app.config.get("GCS_CREDENTIALS_JSON") or None,
+        )
+
     save_path = os.path.join(current_app.config["UPLOAD_FOLDER"], unique_name)
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     with open(save_path, "wb") as f:
         f.write(compressed_bytes)
     return unique_name

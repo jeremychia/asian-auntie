@@ -154,7 +154,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
         >
           {% if photo %}
           <img
-            src="{{ url_for('uploaded_file', filename=photo.photo_path) }}"
+            src="{{ photo.photo_url }}"
             alt="{{ item.name }}"
             class="item-card__photo"
           />

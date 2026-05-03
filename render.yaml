@@ -6,21 +6,47 @@ services:
     dockerfilePath: ./Dockerfile
     autoDeploy: true
     envVars:
+      # Flask
       - key: FLASK_ENV
         value: production
       - key: FLASK_SECRET_KEY
         sync: false
       - key: JWT_SECRET_KEY
         sync: false
+
+      # Database
       - key: DATABASE_URL
         sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: LOG_LEVEL
-        value: INFO
+
+      # CORS
       - key: ALLOWED_ORIGINS
         scope: preview
         value: https://${RENDER_EXTERNAL_HOSTNAME}
       - key: ALLOWED_ORIGINS
         scope: production
         value: https://${RENDER_EXTERNAL_HOSTNAME}
+
+      # Image recognition — Groq is preferred (free tier); OpenAI is fallback
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+      # Photo storage (GCS)
+      - key: GCS_BUCKET_NAME
+        value: asian-auntie-items-prod
+      - key: GCS_CREDENTIALS_JSON
+        sync: false
+
+      # Web Push notifications
+      # Generate a fresh key pair with: python -m py_vapid --gen
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_CLAIMS_EMAIL
+        sync: false
+
+      # Logging
+      - key: LOG_LEVEL
+        value: INFO

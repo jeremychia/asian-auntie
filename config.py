@@ -19,9 +19,14 @@ class Config:
     RATELIMIT_DEFAULT = "1000 per day;500 per hour"
     RATELIMIT_STORAGE_URL = "memory://"
 
-    # File uploads
+    # File uploads — local fallback used when GCS_BUCKET_NAME is not set
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB max upload
+
+    # Google Cloud Storage (production photo storage)
+    GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
+    # Service account key JSON string; leave unset to use Application Default Credentials
+    GCS_CREDENTIALS_JSON = os.environ.get("GCS_CREDENTIALS_JSON", "")
 
     # CORS — comma-separated origins from env, fallback to localhost
     ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:5000").split(
