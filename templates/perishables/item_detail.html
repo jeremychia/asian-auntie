@@ -190,6 +190,37 @@ today).days %}
     </div>
     {% endif %}
     {% endif %}
+    {% if item.off_nutriscore_grade and item.off_nutriscore_grade != 'U' %}
+    <div class="meta-row">
+      <span class="meta-label">
+        Nutri-Score
+        <span class="tooltip-icon" data-tip="Nutritional quality score from A (best) to E (worst), based on nutrients per 100g/100ml.">ⓘ</span>
+      </span>
+      <div class="meta-value">
+        <span class="grade-badge nutriscore-grade--{{ item.off_nutriscore_grade | lower }}">{{ item.off_nutriscore_grade | upper }}</span>
+      </div>
+    </div>
+    {% endif %}
+    {% if item.off_nova_group %}
+    <div class="meta-row">
+      <span class="meta-label">
+        NOVA group
+        <span class="tooltip-icon" data-tip="Food processing level: 1 = unprocessed, 2 = processed ingredients, 3 = processed food, 4 = ultra-processed.">ⓘ</span>
+      </span>
+      <span class="meta-value">{{ item.off_nova_group }}</span>
+    </div>
+    {% endif %}
+    {% if item.off_ecoscore_grade and item.off_ecoscore_grade != 'U' %}
+    <div class="meta-row">
+      <span class="meta-label">
+        Eco-Score
+        <span class="tooltip-icon" data-tip="Environmental impact from A (low) to E (high), covering production, transport, and packaging.">ⓘ</span>
+      </span>
+      <div class="meta-value">
+        <span class="grade-badge ecoscore-grade--{{ item.off_ecoscore_grade | lower }}">{{ item.off_ecoscore_grade | upper }}</span>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   {% if not is_editing %}

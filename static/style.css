@@ -659,6 +659,74 @@ nav.container {
   font-size: var(--font-md);
   color: var(--text-muted);
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tooltip-icon {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: help;
+  position: relative;
+  line-height: 1;
+}
+.tooltip-icon::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: var(--text);
+  color: var(--surface);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--r-sm);
+  font-size: 0.7rem;
+  font-weight: 400;
+  white-space: normal;
+  width: 200px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  line-height: 1.4;
+}
+.tooltip-icon:hover::after,
+.tooltip-icon:focus::after {
+  opacity: 1;
+}
+
+.grade-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--r-sm);
+  font-weight: 700;
+  font-size: var(--font-md);
+  color: #fff;
+}
+.nutriscore-grade--a,
+.ecoscore-grade--a {
+  background: #1a9841;
+}
+.nutriscore-grade--b,
+.ecoscore-grade--b {
+  background: #79c243;
+}
+.nutriscore-grade--c,
+.ecoscore-grade--c {
+  background: #f9c12e;
+  color: #333;
+}
+.nutriscore-grade--d,
+.ecoscore-grade--d {
+  background: #f07e0a;
+}
+.nutriscore-grade--e,
+.ecoscore-grade--e {
+  background: #e32b14;
 }
 
 .meta-value {
