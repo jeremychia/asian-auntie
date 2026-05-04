@@ -79,6 +79,12 @@
 
   </div>
 
+  <!-- ── Loading state ───────────────────────────────────────── -->
+  <div id="loading-state" class="recipe-loading" hidden>
+    <span class="recipe-loading__icon">🥡</span>
+    <p class="recipe-loading__text">Cooking up some recipes…</p>
+  </div>
+
   <!-- ── Results ───────────────────────────────────────────────── -->
   <div id="results-area" class="results-area" hidden>
     <div class="results-header">
@@ -237,6 +243,7 @@
   const noRecipesMsg       = document.getElementById('no-recipes-msg');
   const noIngredientsMsg   = document.getElementById('no-ingredients-msg');
   const genericIngMsg      = document.getElementById('generic-ingredient-msg');
+  const loadingState       = document.getElementById('loading-state');
   const loadMoreBtn        = document.getElementById('load-more-btn');
   const showAllBtn         = document.getElementById('show-all-btn');
   const resultsTitle       = document.getElementById('results-title');
@@ -483,9 +490,12 @@
     currentIngredients = active;
     currentPage = 1;
     recipeList.innerHTML = '';
+    resultsArea.hidden = true;
+    loadingState.hidden = false;
     try {
       const { results, total, has_more } = await fetchPage(active, 1, false, currentSort, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
       totalResults = total;
+      loadingState.hidden = true;
       resultsArea.hidden = false;
       noRecipesMsg.hidden = results.length > 0;
       resultsTitle.textContent = total
@@ -493,7 +503,9 @@
         : 'Recipes';
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       updatePaginationButtons(has_more, total - results.length);
-    } catch (_) {}
+    } catch (_) {
+      loadingState.hidden = true;
+    }
   }
 
   function updatePaginationButtons(hasMore, remaining) {

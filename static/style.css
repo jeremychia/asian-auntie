@@ -1797,6 +1797,34 @@ select.sort-select:focus {
   white-space: nowrap;
 }
 
+.recipe-loading {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+}
+
+.recipe-loading__icon {
+  font-size: 2.75rem;
+  display: block;
+  margin-bottom: 0.75rem;
+  animation: recipe-bob 1.2s ease-in-out infinite;
+}
+
+.recipe-loading__text {
+  font-size: var(--font-secondary);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+@keyframes recipe-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 .recipe-list {
   display: flex;
   flex-direction: column;
