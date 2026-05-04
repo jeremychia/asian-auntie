@@ -475,7 +475,7 @@ function handleDoneClick(event) {
   <div class="photo-strip" id="confirm-all-photos">
     {% for photo in photo_items %}
     <div class="photo-thumb">
-      <img src="{{ url_for('uploaded_file', filename=photo['path']) }}" alt="{{ photo['type'] | capitalize }}">
+      <img src="{{ photo['path'] if photo['path'].startswith('http') else url_for('uploaded_file', filename=photo['path']) }}" alt="{{ photo['type'] | capitalize }}">
       <span class="photo-type-label photo-type-label--static">{{ photo['type'] | capitalize }}</span>
     </div>
     {% endfor %}
