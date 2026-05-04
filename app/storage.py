@@ -23,5 +23,4 @@ def upload_photo(
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(object_name)
     blob.upload_from_string(image_bytes, content_type="image/jpeg")
-    blob.make_public()
     return blob.public_url
