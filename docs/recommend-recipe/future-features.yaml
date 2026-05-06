@@ -1,6 +1,92 @@
 # Future Features (v2+)
 
 future_features:
+  MATCH_THRESHOLD_FLOOR:
+    name: Minimum Ingredient Match Threshold
+    priority: high
+    phase: v1.x
+    description: Suppress recipe suggestions where the user is missing too many required ingredients
+    rationale: |
+      User feedback (Saumya, 2026-05-05): recipes are surfaced when the user has only ~20% of
+      required ingredients, which feels irrelevant rather than inspiring. Filtering by number of
+      missing ingredients (rather than %) gives a more intuitive cutoff — "missing 2 ingredients"
+      is more actionable than "60% match".
+    approach:
+      - Filter out recipes where the user is missing more than N ingredients (configurable)
+      - N should be tunable without a code deploy — store in config or admin setting
+      - When results are sparse or empty, show a prompt encouraging the user to add more items
+        to their pantry (e.g. "Add more pantry items to unlock better matches")
+      - "You're missing X ingredients: [list]" remains visible on each card so users know what to buy
+    requirements:
+      - Configurable missing-ingredient ceiling (start with N=3 as a sensible default to tune from)
+      - Empty/sparse state messaging must not feel like an error — frame as "add more to unlock"
+    open_questions:
+      - Should N vary by recipe length? (missing 3 of 5 vs missing 3 of 15 are very different)
+      - Should the threshold be user-adjustable (a slider on the results page) or only admin-configurable?
+
+  PANTRY_EXPANSION_SUGGESTIONS:
+    name: Suggested Staple Purchases to Unlock More Recipes
+    priority: high
+    phase: v2
+    description: |
+      Recommend a small list of generic Asian pantry staples the user could buy to unlock
+      significantly more recipe matches from their current pantry
+    rationale: |
+      When a user has few matches, the most useful response is not just "add more items" but
+      "here's specifically what to buy." Many Asian recipes share a small set of high-leverage
+      staples (e.g. fish sauce, oyster sauce, sesame oil, light soy sauce). Buying one or two
+      of these can unlock dozens of recipes. This is more actionable than a generic nudge.
+    approach:
+      - For each ingredient the user is missing, count how many corpus recipes it would unlock
+        given their current pantry (i.e. would drop a recipe from "missing 4" to "missing 3")
+      - Surface the top 3–5 ingredients by unlock count as "buy these to cook more"
+      - Show alongside each suggestion: how many more recipes it would unlock (e.g. "+12 recipes")
+      - Suggestions should be generic/affordable staples — filter out niche or expensive items
+    requirements:
+      - Ingredient unlock counts computed from corpus at query time (or pre-cached if too slow)
+      - Suggestions only shown when match results are sparse (don't clutter a full results page)
+      - Links to the PANTRY_ITEMS canonical list — suggestions must be recognisable pantry names
+    open_questions:
+      - Should suggestions be cuisine-specific? (e.g. if user's pantry skews Japanese, suggest
+        mirin/dashi rather than fish sauce)
+      - Should the user be able to mark a suggestion as "I don't use this" to suppress it?
+
+  PANTRY_FIRST_RECIPE_GENERATION:
+    name: Pantry-First Recipe Generation (Corpus-Grounded)
+    priority: high
+    phase: v2
+    description: |
+      Generate a recipe that uses most or all of the user's available ingredients, grounded in
+      the scraped Asian recipe corpus rather than free AI generation
+    rationale: |
+      User feedback (Saumya, 2026-05-05): "suggest a recipe inspired by current recipes for all
+      or most of my existing ingredients... if it's grounded in proper Asian recipes, that's better
+      [than ChatGPT]". Pure retrieval fails when no scraped recipe closely matches the user's pantry.
+      Pure AI generation risks inventing dishes that sound Asian but aren't authentic. The middle
+      path is RAG: the LLM composes a recipe using the user's ingredients, but is constrained to
+      techniques and flavour profiles drawn from real corpus recipes.
+    approach:
+      - Retrieve the top-N corpus recipes most similar to the user's pantry (existing engine)
+      - Pass those recipes as context to the LLM with a strict prompt: adapt using user's ingredients,
+        do not invent techniques or flavour combinations not present in the provided recipes
+      - LLM output must cite the recipe(s) it drew from — shown in UI as "Inspired by [Recipe Name]"
+      - Label generated recipes distinctly (e.g. "AI-adapted") vs tested scraped recipes
+    validity_controls:
+      - Corpus-only grounding: LLM cannot introduce techniques absent from retrieved context
+      - Mandatory source citation: every generated recipe traces to ≥1 real scraped recipe
+      - No freeform generation: ruled out due to authenticity risk (LLM may produce plausible-sounding
+        but non-authentic Asian dishes with no real-world basis)
+      - Cuisine tag inherited from source recipe(s) — not AI-assigned
+    requirements:
+      - Corpus must be large enough to cover common pantry combinations before this feature ships
+      - Generated recipes flagged in DB with source recipe IDs for auditability
+      - User-facing label clearly distinguishes AI-adapted from scraped-and-tested recipes
+    open_questions:
+      - How many source recipes to pass as context? (more context = better grounding, higher token cost)
+      - Should generated recipes be cached per pantry fingerprint, or generated fresh each time?
+      - Do users trust AI-adapted recipes as much as scraped ones? May need user study.
+      - Should users be able to rate/flag generated recipes as inauthentic?
+
   MULTI_SOURCE_EXPANSION:
     name: Multi-Source Recipe Expansion
     priority: high
