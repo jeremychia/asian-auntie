@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link
@@ -34,38 +34,77 @@
   </head>
   <body>
     {% if current_user.is_authenticated %}
+    {# SVG sprite for nav icons #}
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="nav-i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </symbol>
+        <symbol id="nav-i-pantry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 4h10v3H7z"/><path d="M6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/><line x1="6" y1="12" x2="18" y2="12"/>
+        </symbol>
+        <symbol id="nav-i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><line x1="8" y1="8" x2="14" y2="8"/><line x1="8" y1="12" x2="14" y2="12"/>
+        </symbol>
+        <symbol id="nav-i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </symbol>
+        <symbol id="nav-i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </symbol>
+      </defs>
+    </svg>
     <header class="site-header">
       <div class="nav-inner">
-        <a href="{{ url_for('perishables.dashboard') }}" class="nav-brand"
-          >Asian Auntie</a
-        >
+        <a href="{{ url_for('perishables.dashboard') }}" class="nav-brand">Asian Auntie</a>
+        {# Desktop nav #}
         <div class="nav-end">
-          <a
-            href="{{ url_for('perishables.add_item') }}"
-            class="nav-link nav-link--primary"
-            >+ Add item</a
-          >
-          <a
-            href="{{ url_for('recipes.index') }}"
-            class="nav-link{% if request.path.startswith('/recipes') %} nav-link--active{% endif %}"
-            >Find recipes</a
-          >
-          <a
-            href="{{ url_for('notifications.settings') }}"
-            class="nav-link{% if request.path == '/settings' %} nav-link--active{% endif %}"
-            >Settings</a
-          >
-          <form
-            method="post"
-            action="{{ url_for('auth.logout') }}"
-            style="margin: 0"
-          >
+          <a href="{{ url_for('perishables.add_item') }}" class="nav-link nav-link--primary" aria-label="Add item">
+            <span aria-hidden="true" style="margin-right:4px">+</span> Add item
+          </a>
+          <a href="{{ url_for('recipes.index') }}" class="nav-link{% if request.path.startswith('/recipes') %} nav-link--active{% endif %}">Recipes</a>
+          <a href="{{ url_for('notifications.settings') }}" class="nav-link{% if request.path == '/settings' %} nav-link--active{% endif %}">Settings</a>
+          <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0;display:flex;align-items:center">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="nav-logout">Log out</button>
           </form>
         </div>
+        {# Mobile: log out icon in top bar #}
+        <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button type="submit" class="nav-logout-icon" aria-label="Log out">
+            <svg><use href="#nav-i-logout"/></svg>
+          </button>
+        </form>
       </div>
     </header>
+    {# Mobile bottom tab bar #}
+    <nav class="tabbar" aria-label="Primary navigation">
+      <a href="{{ url_for('perishables.dashboard') }}"
+         class="tab{% if request.path == '/' or request.path.startswith('/pantry') or (request.path == '/dashboard' or request.endpoint and request.endpoint.startswith('perishables')) %} tab--active{% endif %}"
+         aria-label="Pantry">
+        <svg><use href="#nav-i-pantry"/></svg>
+        <span class="tab-label">Pantry</span>
+      </a>
+      <a href="{{ url_for('perishables.add_item') }}" class="tab tab--add" aria-label="Add item">
+        <svg><use href="#nav-i-plus"/></svg>
+        <span class="tab-label">Add</span>
+      </a>
+      <a href="{{ url_for('recipes.index') }}"
+         class="tab{% if request.path.startswith('/recipes') %} tab--active{% endif %}"
+         aria-label="Recipes">
+        <svg><use href="#nav-i-book"/></svg>
+        <span class="tab-label">Recipes</span>
+      </a>
+      <a href="{{ url_for('notifications.settings') }}"
+         class="tab{% if request.path == '/settings' %} tab--active{% endif %}"
+         aria-label="Settings">
+        <svg><use href="#nav-i-gear"/></svg>
+        <span class="tab-label">Settings</span>
+      </a>
+    </nav>
     {% endif %}
 
     <main>

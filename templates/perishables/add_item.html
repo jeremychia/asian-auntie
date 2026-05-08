@@ -5,26 +5,46 @@
 <div class="content">
 
 {% if step == 'photo' %}
-{# ── Step 1: Choose method ───────────────────────────────────────── #}
+{# ── Step 1: Camera-first landing ───────────────────────────────── #}
+
+{# SVG icons for add-item flow #}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="ai-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </symbol>
+    <symbol id="ai-barcode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="4" y1="6" x2="4" y2="18"/><line x1="7" y1="6" x2="7" y2="18"/>
+      <line x1="11" y1="6" x2="11" y2="18"/><line x1="14" y1="6" x2="14" y2="18"/>
+      <line x1="17" y1="6" x2="17" y2="18"/><line x1="20" y1="6" x2="20" y2="18"/>
+    </symbol>
+    <symbol id="ai-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>
+    </symbol>
+  </defs>
+</svg>
 
 {# ── Method landing ── #}
 <div id="method-landing">
-  <div class="step-header">
-    <span class="step-label">Add item</span>
-    <p class="step-hint">How would you like to identify this item?</p>
-  </div>
+  <h1 class="add-title">Add an item</h1>
+  <p class="add-sub">Snap the label and we'll fill in the details. Or scan a barcode or type it in.</p>
 
-  <div style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.25rem;">
-    <button type="button" class="btn btn-primary btn-lg btn-full" onclick="startBarcode()">
-      Scan barcode — fastest
-    </button>
-    <button type="button" class="btn btn-secondary btn-lg btn-full" onclick="startPhotos()">
-      Take photos
-    </button>
-  </div>
+  <button type="button" class="add-capture" onclick="startPhotos()" aria-label="Take photo of item">
+    <div class="add-capture__icon">
+      <svg><use href="#ai-camera"/></svg>
+    </div>
+    <p class="add-capture__title">Snap the label</p>
+    <p class="add-capture__sub">We'll read the name and expiry date — you confirm.</p>
+  </button>
 
-  <div class="form-actions" style="justify-content:center;">
-    <a href="{{ url_for('perishables.add_item') }}?skip=1" class="skip-link">Enter manually instead</a>
+  <div class="add-alt-routes">
+    <button type="button" class="add-alt-route" onclick="startBarcode()">
+      <svg><use href="#ai-barcode"/></svg> Scan barcode
+    </button>
+    <a href="{{ url_for('perishables.add_item') }}?skip=1" class="add-alt-route">
+      <svg><use href="#ai-edit"/></svg> Type it in
+    </a>
   </div>
 </div>
 
@@ -445,10 +465,13 @@ function handleDoneClick(event) {
 {% elif step == 'confirm' %}
 {# ── Step 2: Confirmation ────────────────────────────────────────── #}
 
-<div class="step-header">
-  <span class="step-label">Step 2 of 2</span>
-  <p class="step-hint">Check the details below and make any changes.</p>
+<div class="add-stepper" aria-label="Step 2 of 2">
+  <span class="add-stepper__pill">1 · Capture</span>
+  <span class="add-stepper__line"></span>
+  <span class="add-stepper__pill add-stepper__pill--active">2 · Review</span>
 </div>
+<h1 class="add-title">Does this look right?</h1>
+<p class="add-sub">{% if source == 'photo' %}We've filled in what we could read — tap any field to fix it.{% else %}Check the details below and make any changes.{% endif %}</p>
 
 <form method="post" action="{{ url_for('perishables.add_item') }}" enctype="multipart/form-data">
   {{ form.hidden_tag() }}
@@ -472,176 +495,256 @@ function handleDoneClick(event) {
   {{ form.off_packaging_tags() }}
   {{ form.off_data_quality_tags() }}
 
-  <div class="photo-strip" id="confirm-all-photos">
-    {% for photo in photo_items %}
-    <div class="photo-thumb">
-      <img src="{{ photo['path'] if photo['path'].startswith('http') else url_for('uploaded_file', filename=photo['path']) }}" alt="{{ photo['type'] | capitalize }}">
-      <span class="photo-type-label photo-type-label--static">{{ photo['type'] | capitalize }}</span>
+  <div class="add-review-card">
+    {# Photo strip inside the review card #}
+    {% if photo_items %}
+    <div class="add-review-photo">
+      {% set first_photo = photo_items[0] %}
+      <img src="{{ first_photo['path'] if first_photo['path'].startswith('http') else url_for('uploaded_file', filename=first_photo['path']) }}" alt="Item photo">
+      <button type="button" class="review-photo__retake" onclick="goBackToCapture()" style="position:absolute;top:0.75rem;right:0.75rem;height:32px;padding:0 0.75rem;background:rgba(255,255,255,0.95);color:var(--brand);border:1px solid var(--brand-faint);border-radius:9999px;cursor:pointer;font-family:inherit;font-size:0.75rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(4px);">
+        ↺ Retake
+      </button>
     </div>
-    {% endfor %}
-  </div>
-  <div id="confirm-photo-entries"></div>
-  <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
-    <button type="button" class="btn btn-secondary btn-sm" onclick="addConfirmPhoto()">+ Add photo</button>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="openConfirmCamera()">📷 Take photo</button>
-  </div>
-
-  <div id="confirm-camera-panel" hidden>
-    <div style="width:100%; border-radius:var(--r-lg); overflow:hidden; margin-bottom:1rem; background:#000;">
-      <video id="confirm-camera-video" autoplay playsinline style="width:100%; display:block; max-height:60vh; object-fit:cover;"></video>
+    {% endif %}
+    <div id="confirm-all-photos" hidden>
+      {% for photo in photo_items %}
+      <div class="photo-thumb">
+        <img src="{{ photo['path'] if photo['path'].startswith('http') else url_for('uploaded_file', filename=photo['path']) }}" alt="{{ photo['type'] | capitalize }}">
+        <span class="photo-type-label photo-type-label--static">{{ photo['type'] | capitalize }}</span>
+      </div>
+      {% endfor %}
     </div>
-    <canvas id="confirm-camera-canvas" hidden></canvas>
-    <div class="form-actions" style="justify-content:center; margin-bottom:0.5rem;">
-      <button type="button" class="btn btn-primary btn-lg" onclick="captureConfirmPhoto()">Capture</button>
+    <div id="confirm-photo-entries"></div>
+
+    <div class="add-review-fields">
+      <div id="confirm-camera-panel" hidden style="margin-bottom:var(--s-4)">
+        <div style="width:100%;border-radius:var(--r-lg);overflow:hidden;margin-bottom:1rem;background:#000;">
+          <video id="confirm-camera-video" autoplay playsinline style="width:100%;display:block;max-height:60vh;object-fit:cover;"></video>
+        </div>
+        <canvas id="confirm-camera-canvas" hidden></canvas>
+        <div class="form-actions" style="justify-content:center;margin-bottom:0.5rem;">
+          <button type="button" class="btn btn-primary btn-lg" onclick="captureConfirmPhoto()">Capture</button>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeConfirmCamera()">Cancel</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="add-field-row">
+          <label class="add-field-label" for="name">Item name</label>
+          {% if source == 'photo' %}<span class="add-ai-pill">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg> Read
+          </span>{% endif %}
+        </div>
+        {{ form.name(id="name", autocomplete="off", placeholder="e.g. Ayam Brand Coconut Milk") }}
+        <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
+        {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </div>
+
+      <div>
+        <div class="add-field-row">
+          <label class="add-field-label" for="standard_name">
+            Standard ingredient
+            <span class="info-icon-wrapper" data-tooltip="The generic ingredient name (e.g. 'Coconut milk') used to find matching recipes — not the brand name" style="cursor:help">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;margin-left:3px;vertical-align:text-bottom;opacity:0.6;" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </span>
+          </label>
+          {% if source == 'photo' %}<span class="add-ai-pill">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg> Suggested
+          </span>{% endif %}
+        </div>
+        {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
+        <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
+      </div>
+
+      <div>
+        <div class="add-field-row"><span class="add-field-label">Type</span></div>
+        {# Hidden select for form submission — driven by chips below #}
+        {{ form.item_type(id="item_type", style="display:none") }}
+        <div class="add-chips" id="type-chips" role="group" aria-label="Item type"></div>
+      </div>
+
+      <div>
+        <div class="add-field-row"><span class="add-field-label">Where is it?</span></div>
+        {# Hidden input for location — driven by chips below #}
+        {{ form.location(id="location", style="display:none", maxlength="32") }}
+        <div class="add-chips" id="location-chips" role="group" aria-label="Storage location"></div>
+      </div>
+
+      <div>
+        <div class="add-field-row">
+          <label class="add-field-label" for="expiry_date">
+            Expires
+            {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}" style="margin-left:6px">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
+          </label>
+          {% if source == 'photo' and expiry_source == 'printed' %}<span class="add-ai-pill">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg> Read
+          </span>{% endif %}
+        </div>
+        {{ form.expiry_date(id="expiry_date") }}
+        {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+        <small id="expiry-warning" class="field-warning" hidden></small>
+        <div class="add-expiry-quick" id="expiry-quick-chips"></div>
+      </div>
+
+      <button type="button" class="add-more-toggle" id="more-toggle" aria-expanded="false" onclick="toggleMore()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        Add notes or barcode
+      </button>
+      <div class="add-more-fields" id="more-fields" hidden>
+        <div>
+          <label class="add-field-label" for="confirm_barcode" style="display:block;margin-bottom:var(--s-2)">Barcode (optional)</label>
+          {{ form.barcode(id="confirm_barcode", inputmode="numeric", placeholder="e.g. 4902430864602", maxlength="64") }}
+          {% if source == "barcode" %}
+          <small style="color:var(--text-muted);font-size:var(--t-xs);display:block;margin-top:4px;">
+            Product info from <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>
+          </small>
+          {% endif %}
+        </div>
+        <div>
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addConfirmPhoto()">+ Add photo</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openConfirmCamera()">Take photo</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="form-actions">
-      <button type="button" class="btn btn-ghost" onclick="closeConfirmCamera()">Cancel</button>
-    </div>
   </div>
 
-  <div class="autocomplete-wrap">
-    <label for="name">Item name</label>
-    {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce") }}
-    <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
-    {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
-    <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The name as it appears on the packaging, including the brand (e.g. "Creamises Kokomilch").</small>
-  </div>
-
-  <div class="autocomplete-wrap">
-    <label for="standard_name">
-      Standard ingredient name
-      <span class="info-icon-wrapper" data-tooltip="The generic ingredient name (e.g. 'Coconut milk') used to find matching recipes — not the brand name">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.35rem; vertical-align: text-bottom; opacity: 0.6; cursor: help;" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="16" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-      </span>
-    </label>
-    {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
-    <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
-    <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The generic ingredient name used to find recipes. For a branded product, pick the closest match (e.g. "Coconut milk").</small>
-  </div>
-
-  <label for="item_type">Type</label>
-  {{ form.item_type(id="item_type") }}
-
-  <label for="location">Location</label>
-  {{ form.location(id="location", list="location-options", placeholder="e.g. Fridge", maxlength="32") }}
-  <datalist id="location-options">
-    <option value="Fridge">
-    <option value="Freezer">
-    <option value="Pantry">
-    <option value="Cupboard">
-    <option value="Counter">
-  </datalist>
-
-  <label for="expiry_date">Expiry date
-    {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
-  </label>
-  {{ form.expiry_date(id="expiry_date") }}
-  {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
-  <small id="expiry-warning" class="field-warning" hidden></small>
-
-  <label for="confirm_barcode">Barcode (optional)</label>
-  {{ form.barcode(id="confirm_barcode", inputmode="numeric", placeholder="e.g. 4902430864602", maxlength="64") }}
-  <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The number printed below the barcode on the packaging (8–14 digits).</small>
-
-  {% if source == "barcode" %}
-  <p style="font-size:var(--font-xs); color:var(--text-muted); margin:0.25rem 0 0.75rem;">
-    Product info from <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>
-  </p>
-  {% endif %}
-
-  <div class="form-actions">
-    {{ form.submit(class="btn btn-primary") }}
-    <a href="{{ url_for('perishables.add_item') }}" class="btn btn-secondary">Cancel</a>
+  <div class="add-actions">
+    <button type="button" class="btn btn-ghost" onclick="history.back()">Cancel</button>
+    {{ form.submit(class="btn btn-primary", style="flex:1") }}
   </div>
 </form>
+<script>
+function goBackToCapture() {
+  window.location.href = "{{ url_for('perishables.add_item') }}";
+}
+function toggleMore() {
+  const fields = document.getElementById('more-fields');
+  const toggle = document.getElementById('more-toggle');
+  const open = !fields.hidden;
+  fields.hidden = open;
+  toggle.setAttribute('aria-expanded', String(!open));
+  toggle.querySelector('span') && (toggle.querySelector('span').textContent = open ? 'Add notes or barcode' : 'Hide extras');
+}
+</script>
 
 
 {% else %}
 {# ── Manual entry form ──────────────────────────────────────────── #}
-<div class="step-header">
-  <span class="step-label">Manual entry</span>
-  <p class="step-hint">Fill in the details for your item.</p>
+<div class="add-stepper" aria-label="Step 2 of 2">
+  <span class="add-stepper__pill">1 · Capture</span>
+  <span class="add-stepper__line"></span>
+  <span class="add-stepper__pill add-stepper__pill--active">2 · Details</span>
 </div>
+<h1 class="add-title">Add item details</h1>
+<p class="add-sub">Just the basics. Add notes or a photo below if you want.</p>
 
 <form method="post" action="{{ url_for('perishables.add_item') }}" enctype="multipart/form-data">
   {{ form.hidden_tag() }}
   <input type="hidden" name="step" value="manual">
 
-  <div class="autocomplete-wrap">
-    <label for="name">Item name</label>
-    {{ form.name(id="name", autocomplete="off", placeholder="e.g. Fish sauce", autofocus=true) }}
-    <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
-    {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
-    <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The name as it appears on the packaging, including the brand (e.g. "Creamises Kokomilch").</small>
-  </div>
+  <div class="add-review-card">
+    <div class="add-review-fields">
 
-  <div class="autocomplete-wrap">
-    <label for="standard_name">
-      Standard ingredient name
-      <span class="info-icon-wrapper" data-tooltip="The generic ingredient name (e.g. 'Coconut milk') used to find matching recipes — not the brand name">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.35rem; vertical-align: text-bottom; opacity: 0.6; cursor: help;" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="16" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-      </span>
-    </label>
-    {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
-    <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
-    <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The generic ingredient name used to find recipes. For a branded product, pick the closest match (e.g. "Coconut milk").</small>
-  </div>
+      <div>
+        <div class="add-field-row">
+          <label class="add-field-label" for="name">Item name</label>
+        </div>
+        {{ form.name(id="name", autocomplete="off", placeholder="e.g. Kecap Manis ABC", autofocus=true) }}
+        <ul class="autocomplete-dropdown" id="name-dropdown" role="listbox" hidden></ul>
+        {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </div>
 
-  <label for="item_type">Type</label>
-  {{ form.item_type(id="item_type") }}
+      <div>
+        <div class="add-field-row">
+          <label class="add-field-label" for="standard_name">
+            Standard ingredient
+            <span class="info-icon-wrapper" data-tooltip="The generic ingredient name (e.g. 'Coconut milk') used to find matching recipes — not the brand name" style="cursor:help">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;margin-left:3px;vertical-align:text-bottom;opacity:0.6;" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </span>
+          </label>
+        </div>
+        {{ form.standard_name(id="standard_name", autocomplete="off", placeholder="e.g. Coconut milk", maxlength="256") }}
+        <ul class="autocomplete-dropdown" id="standard-name-dropdown" role="listbox" hidden></ul>
+      </div>
 
-  <label for="location">Location</label>
-  {{ form.location(id="location", list="location-options", placeholder="e.g. Fridge", maxlength="32") }}
-  <datalist id="location-options">
-    <option value="Fridge">
-    <option value="Freezer">
-    <option value="Pantry">
-    <option value="Cupboard">
-    <option value="Counter">
-  </datalist>
+      <div>
+        <div class="add-field-row"><span class="add-field-label">Type</span></div>
+        {{ form.item_type(id="item_type", style="display:none") }}
+        <div class="add-chips" id="type-chips" role="group" aria-label="Item type"></div>
+      </div>
 
-  <label for="expiry_date">Expiry date</label>
-  {{ form.expiry_date(id="expiry_date") }}
-  {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
-  <small id="expiry-warning" class="field-warning" hidden></small>
+      <div>
+        <div class="add-field-row"><span class="add-field-label">Where is it?</span></div>
+        {{ form.location(id="location", style="display:none", maxlength="32") }}
+        <div class="add-chips" id="location-chips" role="group" aria-label="Storage location"></div>
+      </div>
 
-  <label for="barcode">Barcode (optional)</label>
-  {{ form.barcode(id="barcode", inputmode="numeric", placeholder="e.g. 4902430864602", maxlength="64") }}
-  <small style="color:var(--text-muted); font-size:var(--font-xs); display:block; margin-top:-0.25rem; margin-bottom:0.75rem;">The number printed below the barcode on the packaging (8–14 digits).</small>
+      <div>
+        <div class="add-field-row">
+          <label class="add-field-label" for="expiry_date">Expires</label>
+        </div>
+        {{ form.expiry_date(id="expiry_date") }}
+        {% for error in form.expiry_date.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+        <small id="expiry-warning" class="field-warning" hidden></small>
+        <div class="add-expiry-quick" id="expiry-quick-chips"></div>
+      </div>
 
-  <label>Photos (optional)</label>
-  <div class="photo-strip" id="manual-photo-strip"></div>
-  <div id="manual-photo-entries"></div>
-  <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-    <button type="button" class="btn btn-secondary btn-sm" onclick="addManualPhoto()">+ Add photo</button>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="openManualCamera()">📷 Take photo</button>
-  </div>
-  <div id="manual-camera-panel" hidden>
-    <div style="width:100%; border-radius:var(--r-lg); overflow:hidden; margin-bottom:1rem; background:#000;">
-      <video id="manual-camera-video" autoplay playsinline style="width:100%; display:block; max-height:60vh; object-fit:cover;"></video>
+      <button type="button" class="add-more-toggle" id="more-toggle" aria-expanded="false" onclick="toggleMore()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        Add notes, barcode or photos
+      </button>
+      <div class="add-more-fields" id="more-fields" hidden>
+        <div>
+          <label class="add-field-label" for="barcode" style="display:block;margin-bottom:var(--s-2)">Barcode (optional)</label>
+          {{ form.barcode(id="barcode", inputmode="numeric", placeholder="e.g. 4902430864602", maxlength="64") }}
+        </div>
+        <div>
+          <span class="add-field-label" style="display:block;margin-bottom:var(--s-2)">Photos (optional)</span>
+          <div class="photo-strip" id="manual-photo-strip"></div>
+          <div id="manual-photo-entries"></div>
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addManualPhoto()">+ Add photo</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openManualCamera()">Take photo</button>
+          </div>
+          <div id="manual-camera-panel" hidden>
+            <div style="width:100%;border-radius:var(--r-lg);overflow:hidden;margin-bottom:1rem;background:#000;">
+              <video id="manual-camera-video" autoplay playsinline style="width:100%;display:block;max-height:60vh;object-fit:cover;"></video>
+            </div>
+            <canvas id="manual-camera-canvas" hidden></canvas>
+            <div class="form-actions" style="justify-content:center;margin-bottom:0.5rem;">
+              <button type="button" class="btn btn-primary btn-lg" onclick="captureManualPhoto()">Capture</button>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-ghost" onclick="closeManualCamera()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <canvas id="manual-camera-canvas" hidden></canvas>
-    <div class="form-actions" style="justify-content:center; margin-bottom:0.5rem;">
-      <button type="button" class="btn btn-primary btn-lg" onclick="captureManualPhoto()">Capture</button>
-    </div>
-    <div class="form-actions">
-      <button type="button" class="btn btn-ghost" onclick="closeManualCamera()">Cancel</button>
-    </div>
   </div>
 
-  <div class="form-actions">
-    {{ form.submit(class="btn btn-primary") }}
-    <a href="{{ url_for('perishables.dashboard') }}" class="btn btn-secondary">Cancel</a>
+  <div class="add-actions">
+    <a href="{{ url_for('perishables.dashboard') }}" class="btn btn-ghost">Cancel</a>
+    {{ form.submit(class="btn btn-primary", style="flex:1") }}
   </div>
 </form>
+<script>
+function toggleMore() {
+  const fields = document.getElementById('more-fields');
+  const toggle = document.getElementById('more-toggle');
+  const open = !fields.hidden;
+  fields.hidden = open;
+  toggle.setAttribute('aria-expanded', String(!open));
+}
+</script>
 {% endif %}
 
 </div>
@@ -898,6 +1001,87 @@ document.getElementById('expiry_date')?.addEventListener('change', checkExpiryWa
 
 applyDateDefault();
 checkExpiryWarning();
+
+// ── Chip selectors for Type and Location ──────────────────────────
+(function() {
+  const TYPES = [
+    { id: 'sauce', label: 'Sauce' }, { id: 'condiment', label: 'Condiment' },
+    { id: 'spice', label: 'Spice' }, { id: 'produce', label: 'Produce' },
+    { id: 'dairy', label: 'Dairy' }, { id: 'seafood', label: 'Seafood' },
+    { id: 'tofu', label: 'Tofu' }, { id: 'oil', label: 'Oil' },
+    { id: 'dried', label: 'Dried' }, { id: 'other', label: 'Other' },
+  ];
+  const LOCATIONS = [
+    { id: 'fridge', label: 'Fridge' }, { id: 'freezer', label: 'Freezer' },
+    { id: 'pantry', label: 'Pantry' }, { id: 'cupboard', label: 'Cupboard' },
+    { id: 'counter', label: 'Counter' },
+  ];
+  const QUICK_EXPIRY = [
+    { days: 3, label: '+3 days' }, { days: 7, label: '+1 week' },
+    { days: 30, label: '+1 month' }, { days: 180, label: '+6 months' }, { days: 365, label: '+1 year' },
+  ];
+
+  function addDays(n) {
+    const d = new Date(); d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function renderTypeChips() {
+    const container = document.getElementById('type-chips');
+    const select = document.getElementById('item_type');
+    if (!container || !select) return;
+    container.innerHTML = TYPES.map(t => {
+      const active = select.value === t.id;
+      return `<button type="button" class="add-chip${active ? ' add-chip--active' : ''}" data-type="${t.id}" onclick="selectType('${t.id}')">${active ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}${t.label}</button>`;
+    }).join('');
+  }
+
+  function renderLocationChips() {
+    const container = document.getElementById('location-chips');
+    const input = document.getElementById('location');
+    if (!container || !input) return;
+    const current = (input.value || 'pantry').toLowerCase();
+    container.innerHTML = LOCATIONS.map(l => {
+      const active = current === l.id;
+      return `<button type="button" class="add-chip${active ? ' add-chip--active' : ''}" data-loc="${l.id}" onclick="selectLocation('${l.id}', '${l.label}')">${active ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}${l.label}</button>`;
+    }).join('');
+  }
+
+  function renderExpiryChips() {
+    const container = document.getElementById('expiry-quick-chips');
+    const input = document.getElementById('expiry_date');
+    if (!container || !input) return;
+    container.innerHTML = QUICK_EXPIRY.map(q => {
+      const val = addDays(q.days);
+      const active = input.value === val;
+      return `<button type="button" class="add-expiry-chip${active ? ' add-expiry-chip--active' : ''}" onclick="selectExpiry(${q.days})">${q.label}</button>`;
+    }).join('');
+  }
+
+  window.selectType = function(id) {
+    const select = document.getElementById('item_type');
+    if (select) { select.value = id; select.dispatchEvent(new Event('change')); }
+    renderTypeChips();
+  };
+  window.selectLocation = function(id, label) {
+    const input = document.getElementById('location');
+    if (input) { input.value = label; }
+    renderLocationChips();
+  };
+  window.selectExpiry = function(days) {
+    const input = document.getElementById('expiry_date');
+    if (input) { input.value = addDays(days); input.dispatchEvent(new Event('change')); }
+    renderExpiryChips();
+  };
+
+  // Initial render after DOM is ready
+  renderTypeChips();
+  renderLocationChips();
+  renderExpiryChips();
+
+  // Re-render chips when type changes (e.g. auto-set from ingredient name)
+  document.getElementById('item_type')?.addEventListener('change', renderTypeChips);
+})();
 
 // Custom tooltip for info icons
 (function() {

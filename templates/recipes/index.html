@@ -2,187 +2,143 @@
 {% block title %}Find a Recipe — Asian Auntie{% endblock %}
 {% block content %}
 
-<div class="content">
-  <div class="page-header">
-    <h1 class="page-title">Find a recipe</h1>
-  </div>
+<div class="rf-page">
+  <h1>Find a recipe</h1>
+  <p class="rf-lede">Malaysian and Southeast Asian recipes matched to what you have on hand.</p>
 
-  <p class="recipes-scope-note">Malaysian and Southeast Asian recipes to start.</p>
+  <!-- ── Ingredients zone ──────────────────────────────────────── -->
+  <section class="rf-ing" aria-labelledby="ing-heading">
+    <div class="rf-ing__head">
+      <h2 class="rf-ing__heading" id="ing-heading">
+        <span id="ing-heading-text">Your ingredients</span>
+      </h2>
+      <button type="button" class="rf-btn-link" id="clear-all-btn" hidden
+              onclick="clearAll()">Clear all</button>
+    </div>
 
-  <!-- ── Ingredient source ─────────────────────────────────────── -->
-  <div class="ingredient-section">
+    <!-- Empty state: shown when no chips and not adding -->
+    <div id="empty-state">
+      {% if pantry_items %}
+      <button type="button" class="rf-ing__primary" id="load-pantry-btn">
+        <span>Use my pantry</span>
+        <span class="rf-ing__primary-count" id="pantry-count">{{ pantry_items | length }} item{{ 's' if pantry_items | length != 1 }}</span>
+      </button>
+      {% else %}
+      <button type="button" class="rf-ing__primary" id="load-pantry-btn" disabled
+              style="opacity:0.5;cursor:default">
+        <span>No pantry items yet</span>
+        <span class="rf-ing__primary-count"><a href="{{ url_for('perishables.add_item') }}" style="color:rgba(255,255,255,0.8)">Add items →</a></span>
+      </button>
+      {% endif %}
+      <p class="rf-ing__or">or</p>
+      <button type="button" class="rf-btn-ghost-add" id="begin-add-btn"
+              onclick="beginAdd()">+ Add an ingredient</button>
+    </div>
 
-    {% if pantry_items %}
-    <!-- Primary CTA: use pantry -->
-    <div id="pantry-cta" class="pantry-cta">
-      <div class="pantry-cta__row">
-        <button type="button" class="btn btn-primary btn-lg" id="load-pantry-btn">
-          Use my pantry
-          <span class="pantry-cta__count">{{ pantry_items | length }} item{{ 's' if pantry_items | length != 1 }}</span>
-        </button>
-        <!-- Expired items preference -->
-        <div class="pantry-cta__settings">
-          <label for="expired-items-select" class="pantry-cta__label">Expired:</label>
-          <select id="expired-items-select" class="pantry-cta__select">
-            <option value="0" {% if user_expired_items_days == 0 %}selected{% endif %}>Exclude</option>
-            <option value="7" {% if user_expired_items_days == 7 %}selected{% endif %}>+7d</option>
-            <option value="14" {% if user_expired_items_days == 14 %}selected{% endif %}>+14d</option>
-            <option value="30" {% if user_expired_items_days == 30 %}selected{% endif %}>+30d</option>
-            <option value="90" {% if user_expired_items_days == 90 %}selected{% endif %}>+90d</option>
-          </select>
-          <span id="expired-items-status" class="pantry-cta__status"></span>
-        </div>
+    <!-- Chip list: shown when ingredients are loaded -->
+    <div id="chip-area" hidden>
+      <div class="rf-chips" id="chip-list" aria-label="Selected ingredients" role="list"></div>
+    </div>
+
+    <!-- Inline add input: summoned by "+ Add" chip -->
+    <div id="add-input-row" class="rf-ing__input-row" hidden>
+      <div style="position:relative;flex:1">
+        <input type="text" id="manual-input" class="rf-ing__input"
+               placeholder="e.g. coconut milk"
+               autocomplete="off" aria-label="New ingredient"
+               aria-autocomplete="list" aria-controls="autocomplete-list" />
+        <ul id="autocomplete-list" class="autocomplete-list" role="listbox" hidden></ul>
       </div>
-    </div>
-    {% else %}
-    <!-- No pantry items -->
-    <div class="hint" id="no-pantry-hint">
-      Add items to your pantry to use this faster next time.
-      <a href="{{ url_for('perishables.add_item') }}">Add items</a>
-    </div>
-    {% endif %}
-
-    <!-- Chip list (hidden until pantry loaded or manual add) -->
-    <div id="chip-area" class="chip-area" hidden>
-      <div id="chip-list" class="chip-list" aria-label="Selected ingredients" role="list"></div>
+      <button type="button" class="rf-ing__add-btn" id="add-manual-btn">Add</button>
     </div>
 
-    <!-- Manual ingredient input -->
-    <div id="manual-area" class="manual-area">
-      <div class="manual-input-row">
-        <div class="manual-input-wrap">
-          <input
-            type="text"
-            id="manual-input"
-            class="manual-input"
-            placeholder="Add an ingredient…"
-            autocomplete="off"
-            aria-label="Add ingredient"
-            aria-autocomplete="list"
-            aria-controls="autocomplete-list"
-          />
-          <ul id="autocomplete-list" class="autocomplete-list" role="listbox" hidden></ul>
+    <!-- Zone footer: options disclosure (visible once ingredients exist or input open) -->
+    <div class="rf-ing__foot" id="ing-foot" hidden>
+      <details id="options-details">
+        <summary>Options</summary>
+        <div class="rf-filter-body" id="options-body">
+          <span style="align-self:center;margin-right:4px;font-size:var(--t-xs)">Include expired</span>
+          {% for val, label in [('0','Exclude'),('7','+7d'),('14','+14d'),('30','+30d'),('90','+90d')] %}
+          <button type="button"
+                  class="rf-filter-pill{% if user_expired_items_days | string == val %} rf-filter-pill--on{% endif %}"
+                  data-expired="{{ val }}"
+                  onclick="setExpired({{ val }})">{{ label }}</button>
+          {% endfor %}
+          <span id="expired-status" style="font-size:var(--t-xs);color:var(--brand-muted)"></span>
+          <div style="width:100%;margin-top:var(--s-2);display:flex;flex-wrap:wrap;gap:var(--s-2);align-items:center">
+            <span style="font-size:var(--t-xs);align-self:center">Sort</span>
+            <select id="sort-filter" class="rf-filter-select">
+              <option value="match">Best match</option>
+              <option value="match_rev">Worst match</option>
+              <option value="quick">Quickest</option>
+              <option value="quick_rev">Longest</option>
+              <option value="simple">Simplest</option>
+              <option value="simple_rev">Most ingredients</option>
+            </select>
+            <span style="font-size:var(--t-xs);align-self:center">Cuisine</span>
+            <select id="cuisine-filter" class="rf-filter-select">
+              <option value="">All</option>
+              <option value="Chinese">Chinese</option>
+              <option value="Filipino">Filipino</option>
+              <option value="Indonesian">Indonesian</option>
+              <option value="Malaysian">Malaysian</option>
+              <option value="Singaporean">Singaporean</option>
+              <option value="Thai">Thai</option>
+              <option value="Vietnamese">Vietnamese</option>
+            </select>
+            <span style="font-size:var(--t-xs);align-self:center">Website</span>
+            <select id="website-filter" class="rf-filter-select">
+              <option value="">All</option>
+              <option value="Caroline's Cooking">Caroline's Cooking</option>
+              <option value="Cook Me Indonesian">Cook Me Indonesian</option>
+              <option value="Daily Cooking Quest">Daily Cooking Quest</option>
+              <option value="Delightful Plate">Delightful Plate</option>
+              <option value="Hot Thai Kitchen">Hot Thai Kitchen</option>
+              <option value="Huang Kitchen">Huang Kitchen</option>
+              <option value="Hungry Huy">Hungry Huy</option>
+              <option value="Lin's Food">Lin's Food</option>
+              <option value="Made with Lau">Made with Lau</option>
+              <option value="Nyonya Cooking">Nyonya Cooking</option>
+              <option value="Panlasang Pinoy">Panlasang Pinoy</option>
+              <option value="Rasa Malaysia">Rasa Malaysia</option>
+              <option value="RecipeTin Eats">RecipeTin Eats</option>
+              <option value="The Woks of Life">The Woks of Life</option>
+              <option value="Vicky Pham">Vicky Pham</option>
+              <option value="What To Cook Today">What To Cook Today</option>
+            </select>
+          </div>
         </div>
-        <button type="button" class="btn btn-secondary" id="add-manual-btn">Add</button>
-      </div>
+      </details>
     </div>
+  </section>
 
-    <!-- Empty chip warning -->
-    <p id="no-ingredients-msg" class="no-ingredients-msg" hidden>
-      Add at least one ingredient to find recipes.
-    </p>
-
-    <!-- Generic ingredient warning -->
-    <p id="generic-ingredient-msg" class="hint hint--warn" hidden>
-      Some ingredients match broadly — add more specific ones for better results.
-    </p>
-
-  </div>
-
-  <!-- ── Loading state ───────────────────────────────────────── -->
+  <!-- ── Loading state ─────────────────────────────────────────── -->
   <div id="loading-state" class="recipe-loading" hidden>
     <span class="recipe-loading__icon">🥡</span>
     <p class="recipe-loading__text">Cooking up some recipes…</p>
   </div>
 
-  <!-- ── Results ───────────────────────────────────────────────── -->
-  <div id="results-area" class="results-area" hidden>
-    <div class="results-header">
-      <h2 class="results-title" id="results-title">Recipes</h2>
-      <!-- Filters -->
-      <div class="results-filters">
-        <div class="filter-group">
-          <label for="sort-filter" class="filter-label">Sort by</label>
-          <select id="sort-filter" class="filter-select">
-            <option value="match">Best match</option>
-            <option value="match_rev">Worst match</option>
-            <option value="quick">Quickest</option>
-            <option value="quick_rev">Longest</option>
-            <option value="simple">Simplest</option>
-            <option value="simple_rev">Most ingredients</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="cuisine-filter" class="filter-label">Cuisine</label>
-          <select id="cuisine-filter" class="filter-select">
-            <option value="">All cuisines</option>
-            <option value="Chinese">Chinese</option>
-            <option value="Filipino">Filipino</option>
-            <option value="Indonesian">Indonesian</option>
-            <option value="Malaysian">Malaysian</option>
-            <option value="Singaporean">Singaporean</option>
-            <option value="Thai">Thai</option>
-            <option value="Vietnamese">Vietnamese</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="website-filter" class="filter-label">Website</label>
-          <select id="website-filter" class="filter-select">
-            <option value="">All websites</option>
-            <option value="Caroline's Cooking">Caroline's Cooking</option>
-            <option value="Cook Me Indonesian">Cook Me Indonesian</option>
-            <option value="Daily Cooking Quest">Daily Cooking Quest</option>
-            <option value="Delightful Plate">Delightful Plate</option>
-            <option value="Hot Thai Kitchen">Hot Thai Kitchen</option>
-            <option value="Huang Kitchen">Huang Kitchen</option>
-            <option value="Hungry Huy">Hungry Huy</option>
-            <option value="Lin's Food">Lin's Food</option>
-            <option value="Made with Lau">Made with Lau</option>
-            <option value="Nyonya Cooking">Nyonya Cooking</option>
-            <option value="Panlasang Pinoy">Panlasang Pinoy</option>
-            <option value="Rasa Malaysia">Rasa Malaysia</option>
-            <option value="RecipeTin Eats">RecipeTin Eats</option>
-            <option value="The Woks of Life">The Woks of Life</option>
-            <option value="Vicky Pham">Vicky Pham</option>
-            <option value="What To Cook Today">What To Cook Today</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label class="filter-label">Cooking time</label>
-          <div class="filter-cook-time">
-            <div class="filter-cook-time-sliders">
-              <input
-                type="range"
-                id="cook-time-min"
-                class="filter-slider filter-slider--min"
-                min="0"
-                max="120"
-                value="0"
-                aria-label="Minimum cooking time"
-              />
-              <input
-                type="range"
-                id="cook-time-max"
-                class="filter-slider filter-slider--max"
-                min="0"
-                max="120"
-                value="120"
-                aria-label="Maximum cooking time"
-              />
-            </div>
-            <span class="filter-cook-time__value" id="cook-time-value">0–120 min</span>
-          </div>
-        </div>
-      </div>
+  <!-- ── Results zone ──────────────────────────────────────────── -->
+  <section id="results-area" hidden aria-labelledby="results-heading">
+    <div class="rf-results__head">
+      <h2 class="rf-results__heading" id="results-heading">Best matches</h2>
+      <span class="rf-results__count" id="results-count"></span>
     </div>
-    <div id="recipe-list" class="recipe-list"></div>
-    <p id="no-recipes-msg" class="no-results" hidden>
-      No matches found. Try removing an ingredient.
-    </p>
-    <button type="button" class="btn btn-secondary btn-full" id="load-more-btn" hidden>
-      Load more
-    </button>
-    <button type="button" class="btn btn-secondary btn-full" id="show-all-btn" hidden>
-      Show all results
-    </button>
-  </div>
-
+    <div id="recipe-list"></div>
+    <div id="no-recipes-msg" class="rf-empty" hidden>
+      <p class="rf-empty__title">No matches found</p>
+      <p class="rf-empty__body">Try removing an ingredient or changing the filters.</p>
+    </div>
+    <button type="button" class="btn btn-secondary btn-full" id="load-more-btn" hidden style="margin-top:var(--s-3)">Load more</button>
+    <button type="button" class="btn btn-secondary btn-full" id="show-all-btn" hidden style="margin-top:var(--s-2)">Show all results</button>
+  </section>
 </div>
 
 <script>
 (function () {
-  // ── Autocomplete ingredient list ────────────────────────────
-  // (Same ingredient vocabulary as manage-perishables.)
+  const MAX_CHIPS = 6;
+
+  // ── Ingredient vocabulary ────────────────────────────────────
   const INGREDIENTS = [
     "anchovies","aubergine","bak choy","bamboo shoots","banana blossom",
     "bean sprouts","belacan","bok choy","chicken","chilli flakes","chilli paste",
@@ -197,118 +153,56 @@
     "turmeric","vinegar","white pepper","yellow noodles",
   ].sort();
 
-  // ── Pantry data from server ─────────────────────────────────
   const PANTRY = [
     {% for item in pantry_items %}
     {{ (item.standard_name or item.name) | tojson }}{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
 
-  // ── Skipped recipe IDs (user previously marked "not for me") ─
   const SKIPPED = new Set([
     {% for rid in skipped_ids %}
     {{ rid | tojson }}{% if not loop.last %},{% endif %}
     {% endfor %}
   ]);
 
-  // Ingredients that match too broadly to be useful on their own
-  const GENERIC_INGREDIENTS = new Set([
-    'oil','water','salt','sugar','flour','stock','broth','sauce','paste',
-  ]);
-
-  // ── State ───────────────────────────────────────────────────
-  // Each ingredient: { label: string, active: boolean, source: "pantry"|"manual" }
+  // ── State ────────────────────────────────────────────────────
   let ingredients = [];
   let pantryLoaded = false;
+  let showAllChips = false;
+  let showAddInput = false;
   let currentPage = 1;
   let currentIngredients = [];
   let currentSort = 'match';
   let currentCuisine = '';
   let currentWebsite = '';
-  let currentCookTimeMin = 0;
-  let currentCookTimeMax = 120;
   let totalResults = 0;
   let searchDebounce = null;
 
-  // ── DOM refs ────────────────────────────────────────────────
-  const loadPantryBtn      = document.getElementById('load-pantry-btn');
-  const pantryCtaEl        = document.getElementById('pantry-cta');
-  const chipArea           = document.getElementById('chip-area');
-  const chipList           = document.getElementById('chip-list');
-  const manualInput        = document.getElementById('manual-input');
-  const addManualBtn       = document.getElementById('add-manual-btn');
-  const acList             = document.getElementById('autocomplete-list');
-  const resultsArea        = document.getElementById('results-area');
-  const recipeList         = document.getElementById('recipe-list');
-  const noRecipesMsg       = document.getElementById('no-recipes-msg');
-  const noIngredientsMsg   = document.getElementById('no-ingredients-msg');
-  const genericIngMsg      = document.getElementById('generic-ingredient-msg');
-  const loadingState       = document.getElementById('loading-state');
-  const loadMoreBtn        = document.getElementById('load-more-btn');
-  const showAllBtn         = document.getElementById('show-all-btn');
-  const resultsTitle       = document.getElementById('results-title');
-  const sortFilter         = document.getElementById('sort-filter');
-  const cuisineFilter      = document.getElementById('cuisine-filter');
-  const websiteFilter      = document.getElementById('website-filter');
-  const cookTimeMinFilter  = document.getElementById('cook-time-min');
-  const cookTimeMaxFilter  = document.getElementById('cook-time-max');
-  const cookTimeValue      = document.getElementById('cook-time-value');
+  // ── DOM ──────────────────────────────────────────────────────
+  const emptyState    = document.getElementById('empty-state');
+  const chipArea      = document.getElementById('chip-area');
+  const chipList      = document.getElementById('chip-list');
+  const addInputRow   = document.getElementById('add-input-row');
+  const manualInput   = document.getElementById('manual-input');
+  const addManualBtn  = document.getElementById('add-manual-btn');
+  const acList        = document.getElementById('autocomplete-list');
+  const ingFoot       = document.getElementById('ing-foot');
+  const clearAllBtn   = document.getElementById('clear-all-btn');
+  const ingHeadText   = document.getElementById('ing-heading-text');
+  const loadPantryBtn = document.getElementById('load-pantry-btn');
+  const resultsArea   = document.getElementById('results-area');
+  const recipeList    = document.getElementById('recipe-list');
+  const noRecipesMsg  = document.getElementById('no-recipes-msg');
+  const loadingState  = document.getElementById('loading-state');
+  const resultsCount  = document.getElementById('results-count');
+  const loadMoreBtn   = document.getElementById('load-more-btn');
+  const showAllBtn    = document.getElementById('show-all-btn');
+  const sortFilter    = document.getElementById('sort-filter');
+  const cuisineFilter = document.getElementById('cuisine-filter');
+  const websiteFilter = document.getElementById('website-filter');
 
-  // ── Expired items preference ────────────────────────────────
-  const expiredItemsSelect = document.getElementById('expired-items-select');
-  const expiredItemsStatus = document.getElementById('expired-items-status');
-  const pantryCtaCount = document.querySelector('.pantry-cta__count');
-
-  if (expiredItemsSelect) {
-    expiredItemsSelect.addEventListener('change', async () => {
-      const days = parseInt(expiredItemsSelect.value);
-      expiredItemsStatus.textContent = 'Saving...';
-      try {
-        const resp = await fetch('/recipes/settings/expired-items', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-          body: JSON.stringify({ days }),
-        });
-        if (resp.ok) {
-          // Fetch updated pantry items
-          const itemsResp = await fetch('/recipes/pantry-items');
-          if (itemsResp.ok) {
-            const { items } = await itemsResp.json();
-            // Update PANTRY array
-            PANTRY.length = 0;
-            items.forEach(item => PANTRY.push(item));
-            // Update button count
-            if (pantryCtaCount) {
-              pantryCtaCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
-            }
-            // Update ingredients if pantry was already loaded
-            if (pantryLoaded) {
-              items.forEach(name => {
-                if (!ingredients.find(i => norm(i.label) === norm(name))) {
-                  ingredients.push({ label: name, active: true, source: 'pantry' });
-                }
-              });
-              // Remove ingredients that are no longer in pantry
-              ingredients = ingredients.filter(ing =>
-                ing.source === 'manual' || items.find(n => norm(n) === norm(ing.label))
-              );
-              renderChips();
-              markDirty();
-            }
-          }
-          expiredItemsStatus.textContent = 'Saved';
-          setTimeout(() => { expiredItemsStatus.textContent = ''; }, 2000);
-        } else {
-          expiredItemsStatus.textContent = 'Error saving';
-        }
-      } catch (_) {
-        expiredItemsStatus.textContent = 'Error saving';
-      }
-    });
-  }
-
-  // ── Load pantry ─────────────────────────────────────────────
-  if (loadPantryBtn) {
+  // ── Load pantry ──────────────────────────────────────────────
+  if (loadPantryBtn && !loadPantryBtn.disabled) {
     loadPantryBtn.addEventListener('click', () => {
       if (pantryLoaded) return;
       PANTRY.forEach(name => {
@@ -317,63 +211,89 @@
         }
       });
       pantryLoaded = true;
-      pantryCtaEl.hidden = true;
-      renderChips();
-      // Auto-search immediately on pantry load — the "Use my pantry" tap is the trigger
+      render();
       search();
     });
   }
 
-  // ── Chips ────────────────────────────────────────────────────
-  function renderChips() {
+  // ── Clear all ────────────────────────────────────────────────
+  window.clearAll = function() {
+    ingredients = [];
+    pantryLoaded = false;
+    showAllChips = false;
+    showAddInput = false;
+    render();
+    resultsArea.hidden = true;
+    recipeList.innerHTML = '';
+  };
+
+  // ── Begin add ────────────────────────────────────────────────
+  window.beginAdd = function() {
+    showAddInput = true;
+    render();
+    setTimeout(() => manualInput && manualInput.focus(), 30);
+  };
+
+  // ── Render ───────────────────────────────────────────────────
+  function render() {
+    const hasChips = ingredients.length > 0;
+
+    // Empty state vs chip area
+    emptyState.hidden = hasChips || showAddInput;
+    chipArea.hidden   = !hasChips;
+    addInputRow.hidden = !showAddInput;
+    ingFoot.hidden    = !hasChips && !showAddInput;
+    clearAllBtn.hidden = !hasChips;
+
+    // Heading
+    if (hasChips) {
+      ingHeadText.innerHTML = `Cooking with <span class="rf-ing__count">${ingredients.length} ingredient${ingredients.length !== 1 ? 's' : ''}</span>`;
+    } else {
+      ingHeadText.textContent = 'Your ingredients';
+    }
+
+    // Chips
     chipList.innerHTML = '';
-    chipArea.hidden = ingredients.length === 0;
+    const visible = showAllChips ? ingredients : ingredients.slice(0, MAX_CHIPS);
+    const hidden  = ingredients.length - visible.length;
 
-    ingredients.forEach((ing, idx) => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'chip' + (ing.active ? ' chip--active' : '');
+    visible.forEach((ing, idx) => {
+      const chip = document.createElement('span');
+      chip.className = 'rf-chip';
       chip.setAttribute('role', 'listitem');
-      chip.setAttribute('aria-pressed', ing.active ? 'true' : 'false');
-      chip.dataset.idx = idx;
+      chip.textContent = ing.label;
 
-      const label = document.createElement('span');
-      label.textContent = ing.label;
-      chip.appendChild(label);
-
-      const remove = document.createElement('span');
-      remove.className = 'chip__remove';
-      remove.textContent = '×';
-      remove.setAttribute('aria-label', 'Remove ' + ing.label);
-      chip.appendChild(remove);
-
-      chip.addEventListener('click', e => {
-        if (e.target === remove || e.target.classList.contains('chip__remove')) {
-          ingredients.splice(idx, 1);
-          renderChips();
-          markDirty();
-        } else {
-          ingredients[idx].active = !ingredients[idx].active;
-          renderChips();
-          markDirty();
-        }
-      });
-
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'rf-chip__x';
+      x.setAttribute('aria-label', 'Remove ' + ing.label);
+      x.textContent = '×';
+      x.addEventListener('click', () => { ingredients.splice(idx, 1); showAllChips = false; render(); markDirty(); });
+      chip.appendChild(x);
       chipList.appendChild(chip);
     });
 
-    // Show/hide "add at least one" message
-    const anyActive = ingredients.some(i => i.active);
-    noIngredientsMsg.hidden = ingredients.length === 0 || anyActive;
+    if (hidden > 0) {
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'rf-chip--more';
+      more.textContent = `+${hidden} more`;
+      more.addEventListener('click', () => { showAllChips = true; render(); });
+      chipList.appendChild(more);
+    }
 
-    // Generic ingredient warning — shown when any active chip is a generic term
-    const hasGeneric = ingredients.some(
-      i => i.active && GENERIC_INGREDIENTS.has(i.label.toLowerCase().trim())
-    );
-    genericIngMsg.hidden = !hasGeneric;
+    if (!showAddInput) {
+      const addChip = document.createElement('button');
+      addChip.type = 'button';
+      addChip.className = 'rf-chip rf-chip--add';
+      addChip.textContent = '+ Add';
+      addChip.setAttribute('aria-label', 'Add an ingredient');
+      addChip.addEventListener('click', () => { showAddInput = true; render(); setTimeout(() => manualInput && manualInput.focus(), 30); });
+      chipList.appendChild(addChip);
+    }
   }
 
-  // ── Manual input ─────────────────────────────────────────────
+  // ── Manual add ───────────────────────────────────────────────
   function addIngredient(name) {
     name = name.trim();
     if (!name) return;
@@ -384,15 +304,16 @@
     }
     ingredients.push({ label: name, active: true, source: 'manual' });
     manualInput.value = '';
+    showAddInput = false;
     closeAC();
-    renderChips();
+    render();
     markDirty();
   }
 
   addManualBtn.addEventListener('click', () => addIngredient(manualInput.value));
   manualInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); addIngredient(manualInput.value); }
-    if (e.key === 'Escape') closeAC();
+    if (e.key === 'Escape') { showAddInput = false; manualInput.value = ''; closeAC(); render(); }
   });
 
   // ── Autocomplete ─────────────────────────────────────────────
@@ -412,103 +333,103 @@
     });
     acList.hidden = false;
   });
-
   document.addEventListener('click', e => {
-    if (!e.target.closest('.manual-input-wrap')) closeAC();
+    if (!e.target.closest('#add-input-row')) closeAC();
   });
-
   function closeAC() { acList.hidden = true; acList.innerHTML = ''; }
 
+  // ── Expired items setting ────────────────────────────────────
+  const expiredStatus  = document.getElementById('expired-status');
+  const pantryCount    = document.getElementById('pantry-count');
+
+  window.setExpired = async function(days) {
+    document.querySelectorAll('.rf-filter-pill[data-expired]').forEach(btn => {
+      btn.classList.toggle('rf-filter-pill--on', btn.dataset.expired === String(days));
+    });
+    if (expiredStatus) expiredStatus.textContent = 'Saving…';
+    try {
+      const resp = await fetch('/recipes/settings/expired-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+        body: JSON.stringify({ days }),
+      });
+      if (resp.ok) {
+        const itemsResp = await fetch('/recipes/pantry-items');
+        if (itemsResp.ok) {
+          const { items } = await itemsResp.json();
+          PANTRY.length = 0;
+          items.forEach(i => PANTRY.push(i));
+          if (pantryCount) pantryCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+          if (pantryLoaded) {
+            items.forEach(name => {
+              if (!ingredients.find(i => norm(i.label) === norm(name))) {
+                ingredients.push({ label: name, active: true, source: 'pantry' });
+              }
+            });
+            ingredients = ingredients.filter(i => i.source === 'manual' || items.find(n => norm(n) === norm(i.label)));
+            render();
+            markDirty();
+          }
+        }
+        if (expiredStatus) { expiredStatus.textContent = 'Saved'; setTimeout(() => { expiredStatus.textContent = ''; }, 2000); }
+      } else {
+        if (expiredStatus) expiredStatus.textContent = 'Error';
+      }
+    } catch (_) {
+      if (expiredStatus) expiredStatus.textContent = 'Error';
+    }
+  };
+
   // ── Filters ──────────────────────────────────────────────────
-  if (sortFilter) {
-    sortFilter.addEventListener('change', () => {
-      currentSort = sortFilter.value;
-      markDirty();
-    });
-  }
-
-  if (cuisineFilter) {
-    cuisineFilter.addEventListener('change', () => {
-      currentCuisine = cuisineFilter.value;
-      markDirty();
-    });
-  }
-
-  if (websiteFilter) {
-    websiteFilter.addEventListener('change', () => {
-      currentWebsite = websiteFilter.value;
-      markDirty();
-    });
-  }
-
-  function updateCookTimeValue() {
-    currentCookTimeMin = parseInt(cookTimeMinFilter.value);
-    currentCookTimeMax = parseInt(cookTimeMaxFilter.value);
-    // Ensure min doesn't exceed max
-    if (currentCookTimeMin > currentCookTimeMax) {
-      currentCookTimeMin = currentCookTimeMax;
-      cookTimeMinFilter.value = currentCookTimeMin;
-    }
-    if (currentCookTimeMax < currentCookTimeMin) {
-      currentCookTimeMax = currentCookTimeMin;
-      cookTimeMaxFilter.value = currentCookTimeMax;
-    }
-    cookTimeValue.textContent = `${currentCookTimeMin}–${currentCookTimeMax} min`;
-    markDirty();
-  }
-
-  if (cookTimeMinFilter) {
-    cookTimeMinFilter.addEventListener('input', updateCookTimeValue);
-  }
-
-  if (cookTimeMaxFilter) {
-    cookTimeMaxFilter.addEventListener('input', updateCookTimeValue);
-  }
+  if (sortFilter) sortFilter.addEventListener('change', () => { currentSort = sortFilter.value; markDirty(); });
+  if (cuisineFilter) cuisineFilter.addEventListener('change', () => { currentCuisine = cuisineFilter.value; markDirty(); });
+  if (websiteFilter) websiteFilter.addEventListener('change', () => { currentWebsite = websiteFilter.value; markDirty(); });
 
   // ── Search ───────────────────────────────────────────────────
-
   function markDirty() {
     const anyActive = ingredients.some(i => i.active);
-    if (!anyActive) {
-      resultsArea.hidden = true;
-      return;
-    }
+    if (!anyActive) { resultsArea.hidden = true; return; }
     clearTimeout(searchDebounce);
-    searchDebounce = setTimeout(search, 150);
+    searchDebounce = setTimeout(doSearch, 150);
   }
 
   function search() {
     const active = ingredients.filter(i => i.active).map(i => i.label);
-    if (!active.length) {
-      resultsArea.hidden = true;
-      return;
-    }
-    _doSearch(active);
-  }
-
-  async function _doSearch(active) {
+    if (!active.length) { resultsArea.hidden = true; return; }
     currentIngredients = active;
     currentPage = 1;
     recipeList.innerHTML = '';
     resultsArea.hidden = true;
     loadingState.hidden = false;
-    try {
-      const { results, total, has_more } = await fetchPage(active, 1, false, currentSort, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
+    fetchPage(active, 1, false).then(({ results, total, has_more }) => {
       totalResults = total;
       loadingState.hidden = true;
       resultsArea.hidden = false;
       noRecipesMsg.hidden = results.length > 0;
-      resultsTitle.textContent = total
-        ? `${total} recipe${total !== 1 ? 's' : ''} found`
-        : 'Recipes';
+      resultsCount.textContent = total ? `${total} recipe${total !== 1 ? 's' : ''}` : '';
+      recipeList.innerHTML = '';
       results.forEach(r => recipeList.appendChild(makeCard(r)));
-      updatePaginationButtons(has_more, total - results.length);
-    } catch (_) {
-      loadingState.hidden = true;
-    }
+      updatePagination(has_more, total - results.length);
+    }).catch(() => { loadingState.hidden = true; });
   }
 
-  function updatePaginationButtons(hasMore, remaining) {
+  function doSearch() {
+    const active = ingredients.filter(i => i.active).map(i => i.label);
+    if (!active.length) { resultsArea.hidden = true; return; }
+    search();
+  }
+
+  async function fetchPage(active, page, showAll) {
+    const resp = await fetch('/recipes/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({ ingredients: active, page, show_all: showAll, sort: currentSort, cuisine: currentCuisine, website: currentWebsite, cook_time_min: 0, cook_time_max: 120 }),
+    });
+    if (!resp.ok) throw new Error('search failed');
+    return resp.json();
+  }
+
+  function updatePagination(hasMore, remaining) {
     loadMoreBtn.hidden = !hasMore;
     showAllBtn.hidden = !hasMore;
     if (hasMore) {
@@ -517,28 +438,18 @@
     }
   }
 
-  async function fetchPage(active, page, showAll = false, sort = 'match', cuisine = '', website = '', cookTimeMin = 0, cookTimeMax = 120) {
-    const resp = await fetch('/recipes/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-      body: JSON.stringify({ ingredients: active, page, show_all: showAll, sort, cuisine, website, cook_time_min: cookTimeMin, cook_time_max: cookTimeMax }),
-    });
-    if (!resp.ok) throw new Error('search failed');
-    return resp.json();
-  }
-
   loadMoreBtn.addEventListener('click', async () => {
     currentPage += 1;
     try {
-      const { results, has_more } = await fetchPage(currentIngredients, currentPage, false, currentSort, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
+      const { results, has_more } = await fetchPage(currentIngredients, currentPage, false);
       results.forEach(r => recipeList.appendChild(makeCard(r)));
-      updatePaginationButtons(has_more, totalResults - recipeList.children.length);
+      updatePagination(has_more, totalResults - recipeList.children.length);
     } catch (_) {}
   });
 
   showAllBtn.addEventListener('click', async () => {
     try {
-      const { results } = await fetchPage(currentIngredients, 1, true, currentSort, currentCuisine, currentWebsite, currentCookTimeMin, currentCookTimeMax);
+      const { results } = await fetchPage(currentIngredients, 1, true);
       recipeList.innerHTML = '';
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       loadMoreBtn.hidden = true;
@@ -546,55 +457,53 @@
     } catch (_) {}
   });
 
+  // ── Card builder ─────────────────────────────────────────────
   function makeCard(r) {
-    const card = document.createElement('a');
-    card.href = `/recipes/${encodeURIComponent(r.id)}`;
-    card.className = 'recipe-card';
-    card.setAttribute('aria-label', `View ${r.name}`);
+    const pct = r.match_pct;
+    const barFill = pct >= 80 ? '' : pct >= 50 ? ' rcard__bar-fill--mid' : ' rcard__bar-fill--low';
+    const pctCls  = pct >= 80 ? '' : pct >= 50 ? ' rcard__pct--mid'      : ' rcard__pct--low';
 
-    const matchClass = r.match_pct >= 80 ? 'match--high'
-                     : r.match_pct >= 50 ? 'match--mid'
-                                         : 'match--low';
+    const missing = r.missing || [];
+    let statusHtml;
+    if (missing.length === 0) {
+      statusHtml = `Have <strong>everything</strong> you need`;
+    } else if (missing.length === 1) {
+      statusHtml = `Just missing <strong>${esc(missing[0])}</strong>`;
+    } else {
+      statusHtml = `Missing <strong>${missing.length} ingredients</strong>`;
+    }
 
-    const skippedBadge = SKIPPED.has(r.id)
-      ? `<span class="recipe-card__skipped">You skipped this before</span>`
+    const skippedHtml = SKIPPED.has(r.id)
+      ? `<div class="rcard__skipped-note">You skipped this before</div>`
       : '';
 
+    const card = document.createElement('a');
+    card.href = `/recipes/${encodeURIComponent(r.id)}`;
+    card.className = 'rcard';
+    card.setAttribute('aria-label', `${esc(r.name)}, ${pct}% match`);
     card.innerHTML = `
-      <div class="recipe-card__header">
-        <div class="recipe-card__title-row">
-          <span class="recipe-card__name">${esc(r.name)}</span>
-          <span class="recipe-card__match ${matchClass}">${r.match_pct}%</span>
-        </div>
-        <div class="recipe-card__meta">
-          <span class="recipe-card__source">${esc(r.source)}</span>
-          <span class="recipe-card__dot">·</span>
-          <span class="recipe-card__cuisine">${esc(r.cuisine)}</span>
-          ${r.cook_time ? `<span class="recipe-card__dot">·</span><span class="recipe-card__time">${esc(r.cook_time)}</span>` : ''}
-        </div>
-        ${skippedBadge}
+      <div class="rcard__row1">
+        <span class="rcard__name">${esc(r.name)}</span>
+        <span class="rcard__pct${pctCls}">${pct}%</span>
       </div>
-      <div class="recipe-card__summary">
-        You have <strong>${r.matched_count} of ${r.total_count}</strong> ingredients
-        ${r.missing.length ? `· Missing: <span class="recipe-card__missing">${r.missing.slice(0,3).map(esc).join(', ')}${r.missing.length > 3 ? ` +${r.missing.length - 3} more` : ''}</span>` : ''}
+      <div class="rcard__meta">
+        <span>${esc(r.cuisine)}</span>
+        ${r.cook_time ? `<span class="rcard__meta-dot">·</span><span>${esc(r.cook_time)}</span>` : ''}
       </div>
+      <div class="rcard__bar" aria-hidden="true">
+        <div class="rcard__bar-fill${barFill}" style="width:${pct}%"></div>
+      </div>
+      <div class="rcard__status">${statusHtml}</div>
+      ${skippedHtml}
     `;
-
     return card;
   }
 
-
-  // ── Helpers ─────────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────────
   function norm(s) { return s.toLowerCase().trim(); }
-
   function esc(s) {
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
   function getCsrf() {
     const el = document.querySelector('input[name="csrf_token"]');
     if (el) return el.value;
@@ -606,6 +515,6 @@
 </script>
 
 <!-- CSRF token for JS fetch calls -->
-<input type="hidden" id="csrf-token" name="csrf_token" value="{{ csrf_token() }}" style="display:none">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" style="display:none">
 
 {% endblock %}

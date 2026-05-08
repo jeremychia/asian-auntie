@@ -6,42 +6,89 @@
   <a href="{{ url_for('recipes.index') }}" class="recipe-detail__back" aria-label="Back to recipes">← Back</a>
 
   <div class="recipe-detail">
+    {% if recipe.get('match_pct') %}
+    {% set pct = recipe.match_pct %}
+    {% set bar_class = '' if pct >= 80 else ('rd-bar-fill--mid' if pct >= 50 else 'rd-bar-fill--low') %}
+    {% set pct_class = '' if pct >= 80 else ('rd-pct--mid' if pct >= 50 else 'rd-pct--low') %}
+    <div class="rd-header">
+      <div class="rd-title-row">
+        <h1 class="rd-title">{{ recipe.name }}</h1>
+        <span class="rd-pct {{ pct_class }}" aria-label="{{ pct }}% match">{{ pct }}%</span>
+      </div>
+      <div class="rd-meta">
+        <span>{{ recipe.source }}</span>
+        <span class="rd-meta-dot">·</span>
+        <span>{{ recipe.cuisine }}</span>
+        {% if recipe.cook_time %}<span class="rd-meta-dot">·</span><span>{{ recipe.cook_time }}</span>{% endif %}
+        {% if recipe.difficulty %}<span class="rd-meta-dot">·</span><span>{{ recipe.difficulty }}</span>{% endif %}
+      </div>
+      <div class="rd-bar" aria-hidden="true">
+        <div class="rd-bar-fill {{ bar_class }}" style="width:{{ pct }}%"></div>
+      </div>
+      <p class="rd-status">
+        {% if recipe.missing | length == 0 %}
+          Have <strong>everything</strong> you need
+        {% elif recipe.missing | length == 1 %}
+          Just missing <strong>{{ recipe.missing[0] }}</strong>
+        {% else %}
+          You have <strong>{{ recipe.matched_count }} of {{ recipe.total_count }}</strong> ingredients
+        {% endif %}
+      </p>
+    </div>
+    {% else %}
     <div class="recipe-detail__header">
       <h1 class="recipe-detail__title">{{ recipe.name }}</h1>
       <div class="recipe-detail__meta">
-        <span class="recipe-card__source">{{ recipe.source }}</span>
-        <span class="recipe-card__dot">·</span>
-        <span class="recipe-card__cuisine">{{ recipe.cuisine }}</span>
-        {% if recipe.cook_time %}<span class="recipe-card__dot">·</span><span class="recipe-card__time">{{ recipe.cook_time }}</span>{% endif %}
+        <span>{{ recipe.source }}</span><span class="recipe-card__dot">·</span>
+        <span>{{ recipe.cuisine }}</span>
+        {% if recipe.cook_time %}<span class="recipe-card__dot">·</span><span>{{ recipe.cook_time }}</span>{% endif %}
         {% if recipe.difficulty %}<span class="recipe-card__dot">·</span><span>{{ recipe.difficulty }}</span>{% endif %}
       </div>
-
-      {% if recipe.get('match_pct') %}
-      {% set match_class = 'match--high' if recipe.match_pct >= 80 else ('match--mid' if recipe.match_pct >= 50 else 'match--low') %}
-      <div class="recipe-detail__match-row">
-        <span class="recipe-card__match {{ match_class }} recipe-card__match--lg">{{ recipe.match_pct }}% match</span>
-        <span class="recipe-detail__summary">
-          {{ recipe.matched_count }} of {{ recipe.total_count }} ingredients
-          {% if recipe.missing | length == 0 %}— you have everything!{% else %}· Missing: {{ recipe.missing | join(', ') }}{% endif %}
-        </span>
-      </div>
-
-      {% if recipe.match_pct >= 80 %}
-      <span class="recipe-detail__match-note">You have most of what you need.</span>
-      {% endif %}
-      {% endif %}
     </div>
+    {% endif %}
 
+    {% if recipe.get('matched') %}
+    {# Split ingredients into have / need #}
+    {% set have_list = [] %}
+    {% set need_list = [] %}
+    {% for ing in recipe.ingredients %}
+      {% if ing in recipe.matched %}{% set _ = have_list.append(ing) %}{% else %}{% set _ = need_list.append(ing) %}{% endif %}
+    {% endfor %}
+
+    {% if have_list %}
+    <p class="rd-ing-heading">In your pantry · {{ have_list | length }}</p>
     <ul class="ing-list">
-      {% for ing in recipe.ingredients %}
-      {% set have = recipe.get('matched') and ing in recipe.matched %}
-      <li class="ing-row{% if have %} ing-row--have{% else %} ing-row--need{% endif %}">
-        <span class="ing-row__dot">{% if have %}✓{% else %}·{% endif %}</span>
+      {% for ing in have_list %}
+      <li class="ing-row ing-row--have">
+        <span class="ing-row__dot" aria-hidden="true">✓</span>
         <span class="ing-row__name">{{ ing }}</span>
-        <span class="ing-row__status">{% if have %}you have it{% else %}you'll need this{% endif %}</span>
       </li>
       {% endfor %}
     </ul>
+    {% endif %}
+
+    {% if need_list %}
+    <p class="rd-ing-heading">Still need · {{ need_list | length }}</p>
+    <ul class="ing-list">
+      {% for ing in need_list %}
+      <li class="ing-row ing-row--need">
+        <span class="ing-row__dot" aria-hidden="true">○</span>
+        <span class="ing-row__name">{{ ing }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% else %}
+    <ul class="ing-list">
+      {% for ing in recipe.ingredients %}
+      <li class="ing-row">
+        <span class="ing-row__dot" aria-hidden="true">·</span>
+        <span class="ing-row__name">{{ ing }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
 
     {% if recipe.source_url %}
     <a

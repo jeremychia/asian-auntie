@@ -9,20 +9,23 @@
     <p class="settings-section__desc">
       Which cuisines do you like to cook? We use this to personalise your recipe suggestions.
     </p>
-    <div class="option-grid option-grid--3col" id="cuisine-grid">
+    <div class="cuisine-chips" id="cuisine-chips">
       {% for cuisine in all_cuisines %}
-      <label class="option-card {% if cuisine in cuisine_prefs %}option-card--selected{% endif %}"
-             style="font-size: var(--font-sm)">
+      {% set is_active = cuisine in cuisine_prefs %}
+      <label class="cuisine-chip{% if is_active %} cuisine-chip--active{% endif %}" data-cuisine="{{ cuisine }}">
         <input type="checkbox" name="cuisine_prefs" value="{{ cuisine }}"
-               {% if cuisine in cuisine_prefs %}checked{% endif %}>
+               {% if is_active %}checked{% endif %}>
+        {% if is_active %}
+        <svg class="cuisine-chip__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        {% endif %}
         {{ cuisine }}
-        <span class="option-card__count">{{ cuisine_counts[cuisine] }} recipes</span>
+        <span class="cuisine-chip__count">· {{ cuisine_counts[cuisine] }}</span>
       </label>
       {% endfor %}
     </div>
-    <div class="settings-actions" style="margin-top: 1rem">
+    <div class="settings-actions">
       <button class="btn btn-primary" id="save-cuisines-btn">Save preferences</button>
-      <span class="save-confirmation" id="cuisine-saved" hidden>Saved</span>
+      <span class="save-confirm" id="cuisine-saved" hidden>✓ Saved</span>
     </div>
   </section>
 
@@ -30,21 +33,19 @@
     <h2 class="settings-section__title">Expired items in recipes</h2>
     <p class="settings-section__desc">
       When searching for recipes, decide whether to include items that have expired.
-      You can choose to include items that are expired up to a certain number of days — useful if you're comfortable cooking with items that are slightly past their date.
+      You can choose to include items that are slightly past their date.
     </p>
-    <div class="expired-items-form">
-      <label for="expired-items-select-settings" class="settings-label">Include expired items:</label>
-      <select id="expired-items-select-settings" class="settings-input">
-        <option value="0" {% if expired_items_days == 0 %}selected{% endif %}>Exclude expired</option>
-        <option value="7" {% if expired_items_days == 7 %}selected{% endif %}>Include up to 7 days</option>
-        <option value="14" {% if expired_items_days == 14 %}selected{% endif %}>Include up to 14 days</option>
-        <option value="30" {% if expired_items_days == 30 %}selected{% endif %}>Include up to 30 days</option>
-        <option value="90" {% if expired_items_days == 90 %}selected{% endif %}>Include up to 90 days</option>
-      </select>
-      <div class="settings-actions" style="margin-top: 1rem">
-        <button class="btn btn-primary" id="save-expired-items-btn">Save preference</button>
-        <span class="save-confirmation" id="expired-items-saved" hidden>Saved</span>
-      </div>
+    <label class="settings-label" for="expired-items-select-settings">Include expired items</label>
+    <select id="expired-items-select-settings" class="settings-select">
+      <option value="0" {% if expired_items_days == 0 %}selected{% endif %}>Exclude expired</option>
+      <option value="7" {% if expired_items_days == 7 %}selected{% endif %}>Up to 7 days past</option>
+      <option value="14" {% if expired_items_days == 14 %}selected{% endif %}>Up to 14 days past</option>
+      <option value="30" {% if expired_items_days == 30 %}selected{% endif %}>Up to 30 days past</option>
+      <option value="90" {% if expired_items_days == 90 %}selected{% endif %}>Up to 90 days past</option>
+    </select>
+    <div class="settings-actions">
+      <button class="btn btn-primary" id="save-expired-items-btn">Save preference</button>
+      <span class="save-confirm" id="expired-items-saved" hidden>✓ Saved</span>
     </div>
   </section>
 
@@ -73,7 +74,7 @@
         item is due to expire. Skip this and we'll use a 3-day window instead.
       </p>
 
-      <div id="notif-status" class="settings-notif-status">
+      <div id="notif-status">
         {% if notifications_enabled %}
         <span class="notif-badge notif-badge--on">Notifications on</span>
         {% else %}
@@ -121,17 +122,73 @@ document.querySelectorAll('.day-chip').forEach(chip => {
   });
 });
 
+// Cuisine chip toggle
+document.querySelectorAll('#cuisine-chips .cuisine-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const cb = chip.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    chip.classList.toggle('cuisine-chip--active', cb.checked);
+
+    // Toggle checkmark SVG
+    const existingCheck = chip.querySelector('.cuisine-chip__check');
+    if (cb.checked && !existingCheck) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'cuisine-chip__check');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '2.5');
+      svg.setAttribute('stroke-linecap', 'round');
+      svg.setAttribute('stroke-linejoin', 'round');
+      svg.setAttribute('aria-hidden', 'true');
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      poly.setAttribute('points', '20 6 9 17 4 12');
+      svg.appendChild(poly);
+      // Insert after the hidden checkbox
+      cb.insertAdjacentElement('afterend', svg);
+    } else if (!cb.checked && existingCheck) {
+      existingCheck.remove();
+    }
+  });
+});
+
+document.getElementById('save-cuisines-btn').addEventListener('click', async () => {
+  const selected = [...document.querySelectorAll('#cuisine-chips input:checked')].map(el => el.value);
+  const res = await fetch('/settings/cuisine-prefs', {
+    method: 'POST',
+    headers: csrfHeaders(),
+    body: JSON.stringify({ cuisine_prefs: selected }),
+  });
+  if (res.ok) {
+    const savedEl = document.getElementById('cuisine-saved');
+    savedEl.hidden = false;
+    setTimeout(() => { savedEl.hidden = true; }, 2500);
+  }
+});
+
+document.getElementById('save-expired-items-btn').addEventListener('click', async () => {
+  const days = parseInt(document.getElementById('expired-items-select-settings').value);
+  const res = await fetch('/settings/expired-items', {
+    method: 'POST',
+    headers: csrfHeaders(),
+    body: JSON.stringify({ days }),
+  });
+  if (res.ok) {
+    const savedEl = document.getElementById('expired-items-saved');
+    savedEl.hidden = false;
+    setTimeout(() => { savedEl.hidden = true; }, 2500);
+  }
+});
+
 document.getElementById('save-btn').addEventListener('click', async () => {
   const days = selectedDays();
 
-  // Save cooking days
   await fetch('/settings/cooking-days', {
     method: 'POST',
     headers: csrfHeaders(),
     body: JSON.stringify({ cooking_days: days }),
   });
 
-  // Request push permission and subscribe
   if (!('Notification' in window)) {
     updateStatus(true);
     return;
@@ -178,41 +235,5 @@ function updateStatus(enabled) {
     : '<span class="notif-badge notif-badge--off">Notifications off</span>';
   disableBtn.style.display = enabled ? '' : 'none';
 }
-
-// Cuisine preference chips
-document.querySelectorAll('#cuisine-grid .option-card input[type="checkbox"]').forEach(cb => {
-  cb.addEventListener('change', () => {
-    cb.closest('.option-card').classList.toggle('option-card--selected', cb.checked);
-  });
-});
-
-document.getElementById('save-cuisines-btn').addEventListener('click', async () => {
-  const selected = [...document.querySelectorAll('#cuisine-grid input:checked')].map(el => el.value);
-  const res = await fetch('/settings/cuisine-prefs', {
-    method: 'POST',
-    headers: csrfHeaders(),
-    body: JSON.stringify({ cuisine_prefs: selected }),
-  });
-  if (res.ok) {
-    const savedEl = document.getElementById('cuisine-saved');
-    savedEl.hidden = false;
-    setTimeout(() => { savedEl.hidden = true; }, 2500);
-  }
-});
-
-// Expired items setting
-document.getElementById('save-expired-items-btn').addEventListener('click', async () => {
-  const days = parseInt(document.getElementById('expired-items-select-settings').value);
-  const res = await fetch('/settings/expired-items', {
-    method: 'POST',
-    headers: csrfHeaders(),
-    body: JSON.stringify({ days }),
-  });
-  if (res.ok) {
-    const savedEl = document.getElementById('expired-items-saved');
-    savedEl.hidden = false;
-    setTimeout(() => { savedEl.hidden = true; }, 2500);
-  }
-});
 </script>
 {% endblock %}
