@@ -105,6 +105,9 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+body:has(.auth-wrap) {
+  background: var(--accent-bg);
+}
 
 /* PicoCSS scopes its own custom properties (--pico-color, --pico-background-color, etc.)
    to each element, overriding the :root tokens. Buttons/inputs/selects that don't use
@@ -129,9 +132,9 @@ nav.container {
 }
 
 .nav-inner {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 24px;
   height: 56px;
   display: flex;
   align-items: center;
@@ -153,7 +156,7 @@ nav.container {
 .nav-end {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -223,6 +226,10 @@ nav.container {
 }
 
 /* Mobile: log-out icon button in top bar */
+.nav-logout-icon-form {
+  display: none;
+  margin: 0;
+}
 .nav-logout-icon {
   width: 36px;
   height: 36px;
@@ -259,6 +266,10 @@ nav.container {
   }
   .nav-logout {
     display: none;
+  }
+  .nav-logout-icon-form {
+    display: flex;
+    align-items: center;
   }
   .nav-logout-icon {
     display: inline-flex;

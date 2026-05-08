@@ -72,7 +72,7 @@
           </form>
         </div>
         {# Mobile: log out icon in top bar #}
-        <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0">
+        <form method="post" action="{{ url_for('auth.logout') }}" class="nav-logout-icon-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <button type="submit" class="nav-logout-icon" aria-label="Log out">
             <svg><use href="#nav-i-logout"/></svg>
