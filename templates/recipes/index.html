@@ -177,6 +177,8 @@
   let currentWebsite = '';
   let totalResults = 0;
   let searchDebounce = null;
+  let pendingScrollY = 0;
+  const STATE_KEY = 'recipePageState';
 
   // ── DOM ──────────────────────────────────────────────────────
   const emptyState    = document.getElementById('empty-state');
@@ -200,6 +202,37 @@
   const sortFilter    = document.getElementById('sort-filter');
   const cuisineFilter = document.getElementById('cuisine-filter');
   const websiteFilter = document.getElementById('website-filter');
+
+  // ── Save / restore state across recipe detail navigation ────
+  function saveState() {
+    try {
+      sessionStorage.setItem(STATE_KEY, JSON.stringify({
+        ingredients, pantryLoaded, currentSort, currentCuisine, currentWebsite,
+        scrollY: window.scrollY,
+      }));
+    } catch (_) {}
+  }
+
+  (function restoreState() {
+    try {
+      const raw = sessionStorage.getItem(STATE_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(STATE_KEY);
+      const state = JSON.parse(raw);
+      if (!state.ingredients || !state.ingredients.length) return;
+      ingredients   = state.ingredients;
+      pantryLoaded  = state.pantryLoaded  || false;
+      currentSort   = state.currentSort   || 'match';
+      currentCuisine = state.currentCuisine || '';
+      currentWebsite = state.currentWebsite || '';
+      pendingScrollY = state.scrollY || 0;
+      if (sortFilter)    sortFilter.value    = currentSort;
+      if (cuisineFilter) cuisineFilter.value = currentCuisine;
+      if (websiteFilter) websiteFilter.value = currentWebsite;
+      render();
+      search();
+    } catch (_) {}
+  })();
 
   // ── Load pantry ──────────────────────────────────────────────
   if (loadPantryBtn && !loadPantryBtn.disabled) {
@@ -410,6 +443,11 @@
       recipeList.innerHTML = '';
       results.forEach(r => recipeList.appendChild(makeCard(r)));
       updatePagination(has_more, total - results.length);
+      if (pendingScrollY) {
+        const sy = pendingScrollY;
+        pendingScrollY = 0;
+        requestAnimationFrame(() => window.scrollTo(0, sy));
+      }
     }).catch(() => { loadingState.hidden = true; });
   }
 
@@ -480,6 +518,7 @@
     const card = document.createElement('a');
     card.href = `/recipes/${encodeURIComponent(r.id)}`;
     card.className = 'rcard';
+    card.addEventListener('click', saveState);
     card.setAttribute('aria-label', `${esc(r.name)}, ${pct}% match`);
     card.innerHTML = `
       <div class="rcard__row1">

@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="content">
-  <a href="{{ url_for('recipes.index') }}" class="recipe-detail__back" aria-label="Back to recipes">← Back</a>
+  <a href="{{ url_for('recipes.index') }}" class="recipe-detail__back" aria-label="Back to recipes" id="back-link">← Back</a>
 
   <div class="recipe-detail">
     {% if recipe.get('match_pct') %}
@@ -107,6 +107,15 @@
 </div>
 
 <script>
+(function () {
+  const backLink = document.getElementById('back-link');
+  if (backLink) {
+    backLink.addEventListener('click', function (e) {
+      if (document.referrer) { e.preventDefault(); history.back(); }
+    });
+  }
+})();
+
 function trackClick(id, url) {
   fetch(`/recipes/${encodeURIComponent(id)}/click`, {
     method: 'POST',
