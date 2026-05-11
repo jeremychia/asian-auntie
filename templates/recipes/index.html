@@ -65,6 +65,13 @@
                   onclick="setExpired({{ val }})">{{ label }}</button>
           {% endfor %}
           <span id="expired-status" style="font-size:var(--t-xs);color:var(--brand-muted)"></span>
+          {% if skipped_ids %}
+          <div style="width:100%;margin-top:var(--s-2)">
+            <label style="font-size:var(--t-xs);display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="hide-skipped-toggle"> Hide skipped recipes
+            </label>
+          </div>
+          {% endif %}
           <div style="width:100%;margin-top:var(--s-2);display:flex;flex-wrap:wrap;gap:var(--s-2);align-items:center">
             <span style="font-size:var(--t-xs);align-self:center">Sort</span>
             <select id="sort-filter" class="rf-filter-select">
@@ -426,6 +433,13 @@
   if (cuisineFilter) cuisineFilter.addEventListener('change', () => { currentCuisine = cuisineFilter.value; markDirty(); });
   if (websiteFilter) websiteFilter.addEventListener('change', () => { currentWebsite = websiteFilter.value; markDirty(); });
 
+  const hideSkippedToggle = document.getElementById('hide-skipped-toggle');
+  if (hideSkippedToggle) {
+    hideSkippedToggle.addEventListener('change', () => {
+      recipeList.classList.toggle('recipe-list--hide-skipped', hideSkippedToggle.checked);
+    });
+  }
+
   // ── Search ───────────────────────────────────────────────────
   function markDirty() {
     const anyActive = ingredients.some(i => i.active);
@@ -528,7 +542,7 @@
 
     const card = document.createElement('a');
     card.href = `/recipes/${encodeURIComponent(r.id)}`;
-    card.className = 'rcard';
+    card.className = SKIPPED.has(r.id) ? 'rcard rcard--skipped' : 'rcard';
     card.addEventListener('click', saveState);
     card.setAttribute('aria-label', `${esc(r.name)}, ${pct}% match`);
     card.innerHTML = `

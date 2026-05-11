@@ -4440,6 +4440,10 @@ select.sort-select:focus {
   color: var(--brand);
   font-weight: 600;
 }
+.recipe-list--hide-skipped .rcard--skipped {
+  display: none;
+}
+
 .rcard__skipped-note {
   font-size: var(--t-xs);
   color: var(--brand-muted);
