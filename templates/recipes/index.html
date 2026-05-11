@@ -316,12 +316,14 @@
     }
 
     if (!showAddInput) {
-      const addChip = document.createElement('button');
-      addChip.type = 'button';
+      const addChip = document.createElement('span');
       addChip.className = 'rf-chip rf-chip--add';
       addChip.textContent = '+ Add';
+      addChip.setAttribute('role', 'button');
+      addChip.setAttribute('tabindex', '0');
       addChip.setAttribute('aria-label', 'Add an ingredient');
       addChip.addEventListener('click', () => { showAddInput = true; render(); setTimeout(() => manualInput && manualInput.focus(), 30); });
+      addChip.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showAddInput = true; render(); setTimeout(() => manualInput && manualInput.focus(), 30); } });
       chipList.appendChild(addChip);
     }
   }

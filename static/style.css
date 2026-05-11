@@ -4099,14 +4099,16 @@ select.sort-select:focus {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
+  align-items: center;
 }
 .rf-chip {
   display: inline-flex;
   align-items: center;
   gap: var(--s-1);
-  padding: 6px 6px 6px 12px;
+  padding: 3px 3px 3px 10px;
   border-radius: 9999px;
-  min-height: 28px;
+  height: 24px;
+  box-sizing: border-box;
   font-family: inherit;
   font-size: var(--t-sm);
   font-weight: 500;
@@ -4115,13 +4117,16 @@ select.sort-select:focus {
   color: var(--brand);
   border: 1px solid var(--brand-faint);
   transition: border-color 0.15s;
+  --pico-form-element-spacing-vertical: 0;
+  --pico-form-element-spacing-horizontal: 0;
+  box-shadow: none;
 }
 .rf-chip:hover {
   border-color: var(--brand);
 }
 .rf-chip__x {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 9999px;
   display: inline-flex;
   align-items: center;
@@ -4152,7 +4157,7 @@ select.sort-select:focus {
   background: transparent;
   border-style: dashed;
   color: var(--brand-muted);
-  padding: 6px 12px;
+  padding: 3px 6px;
   border: 1px dashed var(--brand-faint);
 }
 .rf-chip--add:hover {
