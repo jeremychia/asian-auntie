@@ -86,6 +86,32 @@ RECIPE-004:
     - Weekly refresh check: detect if source URL returns 404 or ingredient count changes significantly
     - If source URL breaks: mark recipe as "source unavailable", still searchable but with a warning
 
+RECIPE-005:
+  title: yes_made ranking boost
+  status: pending
+  decision: |
+    Not yet made. Whether yes_made feedback should boost a recipe's position in search results
+    is deferred until there is user research or engagement data to inform the tradeoff.
+  rationale: |
+    Ambiguous user intent: a user who has made a recipe may want to remake it (favourites boost)
+    or may want to discover something new (no boost, or slight de-prioritisation).
+    Neither assumption is clearly correct. Committing too early risks optimising for the wrong goal.
+    The current approach (badge only, no ranking change) is conservative and reversible.
+  mitigations:
+    - Track click-through rate on "Made before" cards vs. untagged cards once badges are live
+    - Revisit once there is enough data to distinguish "remakerss" from "explorer" behaviour patterns
+
+RECIPE-006:
+  title: Photo upload invitation after yes_made
+  status: pending
+  decision: |
+    Future feature — after marking "Yes, I made it!", invite the user to upload a photo of their dish.
+    Not in scope for the current release.
+  rationale: |
+    Reinforces the feedback loop and builds a sense of community/ownership.
+    Requires image storage, moderation considerations, and UI design for the photo prompt.
+    Added as a future product idea to revisit once the feedback loop basics are shipped.
+
 RECIPE-INTEGRATION:
   title: Integration with Manage Perishables
   status: locked

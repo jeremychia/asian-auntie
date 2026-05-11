@@ -2435,6 +2435,11 @@ select.sort-select:focus {
   padding: 0.25rem 0;
 }
 
+.feedback-thanks--muted {
+  opacity: 0.7;
+  font-style: italic;
+}
+
 /* ── Settings page ─────────────────────────────────────────────── */
 .settings-section {
   background: #fff;
@@ -4441,6 +4446,12 @@ select.sort-select:focus {
   opacity: 0.7;
   margin-top: var(--s-1);
   font-style: italic;
+}
+
+.rcard__made-note {
+  font-size: var(--t-xs);
+  color: var(--brand);
+  margin-top: var(--s-1);
 }
 
 /* Empty / no-results states */

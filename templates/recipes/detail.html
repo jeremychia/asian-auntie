@@ -146,6 +146,12 @@ function getCsrf() {
     {% endfor %}
   ]);
 
+  const MADE = new Set([
+    {% for rid in made_ids %}
+    {{ rid | tojson }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]);
+
   const recipeId = {{ recipe.id | tojson }};
   const recipeName = {{ recipe.name | tojson }};
   const sessionFeedback = new Set();
@@ -176,8 +182,16 @@ function getCsrf() {
     });
   }
 
-  // Show feedback prompt after a short delay
-  setTimeout(() => showFeedback(recipeId, recipeName), 300);
+  // Show persistent note if already answered, otherwise prompt after a short delay
+  if (feedbackSection && MADE.has(recipeId)) {
+    feedbackSection.hidden = false;
+    feedbackSection.innerHTML = `<p class="feedback-thanks">You've made this before.</p>`;
+  } else if (feedbackSection && SKIPPED.has(recipeId)) {
+    feedbackSection.hidden = false;
+    feedbackSection.innerHTML = `<p class="feedback-thanks feedback-thanks--muted">You skipped this one before.</p>`;
+  } else {
+    setTimeout(() => showFeedback(recipeId, recipeName), 300);
+  }
 
   function showFeedback(id, name) {
     if (!feedbackSection || sessionFeedback.has(id)) return;
@@ -231,6 +245,8 @@ function getCsrf() {
     sessionFeedback.add(id);
     if (feedback === 'not_for_me') {
       SKIPPED.add(id);
+    } else if (feedback === 'yes_made') {
+      MADE.add(id);
     }
 
     feedbackSection.innerHTML = `<p class="feedback-thanks">${

@@ -52,10 +52,17 @@ def index():
             user_id=current_user.id, feedback="not_for_me"
         ).all()
     ]
+    made_ids = [
+        e.recipe_id
+        for e in RecipeEngagement.query.filter_by(
+            user_id=current_user.id, feedback="yes_made"
+        ).all()
+    ]
     return render_template(
         "recipes/index.html",
         pantry_items=pantry_items,
         skipped_ids=skipped_ids,
+        made_ids=made_ids,
         user_expired_items_days=current_user.expired_items_days,
     )
 
@@ -169,11 +176,18 @@ def detail(recipe_id: str):
             user_id=current_user.id, feedback="not_for_me"
         ).all()
     ]
+    made_ids = [
+        e.recipe_id
+        for e in RecipeEngagement.query.filter_by(
+            user_id=current_user.id, feedback="yes_made"
+        ).all()
+    ]
 
     return render_template(
         "recipes/detail.html",
         recipe=scored_recipe,
         skipped_ids=skipped_ids,
+        made_ids=made_ids,
     )
 
 

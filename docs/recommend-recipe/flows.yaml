@@ -36,6 +36,7 @@ flows:
       - Pantry item named differently from recipe (e.g., "dark soy" vs "dark soy sauce"): fuzzy match handles
       - User adds then removes ingredient: results update live
       - Large pantry (40+ items): all chips shown, user scrolls or switches to manual for focused search
+      - User previously marked a recipe "Yes, I made it!": card shows a "Made before" note; recipe is not filtered or reranked
     data_collected:
       - User's expired items preference setting (0/7/14/30/90 days)
       - Ingredient source (pantry / manual / mixed)
@@ -70,10 +71,12 @@ flows:
       - Match <50%: card shown at bottom of results, not promoted
       - "View full recipe" always links to original source — instructions never shown inline
       - Feedback prompt: shown once per recipe per session, never repeated if already answered
+      - yes_made: detail page shows "You've made this before." on subsequent visits; feedback prompt is suppressed permanently once answered
     edge_cases:
       - Source link broken: show "Source currently unavailable" — title and ingredient list still shown
       - Recipe has 20+ ingredients: show all with match status, no truncation
-      - User previously marked "Not for me": show faint "You skipped this before" note on card in results
+      - User previously marked "Not for me": show faint "You skipped this before" note on card in results; detail page shows "You skipped this one before." instead of the feedback prompt
+      - User previously marked "Yes, I made it!": show "Made before" note on card in results; detail page shows "You've made this before." instead of the feedback prompt
       - User never taps "View full recipe": no feedback prompt shown (they didn't engage enough to rate)
     data_collected:
       - Recipe ID viewed
