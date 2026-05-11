@@ -8,7 +8,12 @@ from app.extensions import db
 from app.models import Item, RecipeEngagement
 from app.logging_config import get_logger
 from app.recipes.data import RECIPES
-from app.recipes.search import score_recipe, parse_cook_time
+from app.recipes.search import (
+    score_recipe,
+    parse_cook_time,
+    candidate_recipe_indices,
+    _RECIPE_ID_TO_IDX,
+)
 
 recipes_bp = Blueprint("recipes", __name__)
 logger = get_logger(__name__)
@@ -78,8 +83,11 @@ def search():
     if not ingredients:
         return jsonify({"results": [], "total": 0, "has_more": False})
 
+    candidates = candidate_recipe_indices(ingredients)
+
     results = []
-    for recipe in RECIPES:
+    for idx in candidates:
+        recipe = RECIPES[idx]
         # Apply cuisine filter
         if cuisine and recipe.get("cuisine", "") != cuisine:
             continue
@@ -92,7 +100,7 @@ def search():
             if recipe_time_mins < cook_time_min or recipe_time_mins > cook_time_max:
                 continue
 
-        scored = score_recipe(recipe, ingredients)
+        scored = score_recipe(recipe, idx, ingredients)
         if scored:
             results.append(scored)
 
@@ -143,18 +151,14 @@ _RECIPE_IDS = {r["id"] for r in RECIPES}
 @recipes_bp.route("/recipes/<recipe_id>")
 @login_required
 def detail(recipe_id: str):
-    recipe = None
-    for r in RECIPES:
-        if r["id"] == recipe_id:
-            recipe = r
-            break
-
-    if not recipe:
+    recipe_idx = _RECIPE_ID_TO_IDX.get(recipe_id)
+    if recipe_idx is None:
         return "Recipe not found", 404
 
+    recipe = RECIPES[recipe_idx]
     pantry_items = _get_pantry_items(current_user)
     user_ingredients = [item.standard_name or item.name for item in pantry_items]
-    scored_recipe = score_recipe(recipe, user_ingredients)
+    scored_recipe = score_recipe(recipe, recipe_idx, user_ingredients)
 
     if not scored_recipe:
         scored_recipe = recipe

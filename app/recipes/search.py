@@ -1,6 +1,9 @@
 import re
+from collections import defaultdict
+
 from app.ingredient_normalization import normalize_ingredient
 from app.perishables.forms import PANTRY_ITEMS
+from app.recipes.data import RECIPES
 
 
 def parse_cook_time(cook_time_str: str) -> int | None:
@@ -13,12 +16,10 @@ def parse_cook_time(cook_time_str: str) -> int | None:
     cook_time_str = cook_time_str.lower().strip()
     total_minutes = 0
 
-    # Match hours
     hours_match = re.search(r"(\d+)\s*(?:hour|hr)", cook_time_str)
     if hours_match:
         total_minutes += int(hours_match.group(1)) * 60
 
-    # Match minutes
     mins_match = re.search(r"(\d+)\s*(?:min|minute)", cook_time_str)
     if mins_match:
         total_minutes += int(mins_match.group(1))
@@ -88,9 +89,9 @@ SYNONYMS: dict[str, list[str]] = {
     "tamarind juice": ["tamarind"],
     "asam": ["tamarind"],
     "asam jawa": ["tamarind"],
-    # Coriander / cilantro
-    "cilantro": ["coriander"],
-    "coriander leaves": ["coriander"],
+    # Coriander / cilantro — recipes use "cilantro"; map the English name to it
+    "coriander": ["cilantro"],
+    "coriander leaves": ["cilantro"],
     # Spring onions
     "scallions": ["spring onions"],
     "green onions": ["spring onions"],
@@ -142,50 +143,133 @@ SYNONYMS: dict[str, list[str]] = {
 }
 
 
-def _words(text: str) -> set[str]:
+def _words(text: str) -> frozenset[str]:
     tokens = re.sub(r"[^a-z\s]", "", text.lower()).split()
-    return {t for t in tokens if t not in _STOP_WORDS and len(t) > 1}
+    return frozenset(t for t in tokens if t not in _STOP_WORDS and len(t) > 1)
 
 
-def ingredient_matches(recipe_ingredient: str, user_ingredients: list[str]) -> bool:
-    normalized_recipe = (
-        normalize_ingredient(recipe_ingredient) or recipe_ingredient.lower().strip()
-    )
-    normalized_users = [
-        normalize_ingredient(ui) or ui.lower().strip() for ui in user_ingredients
-    ]
+_PANTRY_LOWER: frozenset[str] = frozenset(p.lower() for p in PANTRY_ITEMS)
 
-    if normalized_recipe in normalized_users:
-        return True
+# Pre-computed at module load from data.py's normalized_ingredients.
+# Each entry: list of (raw_ingredient, normalized_lower, word_frozenset).
+_RECIPE_INGREDIENTS: list[list[tuple[str, str, frozenset[str]]]] = []
 
-    # If normalized recipe is in PANTRY_ITEMS, only exact match on canonical names.
-    # This prevents "Grated coconut" from matching "Coconut milk" via word overlap.
-    pantry_lower = [p.lower() for p in PANTRY_ITEMS]
-    if normalized_recipe.lower() in pantry_lower:
-        return False
+# Inverted index: token → set of recipe indices with that token.
+_INGREDIENT_INDEX: dict[str, set[int]] = defaultdict(set)
 
-    ri_words = _words(normalized_recipe.lower())
-    if not ri_words:
-        return False
+# Recipe ID → index into RECIPES (and _RECIPE_INGREDIENTS).
+_RECIPE_ID_TO_IDX: dict[str, int] = {}
 
-    for ui in normalized_users:
-        ui_lower = ui.lower()
-        if ri_words & _words(ui_lower):
+
+def _build_index() -> None:
+    for idx, recipe in enumerate(RECIPES):
+        _RECIPE_ID_TO_IDX[recipe["id"]] = idx
+
+        raw_ings = recipe["ingredients"]
+        # Use pre-normalized forms from data.py; fall back to normalize at load.
+        norm_ings = recipe.get("normalized_ingredients") or [
+            normalize_ingredient(i) or i for i in raw_ings
+        ]
+
+        ing_data: list[tuple[str, str, frozenset[str]]] = []
+        for raw, norm in zip(raw_ings, norm_ings):
+            norm_lower = norm.lower().strip()
+            words = _words(norm_lower)
+            ing_data.append((raw, norm_lower, words))
+            _INGREDIENT_INDEX[norm_lower].add(idx)
+            for word in words:
+                _INGREDIENT_INDEX[word].add(idx)
+
+        _RECIPE_INGREDIENTS.append(ing_data)
+
+
+_build_index()
+
+
+def _normalize_user(ui: str) -> str:
+    """Normalize a single user ingredient, preserving SYNONYMS alias keys as-is.
+
+    normalize_ingredient uses subsequence matching which mis-maps short alias words
+    (e.g. 'shrimp' → 'Dried shrimp', 'egg' → 'Egg noodles') before SYNONYMS can run.
+    Checking SYNONYMS first ensures aliases like 'shrimp' → ['prawns'] always fire.
+    """
+    raw_lower = ui.lower().strip()
+    if raw_lower in SYNONYMS:
+        return raw_lower
+    return (normalize_ingredient(ui) or ui).lower().strip()
+
+
+def candidate_recipe_indices(user_ingredients: list[str]) -> set[int]:
+    """Return indices of recipes sharing at least one ingredient token with the user's list."""
+    candidates: set[int] = set()
+    for ui in user_ingredients:
+        norm = _normalize_user(ui)
+        candidates |= _INGREDIENT_INDEX.get(norm, set())
+        for word in _words(norm):
+            candidates |= _INGREDIENT_INDEX.get(word, set())
+        for canonical in SYNONYMS.get(norm, []):
+            candidates |= _INGREDIENT_INDEX.get(canonical.lower(), set())
+            for word in _words(canonical):
+                candidates |= _INGREDIENT_INDEX.get(word, set())
+    return candidates
+
+
+def _user_norms(user_ingredients: list[str]) -> list[tuple[str, frozenset[str]]]:
+    """Normalize user ingredients once, returning (normalized_lower, word_set) pairs."""
+    result = []
+    for ui in user_ingredients:
+        norm = _normalize_user(ui)
+        result.append((norm, _words(norm)))
+    return result
+
+
+def _ing_matches(
+    recipe_norm: str,
+    recipe_words: frozenset[str],
+    user_norms: list[tuple[str, frozenset[str]]],
+) -> bool:
+    # Exact match
+    for user_norm, _ in user_norms:
+        if recipe_norm == user_norm:
             return True
-        for canonical in SYNONYMS.get(ui_lower.strip(), []):
-            if ri_words & _words(canonical):
+
+    # Synonym expansion must run before the pantry guard so e.g. "shrimp paste"
+    # can match "belacan" even though "belacan" is a canonical pantry item.
+    for user_norm, _ in user_norms:
+        for canonical in SYNONYMS.get(user_norm, []):
+            canon_lower = canonical.lower()
+            if recipe_norm == canon_lower or (recipe_words & _words(canon_lower)):
                 return True
+
+    # Pantry guard: canonical items that didn't exact- or synonym-match must not
+    # match via loose word overlap (prevents "grated coconut" ≠ "coconut milk").
+    if recipe_norm in _PANTRY_LOWER:
+        return False
+
+    if not recipe_words:
+        return False
+
+    for user_norm, user_words in user_norms:
+        shared = recipe_words & user_words
+        # Single-word user ingredients can match on any shared word (e.g. "pork" → "pork belly").
+        # Multi-word user ingredients require ≥2 shared words so that incidental overlap like
+        # "kaffir lime leaves" matching "lime juice" via "lime" is rejected.
+        if shared and (len(user_words) <= 1 or len(shared) >= 2):
+            return True
     return False
 
 
-def score_recipe(recipe: dict, user_ingredients: list[str]) -> dict | None:
+def score_recipe(
+    recipe: dict, recipe_idx: int, user_ingredients: list[str]
+) -> dict | None:
     """Return recipe dict augmented with match metadata, or None if nothing matches."""
+    u_norms = _user_norms(user_ingredients)
     matched, missing = [], []
-    for ing in recipe["ingredients"]:
-        if ingredient_matches(ing, user_ingredients):
-            matched.append(ing)
+    for raw_ing, norm_ing, words_ing in _RECIPE_INGREDIENTS[recipe_idx]:
+        if _ing_matches(norm_ing, words_ing, u_norms):
+            matched.append(raw_ing)
         else:
-            missing.append(ing)
+            missing.append(raw_ing)
 
     total = len(recipe["ingredients"])
     if not matched:

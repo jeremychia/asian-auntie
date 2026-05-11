@@ -125,6 +125,13 @@ def write_staging(site_key: str, recipes: list[dict]) -> pathlib.Path:
     return path
 
 
+def _normalize_ingredients(raw_ingredients: list[str]) -> list[str]:
+    """Return canonical normalized form of each ingredient using the pantry map."""
+    from app.ingredient_normalization import normalize_ingredient
+
+    return [normalize_ingredient(i) or i.lower().strip() for i in raw_ingredients]
+
+
 def emit_data_py(recipes: list[dict], source: Optional[str] = None) -> str:
     """Render a list of recipe dicts as a valid app/recipes/data.py file."""
     source_note = source or "scripts/pipeline/run.py"
@@ -150,6 +157,10 @@ def emit_data_py(recipes: list[dict], source: Optional[str] = None) -> str:
             continue
         lines.append(f"    # ── {cuisine} {'─' * (73 - len(cuisine))}")
         for r in by_cuisine[cuisine]:
+            normalized = r.get(
+                "normalized_ingredients",
+                _normalize_ingredients(r["ingredients"]),
+            )
             lines.append("    {")
             lines.append(f'        "id": "{r["id"]}",')
             lines.append(f'        "name": "{r["name"]}",')
@@ -160,6 +171,9 @@ def emit_data_py(recipes: list[dict], source: Optional[str] = None) -> str:
             lines.append(f'        "difficulty": "{r["difficulty"]}",')
             lines.append(
                 f'        "ingredients": {_repr_list(r["ingredients"], indent=8)},'
+            )
+            lines.append(
+                f'        "normalized_ingredients": {_repr_list(normalized, indent=8)},'
             )
             lines.append("    },")
 

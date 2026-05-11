@@ -1,8 +1,11 @@
 """Ingredient normalization — maps raw names to canonical pantry items."""
 
+from functools import lru_cache
+
 from app.perishables.forms import PANTRY_ITEMS
 
 
+@lru_cache(maxsize=512)
 def normalize_ingredient(name: str) -> str | None:
     """Return the best-matching PANTRY_ITEMS entry for a given name, or None.
 
