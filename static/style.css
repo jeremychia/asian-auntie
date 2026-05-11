@@ -2457,6 +2457,43 @@ select.sort-select:focus {
   margin: 0 0 var(--s-4);
   line-height: 1.5;
 }
+.settings-section--support {
+  background: var(--brand-tint);
+}
+.bmc-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+}
+.bmc-card__text {
+  flex: 1;
+  min-width: 0;
+}
+.bmc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--brand);
+  text-decoration: none;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 8px;
+  padding: var(--s-2) var(--s-4);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.bmc-link:hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+.bmc-link__icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
 .settings-label {
   font-size: var(--t-xs);
   font-weight: 700;
