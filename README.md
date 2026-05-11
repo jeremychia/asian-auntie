@@ -149,7 +149,7 @@ The repo includes a `render.yaml` for one-click deploys. This section walks thro
 
 - A [Render](https://render.com) account
 - A [Google Cloud](https://console.cloud.google.com) project with a GCS bucket created
-- A Postgres database (Render's managed Postgres works)
+- A [Neon](https://neon.tech) project for the Postgres database
 
 ### 1. Create GCS buckets and a service account
 
@@ -169,9 +169,9 @@ For each bucket:
 
 Then create a single service account with the **Storage Object Admin** role on both buckets and generate a JSON key.
 
-### 2. Create a Postgres database on Render
+### 2. Create a Postgres database on Neon
 
-In the Render dashboard, create a new **PostgreSQL** service. Copy the **Internal Database URL** — you'll use it as `DATABASE_URL`.
+Create a project at [neon.tech](https://neon.tech). Copy the **pooled connection string** (the one with `-pooler` in the hostname) — you'll use it as `DATABASE_URL`. Make sure the URL includes `?sslmode=require`.
 
 ### 3. Deploy the web service
 
