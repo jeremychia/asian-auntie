@@ -23,7 +23,7 @@ class Config:
 
     # Rate limiting
     RATELIMIT_DEFAULT = "1000 per day;500 per hour"
-    RATELIMIT_STORAGE_URL = "memory://"
+    RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
 
     # File uploads — local fallback used when GCS_BUCKET_NAME is not set
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
