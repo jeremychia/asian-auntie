@@ -1,3 +1,4 @@
+import logging
 import os
 import secrets
 from datetime import timedelta
@@ -73,15 +74,21 @@ class ProductionConfig(Config):
 
     @classmethod
     def validate(cls):
-        required = [
-            "FLASK_SECRET_KEY",
-            "JWT_SECRET_KEY",
-            "VAPID_PRIVATE_KEY",
-            "VAPID_PUBLIC_KEY",
-        ]
-        missing = [k for k in required if not os.environ.get(k)]
-        if missing:
-            raise RuntimeError(f"Missing required env vars for production: {missing}")
+        critical = ["FLASK_SECRET_KEY", "JWT_SECRET_KEY"]
+        missing_critical = [k for k in critical if not os.environ.get(k)]
+        if missing_critical:
+            raise RuntimeError(
+                f"Missing required env vars for production: {missing_critical}"
+            )
+
+        optional = {
+            "VAPID_PRIVATE_KEY": "web push notifications",
+            "VAPID_PUBLIC_KEY": "web push notifications",
+        }
+        _logger = logging.getLogger(__name__)
+        for key, service in optional.items():
+            if not os.environ.get(key):
+                _logger.warning("%s is not set — %s will be unavailable", key, service)
 
 
 config_by_name = {
