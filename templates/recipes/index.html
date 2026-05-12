@@ -125,8 +125,14 @@
 
   <!-- ── Loading state ─────────────────────────────────────────── -->
   <div id="loading-state" class="recipe-loading" hidden>
-    <span class="recipe-loading__icon">🥡</span>
-    <p class="recipe-loading__text">Cooking up some recipes…</p>
+    <span class="recipe-loading__icon" aria-hidden="true">
+      <svg viewBox="0 0 44 44" width="44" height="44" fill="none">
+        <circle cx="22" cy="22" r="18" stroke="var(--brand-faint)" stroke-width="4"/>
+        <circle cx="22" cy="22" r="18" stroke="var(--brand)" stroke-width="4"
+                stroke-dasharray="70 43" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <p class="recipe-loading__text">Finding matching recipes…</p>
   </div>
 
   <!-- ── Results zone ──────────────────────────────────────────── -->

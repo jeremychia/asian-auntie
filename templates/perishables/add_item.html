@@ -28,19 +28,19 @@
 {# ── Method landing ── #}
 <div id="method-landing">
   <h1 class="add-title">Add an item</h1>
-  <p class="add-sub">Snap the label and we'll fill in the details. Or scan a barcode or type it in.</p>
+  <p class="add-sub">Scan the barcode for the quickest result. Or snap the label, or type it in.</p>
 
-  <button type="button" class="add-capture" onclick="startPhotos()" aria-label="Take photo of item">
+  <button type="button" class="add-capture" onclick="startBarcode()" aria-label="Scan barcode">
     <div class="add-capture__icon">
-      <svg><use href="#ai-camera"/></svg>
+      <svg><use href="#ai-barcode"/></svg>
     </div>
-    <p class="add-capture__title">Snap the label</p>
-    <p class="add-capture__sub">We'll read the name and expiry date — you confirm.</p>
+    <p class="add-capture__title">Scan barcode</p>
+    <p class="add-capture__sub">Point at the barcode — we'll look up the product automatically.</p>
   </button>
 
   <div class="add-alt-routes">
-    <button type="button" class="add-alt-route" onclick="startBarcode()">
-      <svg><use href="#ai-barcode"/></svg> Scan barcode
+    <button type="button" class="add-alt-route" onclick="startPhotos()">
+      <svg><use href="#ai-camera"/></svg> Snap the label
     </button>
     <a href="{{ url_for('perishables.add_item') }}?skip=1" class="add-alt-route">
       <svg><use href="#ai-edit"/></svg> Type it in
