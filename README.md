@@ -103,6 +103,9 @@ Key environment variables:
 | `FLASK_SECRET_KEY`               | Yes              | Flask session signing key                                                                                           |
 | `JWT_SECRET_KEY`                 | Yes              | JWT signing key (different from above)                                                                              |
 | `DATABASE_URL`                   | Yes              | Postgres connection string                                                                                          |
+| `VAPID_PRIVATE_KEY`              | Yes              | VAPID private key for web push notifications                                                                        |
+| `VAPID_PUBLIC_KEY`               | Yes              | VAPID public key for web push notifications                                                                         |
+| `VAPID_CLAIMS_EMAIL`             | No               | Contact email sent with push requests (default: `admin@asian-auntie.app`)                                           |
 | `GROQ_API_KEY`                   | Recommended      | Groq API key for item recognition                                                                                   |
 | `OPENAI_API_KEY`                 | Fallback         | OpenAI key if Groq not set                                                                                          |
 | `OLLAMA_BASE_URL`                | Local dev        | Ollama server URL, e.g. `http://localhost:11434`                                                                    |
@@ -111,6 +114,8 @@ Key environment variables:
 | `LOG_LEVEL`                      | No               | `DEBUG`, `INFO`, `WARNING`, or `ERROR` (default: `INFO`)                                                            |
 | `FLASK_ENV`                      | No               | `development` or `production`                                                                                       |
 | `ALLOWED_ORIGINS`                | Yes              | Comma-separated CORS origins                                                                                        |
+
+> **Production startup guard** — when `FLASK_ENV=production`, the app will refuse to start if any of `FLASK_SECRET_KEY`, `JWT_SECRET_KEY`, `VAPID_PRIVATE_KEY`, or `VAPID_PUBLIC_KEY` are missing. In development, `FLASK_SECRET_KEY` and `JWT_SECRET_KEY` fall back to a random value per restart (sessions won't survive restarts, which is fine locally).
 
 ## Development Commands
 

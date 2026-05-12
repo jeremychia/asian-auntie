@@ -1,10 +1,11 @@
 import os
+import secrets
 from datetime import timedelta
 
 
 class Config:
     # Flask
-    SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
+    SECRET_KEY = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 
     # Database — rewrite postgres(ql):// to use psycopg3 dialect; Neon/Render
     # supply postgresql:// which SQLAlchemy maps to psycopg2 by default
@@ -15,9 +16,10 @@ class Config:
         _db_url = _db_url.replace("postgresql://", "postgresql+psycopg://", 1)
     SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
     # JWT
-    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-jwt-secret-change-me")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or secrets.token_hex(32)
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
@@ -43,14 +45,8 @@ class Config:
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
     # Web Push (VAPID) — generate your own keys with py_vapid for production
-    VAPID_PRIVATE_KEY = os.environ.get(
-        "VAPID_PRIVATE_KEY",
-        "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgZxc1+xhanvM0lNTT\nUEsuid/qEtNYikJvykLdFHVxV0mhRANCAAR5j+/eL/K2r0x+eBbQ6fd6MemCUlLb\nuOJPxE18VSHpa+9cQcOaa7b++Ed+ijufyB1d+tSsardyGPiNgIs//lr4\n-----END PRIVATE KEY-----\n",
-    )
-    VAPID_PUBLIC_KEY = os.environ.get(
-        "VAPID_PUBLIC_KEY",
-        "BHmP794v8ravTH54FtDp93ox6YJSUtu44k_ETXxVIelr71xBw5prtv74R36KO5_IHV361Kxqt3IY-I2Aiz_-Wvg",
-    )
+    VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
+    VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
     VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "admin@asian-auntie.app")
 
     # Open Food Facts contribution (optional — only needed to contribute data back)
@@ -75,6 +71,18 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SECURE = True
     REMEMBER_COOKIE_HTTPONLY = True
 
+    @classmethod
+    def validate(cls):
+        required = [
+            "FLASK_SECRET_KEY",
+            "JWT_SECRET_KEY",
+            "VAPID_PRIVATE_KEY",
+            "VAPID_PUBLIC_KEY",
+        ]
+        missing = [k for k in required if not os.environ.get(k)]
+        if missing:
+            raise RuntimeError(f"Missing required env vars for production: {missing}")
+
 
 config_by_name = {
     "development": DevelopmentConfig,
@@ -84,4 +92,7 @@ config_by_name = {
 
 def get_config():
     env = os.environ.get("FLASK_ENV", "development")
-    return config_by_name.get(env, DevelopmentConfig)
+    cfg = config_by_name.get(env, DevelopmentConfig)
+    if hasattr(cfg, "validate"):
+        cfg.validate()
+    return cfg
