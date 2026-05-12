@@ -49,6 +49,8 @@ def settings():
         cuisine_counts=CUISINE_COUNTS,
         cuisine_prefs=cuisine_prefs,
         expired_items_days=current_user.expired_items_days,
+        user_locations=get_user_locations(current_user),
+        default_locations=_DEFAULT_LOCATIONS,
     )
 
 
@@ -91,6 +93,36 @@ def save_expired_items():
     if days < 0 or days > 90:
         return jsonify({"error": "days must be between 0 and 90"}), 400
     current_user.expired_items_days = days
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+_DEFAULT_LOCATIONS = ["Fridge", "Freezer", "Pantry", "Cupboard", "Counter"]
+
+
+def get_user_locations(user):
+    if user.custom_locations:
+        try:
+            locs = json.loads(user.custom_locations)
+            if isinstance(locs, list) and locs:
+                return locs
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return _DEFAULT_LOCATIONS
+
+
+@notifications_bp.route("/settings/locations", methods=["POST"])
+@login_required
+def save_locations():
+    data = request.get_json(silent=True) or {}
+    locs = data.get("locations", [])
+    if not isinstance(locs, list):
+        return jsonify({"error": "invalid"}), 400
+    cleaned = [str(loc).strip()[:32] for loc in locs if str(loc).strip()][:20]
+    if not cleaned:
+        current_user.custom_locations = None
+    else:
+        current_user.custom_locations = json.dumps(cleaned)
     db.session.commit()
     return jsonify({"ok": True})
 

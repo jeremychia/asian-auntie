@@ -472,6 +472,16 @@ function handleDoneClick(event) {
 </div>
 <h1 class="add-title">Does this look right?</h1>
 <p class="add-sub">{% if source == 'photo' %}We've filled in what we could read — tap any field to fix it.{% else %}Check the details below and make any changes.{% endif %}</p>
+{% if source == 'photo' %}
+  {% if confidence >= 0.6 %}
+  <p class="add-ai-note add-ai-note--ok">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg>
+    AI recognised the label
+  </p>
+  {% else %}
+  <p class="add-ai-note add-ai-note--warn">Couldn't read the label clearly — please check the fields below.</p>
+  {% endif %}
+{% endif %}
 
 <form method="post" action="{{ url_for('perishables.add_item') }}" enctype="multipart/form-data">
   {{ form.hidden_tag() }}
@@ -533,7 +543,7 @@ function handleDoneClick(event) {
       <div>
         <div class="add-field-row">
           <label class="add-field-label" for="name">Item name</label>
-          {% if source == 'photo' %}<span class="add-ai-pill">
+          {% if source == 'photo' and confidence >= 0.6 %}<span class="add-ai-pill">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg> Read
           </span>{% endif %}
         </div>
@@ -552,7 +562,7 @@ function handleDoneClick(event) {
               </svg>
             </span>
           </label>
-          {% if source == 'photo' %}<span class="add-ai-pill">
+          {% if source == 'photo' and confidence >= 0.6 %}<span class="add-ai-pill">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg> Suggested
           </span>{% endif %}
         </div>
@@ -568,7 +578,10 @@ function handleDoneClick(event) {
       </div>
 
       <div>
-        <div class="add-field-row"><span class="add-field-label">Where is it?</span></div>
+        <div class="add-field-row">
+          <span class="add-field-label">Where is it?</span>
+          <a href="{{ url_for('notifications.settings') }}#locations" class="add-field-hint">Edit locations</a>
+        </div>
         {# Hidden input for location — driven by chips below #}
         {{ form.location(id="location", style="display:none", maxlength="32") }}
         <div class="add-chips" id="location-chips" role="group" aria-label="Storage location"></div>
@@ -580,7 +593,7 @@ function handleDoneClick(event) {
             Expires
             {% if expiry_source %}<span class="expiry-source-label expiry-source-label--{{ expiry_source }}" style="margin-left:6px">{{ "Printed date" if expiry_source == "printed" else "Estimated" }}</span>{% endif %}
           </label>
-          {% if source == 'photo' and expiry_source == 'printed' %}<span class="add-ai-pill">
+          {% if source == 'photo' and confidence >= 0.6 and expiry_source == 'printed' %}<span class="add-ai-pill">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg> Read
           </span>{% endif %}
         </div>
@@ -682,7 +695,10 @@ function toggleMore() {
       </div>
 
       <div>
-        <div class="add-field-row"><span class="add-field-label">Where is it?</span></div>
+        <div class="add-field-row">
+          <span class="add-field-label">Where is it?</span>
+          <a href="{{ url_for('notifications.settings') }}#locations" class="add-field-hint">Edit locations</a>
+        </div>
         {{ form.location(id="location", style="display:none", maxlength="32") }}
         <div class="add-chips" id="location-chips" role="group" aria-label="Storage location"></div>
       </div>
@@ -1011,11 +1027,9 @@ checkExpiryWarning();
     { id: 'tofu', label: 'Tofu' }, { id: 'oil', label: 'Oil' },
     { id: 'dried', label: 'Dried' }, { id: 'other', label: 'Other' },
   ];
-  const LOCATIONS = [
-    { id: 'fridge', label: 'Fridge' }, { id: 'freezer', label: 'Freezer' },
-    { id: 'pantry', label: 'Pantry' }, { id: 'cupboard', label: 'Cupboard' },
-    { id: 'counter', label: 'Counter' },
-  ];
+  const LOCATIONS = {{ user_locations | tojson }}.map(function(l) {
+    return { id: l.toLowerCase(), label: l };
+  });
   const QUICK_EXPIRY = [
     { days: 3, label: '+3 days' }, { days: 7, label: '+1 week' },
     { days: 30, label: '+1 month' }, { days: 180, label: '+6 months' }, { days: 365, label: '+1 year' },

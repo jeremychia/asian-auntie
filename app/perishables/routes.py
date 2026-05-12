@@ -22,6 +22,7 @@ from werkzeug.utils import secure_filename
 from app.extensions import db
 from app.models import Item, ItemPhoto
 from app.perishables.forms import AddItemForm, ITEM_TYPES, PANTRY_ITEMS
+from app.notifications.routes import get_user_locations
 from app.recognition.service import recognize_items_multi
 from app.logging_config import get_logger
 from app.ingredient_normalization import normalize_ingredient
@@ -367,11 +368,17 @@ def dashboard():
 def add_item():
     # ── GET: photo capture page (or skip directly to manual form) ─────────────
     if request.method == "GET":
+        user_locs = get_user_locations(current_user)
         if request.args.get("skip"):
             return render_template(
-                "perishables/add_item.html", step="manual", form=AddItemForm()
+                "perishables/add_item.html",
+                step="manual",
+                form=AddItemForm(),
+                user_locations=user_locs,
             )
-        return render_template("perishables/add_item.html", step="photo")
+        return render_template(
+            "perishables/add_item.html", step="photo", user_locations=user_locs
+        )
 
     step = request.form.get("step", "photo")
     logger.info(
@@ -413,7 +420,10 @@ def add_item():
         if not saved_photos:
             logger.warning("add_item_photo_no_valid_photos")
             return render_template(
-                "perishables/add_item.html", step="manual", form=AddItemForm()
+                "perishables/add_item.html",
+                step="manual",
+                form=AddItemForm(),
+                user_locations=get_user_locations(current_user),
             )
 
         logger.info("add_item_recognition_start", num_photos=len(saved_photos))
@@ -464,6 +474,7 @@ def add_item():
             photo_items=photo_data,
             expiry_source=expiry_source,
             source="photo",
+            user_locations=get_user_locations(current_user),
         )
 
     # ── POST step=barcode_confirm: barcode lookup result → show confirmation ──
@@ -520,6 +531,7 @@ def add_item():
             photo_items=photo_data,
             expiry_source="estimated",
             source="barcode",
+            user_locations=get_user_locations(current_user),
         )
 
     # ── POST step=confirm: save item from confirmation card ───────────────────
@@ -626,6 +638,7 @@ def add_item():
             recognition=None,
             photo_items=photo_items,
             source=form.source.data or "photo",
+            user_locations=get_user_locations(current_user),
         )
 
     # ── POST step=manual: save item from manual form ──────────────────────────
@@ -670,7 +683,12 @@ def add_item():
             flash(f'"{item.name}" added to your pantry.', "success")
             return redirect(url_for("perishables.dashboard"))
 
-        return render_template("perishables/add_item.html", step="manual", form=form)
+        return render_template(
+            "perishables/add_item.html",
+            step="manual",
+            form=form,
+            user_locations=get_user_locations(current_user),
+        )
 
     return redirect(url_for("perishables.add_item"))
 

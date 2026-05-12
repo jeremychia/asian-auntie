@@ -37,6 +37,9 @@ class User(UserMixin, db.Model):
     # Recipe expiry preference: 0 = exclude expired, >0 = include up to N days past expiry
     expired_items_days = db.Column(db.Integer, nullable=False, default=0)
 
+    # Storage locations for this user — JSON list of strings; null = use app defaults
+    custom_locations = db.Column(db.Text, nullable=True)
+
     items = db.relationship("Item", back_populates="user", lazy="dynamic")
     refresh_tokens = db.relationship(
         "RefreshToken", back_populates="user", lazy="dynamic"

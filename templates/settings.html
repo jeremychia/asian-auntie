@@ -76,6 +76,32 @@
     </div>
   </section>
 
+  <section class="settings-section" id="locations">
+    <h2 class="settings-section__title">Storage locations</h2>
+    <p class="settings-section__desc">
+      Where do you store things? Add or remove locations to match your setup —
+      these appear as options when you add an item.
+    </p>
+    <div class="loc-list" id="loc-list">
+      {% for loc in user_locations %}
+      <div class="loc-item" data-loc="{{ loc }}">
+        <span class="loc-item__name">{{ loc }}</span>
+        <span class="loc-item__remove" tabindex="0" aria-label="Remove {{ loc }}">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="loc-add-row">
+      <input type="text" id="loc-new-input" class="settings-input" placeholder="New location…" maxlength="32" style="flex:1">
+      <button type="button" class="btn btn-secondary" id="loc-add-btn">Add</button>
+    </div>
+    <div class="settings-actions">
+      <button class="btn btn-primary" id="save-locations-btn">Save locations</button>
+      <span class="save-confirm" id="locations-saved" hidden>✓ Saved</span>
+    </div>
+  </section>
+
   <section class="settings-section">
     <h2 class="settings-section__title">Expiry notifications</h2>
     <p class="settings-section__desc">
@@ -178,6 +204,57 @@ document.querySelectorAll('#cuisine-chips .cuisine-chip').forEach(chip => {
     }
   });
 });
+
+// Locations
+(function() {
+  function getLocations() {
+    return [...document.querySelectorAll('#loc-list .loc-item')].map(el => el.dataset.loc);
+  }
+
+  function addLocItem(name) {
+    const list = document.getElementById('loc-list');
+    const div = document.createElement('div');
+    div.className = 'loc-item';
+    div.dataset.loc = name;
+    div.innerHTML = `<span class="loc-item__name">${name}</span><span class="loc-item__remove" tabindex="0" aria-label="Remove ${name}"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></span>`;
+    bindRemove(div.querySelector('.loc-item__remove'));
+    list.appendChild(div);
+  }
+
+  function bindRemove(el) {
+    el.addEventListener('click', () => el.closest('.loc-item').remove());
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.closest('.loc-item').remove(); } });
+  }
+  document.querySelectorAll('#loc-list .loc-item__remove').forEach(bindRemove);
+
+  document.getElementById('loc-add-btn').addEventListener('click', () => {
+    const input = document.getElementById('loc-new-input');
+    const val = input.value.trim();
+    if (!val) return;
+    const existing = getLocations().map(l => l.toLowerCase());
+    if (existing.includes(val.toLowerCase())) { input.value = ''; return; }
+    addLocItem(val);
+    input.value = '';
+  });
+
+  document.getElementById('loc-new-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('loc-add-btn').click(); }
+  });
+
+  document.getElementById('save-locations-btn').addEventListener('click', async () => {
+    const locs = getLocations();
+    const res = await fetch('/settings/locations', {
+      method: 'POST',
+      headers: csrfHeaders(),
+      body: JSON.stringify({ locations: locs }),
+    });
+    if (res.ok) {
+      const savedEl = document.getElementById('locations-saved');
+      savedEl.hidden = false;
+      setTimeout(() => { savedEl.hidden = true; }, 2500);
+    }
+  });
+})();
 
 document.getElementById('save-cuisines-btn').addEventListener('click', async () => {
   const selected = [...document.querySelectorAll('#cuisine-chips input:checked')].map(el => el.value);
