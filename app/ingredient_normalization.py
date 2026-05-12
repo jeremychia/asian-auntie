@@ -19,12 +19,25 @@ def normalize_ingredient(name: str) -> str | None:
     def score(candidate: str) -> float:
         s = candidate.lower()
         if q in s:
-            return 100 + len(q) / len(s) * 10
+            # raw is a substring of the PANTRY_ITEM — require it covers ≥ 55% of
+            # the candidate so "water" doesn't match "Water chestnuts" and
+            # "mushrooms" doesn't match "Wood ear mushrooms"
+            coverage = len(q) / len(s)
+            return (100 + coverage * 10) if coverage >= 0.55 else 0
+        if s in q:
+            # PANTRY_ITEM is a substring of the raw ingredient (e.g. "gochugaru"
+            # inside "chilli powder/gochugaru, adjust accordingly") — always accept
+            return 100 + len(s) / len(q) * 10
+        # Subsequence: shorter must be ≥ 50% of the longer to avoid spurious matches
+        # ("pasta" ⊂ "potato starch" scores 0 because 5/13 < 0.5)
+        shorter, longer = (q, s) if len(q) <= len(s) else (s, q)
+        if len(shorter) / len(longer) < 0.5:
+            return 0
         j = 0
-        for ch in s:
-            if j < len(q) and ch == q[j]:
+        for ch in longer:
+            if j < len(shorter) and ch == shorter[j]:
                 j += 1
-        return (10 + len(q) / len(s) * 10) if j == len(q) else 0
+        return (10 + len(shorter) / len(longer) * 10) if j == len(shorter) else 0
 
     scored = [(score(item), item) for item in PANTRY_ITEMS]
     best_score, best_item = max(scored, key=lambda x: x[0])

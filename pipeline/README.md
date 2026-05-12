@@ -86,25 +86,45 @@ If you see `"@type": "Recipe"`, this works out of the box.
 
 **How to add:** just add an entry to `pipeline/sites.py` — no code changes.
 
-### Type 2: HTML microdata (older blogs)
+### Type 2: Plain HTML — no recipe plugin
 
-Some older WordPress sites use `itemprop` attributes in HTML instead of
-(or alongside) JSON-LD:
+Some WordPress food blogs (e.g. Shivangi Kooks) write recipe content directly
+in the post body without a recipe plugin. There is no JSON-LD and no
+`itemprop` markup — ingredients live in a plain `<ul>/<li>` list after an
+"Ingredients" heading.
 
-```html
-<span itemprop="cookTime" content="PT20M">20 minutes</span>
-<span itemprop="recipeIngredient">2 tablespoons sesame oil</span>
-```
+**How to check:** open page source (Ctrl+U) and search for `"@type": "Recipe"`
+(JSON-LD) and `wprm-recipe-ingredient` (WP Recipe Maker). If neither is
+present but you can see an `<h3>Ingredients</h3>` followed by a `<ul>`, use
+this extraction mode.
 
-**How to handle:** add a fallback extractor in `pipeline/extract.py`:
+**How to add:**
 
 ```python
-def extract_from_microdata(html_text: str) -> Optional[dict]:
-    # parse itemprop="recipeIngredient", itemprop="cookTime", etc.
-    ...
+"my_site": {
+    "name": "My Site",
+    "discovery": "category",
+    "delay": 2.0,
+    "max_pages": 3,
+    "extraction": "html",           # ← triggers heading-based HTML extraction
+    "categories": [
+        ("https://mysite.com/category/lunch/", "Indian"),
+    ],
+},
 ```
 
-Then call it in `map_to_recipe` when JSON-LD returns nothing.
+**How it works:** `find_recipe_html()` in `extract.py` opens an "ingredient
+section" when it sees a short heading (≤ 40 chars) containing "ingredient",
+collects all `<ul>/<li>` blocks until an "Instructions" heading closes the
+section, then picks the blocks that score ≥ 60% ingredient-like items.
+Sub-section headings (Dough / Filling / Sauce) are ignored — they don't close
+the section. Cook time is scraped from labeled text near "cook time:" or
+"total time:" labels.
+
+**Limitations:** depends on consistent heading names. If the site uses "What
+you'll need" instead of "Ingredients", or instructions under "Method" not
+"Instructions", you may need to extend `_is_ingredient_heading()` or
+`_INSTRUCTIONS_RE` in `extract.py`.
 
 ### Type 3: Site-specific API or JSON endpoint
 
@@ -237,46 +257,115 @@ Both `cache/` and `staging/` are gitignored.
 
 ## Adding a New Site
 
-1. **Verify JSON-LD** — open a recipe page source, search `application/ld+json`.
+### Step 1 — identify the extraction type
 
-2. **Find category URLs** — confirm pagination works (`/page/2/`).
+Open a recipe page source and search for:
 
-3. **Add to `pipeline/sites.py`**:
+| What you find                                                    | Extraction type                             |
+| ---------------------------------------------------------------- | ------------------------------------------- |
+| `"@type": "Recipe"` inside `<script type="application/ld+json">` | JSON-LD (default)                           |
+| `<script id="__NEXT_DATA__">`                                    | Next.js (`"extraction": "nextdata"`)        |
+| `wprm-recipe-ingredient` class names                             | WP Recipe Maker — handled by HTML extractor |
+| `<h3>Ingredients</h3>` + plain `<ul>`                            | Plain HTML (`"extraction": "html"`)         |
 
-   ```python
-   "my_site": {
-       "name": "My Site",
-       "discovery": "category",
-       "delay": 2.0,
-       "max_pages": 5,
-       "categories": [
-           ("https://mysite.com/recipes/vietnamese/", "Vietnamese"),
-       ],
-   },
-   ```
+### Step 2 — find category or sitemap URLs
 
-4. **Test discovery:**
+For category discovery: confirm WordPress pagination works (`/page/2/`).
+For sitemap discovery: check `https://<domain>/sitemap.xml`.
 
-   ```bash
-   uv run python pipeline/run.py --site my_site --discover-only
-   ```
+### Step 3 — add to `pipeline/sites.py`
 
-5. **Test extraction:**
-   ```bash
-   uv run python pipeline/run.py --site my_site --limit 3
-   cat pipeline/cache/my_site.jsonl | python -m json.tool
-   ```
+**JSON-LD site (most common):**
+
+```python
+"my_site": {
+    "name": "My Site",
+    "discovery": "category",
+    "delay": 2.0,
+    "max_pages": 5,
+    "categories": [
+        ("https://mysite.com/recipes/vietnamese/", "Vietnamese"),
+    ],
+},
+```
+
+**Plain-HTML site (no recipe plugin):**
+
+```python
+"my_site": {
+    "name": "My Site",
+    "discovery": "category",
+    "delay": 2.0,
+    "max_pages": 3,
+    "extraction": "html",
+    "categories": [
+        ("https://mysite.com/category/lunch/", "Indian"),
+        ("https://mysite.com/category/dinner/", "Indian"),
+    ],
+},
+```
+
+### Step 4 — test discovery
+
+```bash
+uv run python pipeline/run.py --site my_site --discover-only
+```
+
+### Step 5 — test extraction on a small batch
+
+```bash
+uv run python pipeline/run.py --site my_site --limit 5
+```
+
+Open `pipeline/staging/<date>_my_site.py` and check:
+
+- Ingredient lists look clean (no nav links, no prose paragraphs)
+- `normalized_ingredients` maps PANTRY_ITEMS correctly (soy sauce → Dark soy sauce etc.)
+- `cook_time` is populated (or "unknown" for recipes without explicit timing)
+
+### Step 6 — full scrape and import
+
+```bash
+# Full scrape (cached URLs are skipped on subsequent runs)
+uv run python pipeline/run.py --site my_site
+
+# Review pipeline/staging/<date>_my_site.py — delete bad entries
+
+# Copy approved dict blocks directly into app/recipes/data.py
+# (format is identical — no reformatting needed)
+```
 
 ---
 
 ## Ingredient Cleaning
 
-`transform.clean_ingredient()` normalises each ingredient string:
+There are two cleaning stages, applied in sequence.
 
-1. Strip parenthetical notes: `"chicken (boneless)"` → `"chicken"`
-2. Strip quantity + unit: `"2 tbsp sesame oil"` → `"sesame oil"`
-3. Handle modifiers: `"¼ heaping teaspoon turmeric"` → `"turmeric"`
-4. Strip leading numbers: `"3 spring onions"` → `"spring onions"`
+### Stage 1 — `transform.clean_ingredient()` (stored in `recipe["ingredients"]`)
+
+Produces a human-readable ingredient name, retaining preparation context:
+
+1. Strip leading `+` (used by some blogs as "extra/optional" marker)
+2. Strip parenthetical notes: `"chicken (boneless)"` → `"chicken"`
+3. Strip quantity + unit: `"2 tbsp sesame oil"` → `"sesame oil"`
+   - Unit word-boundary check prevents `g` stripping the first letter of "garlic"
+4. Strip leading bare numbers: `"3 spring onions"` → `"spring onions"`
 5. Lowercase and collapse whitespace
 
-The goal is a bare ingredient name for matching against a user's pantry.
+Result: `"garlic, chopped"`, `"sesame seeds"`, `"uncooked whole wheat noodles"`.
+
+### Stage 2 — `store._pre_normalize()` (stored in `recipe["normalized_ingredients"]`)
+
+Applied before PANTRY_ITEMS lookup; produces a simplified form for matching:
+
+1. Strip everything after the first comma: `"garlic, chopped"` → `"garlic"`
+2. Strip trailing qualifiers: `"pasta of your choice"` → `"pasta"`,
+   `"salt to taste"` → `"salt"`, `"water as needed"` → `"water"`
+3. Strip leading state adjectives: `"uncooked whole wheat noodles"` → `"whole wheat noodles"`,
+   `"boiled potato"` → `"potato"`
+4. Map to a canonical PANTRY_ITEMS entry via `normalize_ingredient()` — bidirectional
+   substring + subsequence matching, so both `"soy sauce"` → `"Dark soy sauce"` and
+   `"gochujang paste"` → `"Gochujang"` resolve correctly
+5. Fall back to the pre-normalized string if no PANTRY_ITEMS entry matches
+
+Result: `"garlic"`, `"Sesame seeds"`, `"whole wheat noodles"`.

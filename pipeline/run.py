@@ -45,6 +45,8 @@ from pipeline.extract import (
     map_to_recipe,
     find_recipe_nextdata,
     map_nextdata_to_recipe,
+    find_recipe_html,
+    map_html_to_recipe,
 )
 from pipeline import store
 
@@ -115,6 +117,14 @@ def _scrape_site(
                 print(f"  [NO NEXT_DATA] {url}", file=sys.stderr)
                 continue
             recipe = map_nextdata_to_recipe(data, site["name"], cuisine, url)
+        elif site.get("extraction") == "html":
+            slug = url.rstrip("/").rsplit("/", 1)[-1]
+            name_hint = slug.replace("-", " ").title()
+            data = find_recipe_html(html_text, name_hint)
+            if not data:
+                print(f"  [NO HTML RECIPE] {url}", file=sys.stderr)
+                continue
+            recipe = map_html_to_recipe(data, site["name"], cuisine, url)
         else:
             jsonld = find_recipe_jsonld(html_text)
             if not jsonld:

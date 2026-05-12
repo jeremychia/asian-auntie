@@ -16,11 +16,22 @@ app/recipes/data.py. Because the format is identical, appending is just
 copying the dict blocks (no reformatting needed).
 """
 
+import re
 import json
 import datetime
 import pathlib
 from collections import defaultdict
 from typing import Optional
+
+_TRAILING_NOISE_RE = re.compile(
+    r"\s+(of your choice|to taste|as needed|as required|if needed|if required"
+    r"|or as required|or as needed|adjust accordingly|to serve)\s*$",
+    re.IGNORECASE,
+)
+_LEADING_STATE_RE = re.compile(
+    r"^(uncooked|cooked|raw|boiled|steamed)\s+",
+    re.IGNORECASE,
+)
 
 _CACHE_DIR = pathlib.Path(__file__).parent / "cache"
 _STAGING_DIR = pathlib.Path(__file__).parent / "staging"
@@ -125,11 +136,32 @@ def write_staging(site_key: str, recipes: list[dict]) -> pathlib.Path:
     return path
 
 
+def _pre_normalize(text: str) -> str:
+    """Simplify a cleaned ingredient string before PANTRY_ITEMS lookup.
+
+    Strips preparation notes and trailing qualifiers so that e.g.
+    "uncooked whole wheat noodles" → "whole wheat noodles" and
+    "pasta of your choice" → "pasta". The original text is kept in
+    recipe["ingredients"]; this simplified form is used only for
+    normalized_ingredients.
+    """
+    text = text.strip()
+    text = re.sub(r",.*$", "", text)  # strip after first comma
+    text = _TRAILING_NOISE_RE.sub("", text)  # strip "of your choice" etc.
+    text = _LEADING_STATE_RE.sub("", text)  # strip "uncooked", "boiled" etc.
+    return text.strip()
+
+
 def _normalize_ingredients(raw_ingredients: list[str]) -> list[str]:
     """Return canonical normalized form of each ingredient using the pantry map."""
     from app.ingredient_normalization import normalize_ingredient
 
-    return [normalize_ingredient(i) or i.lower().strip() for i in raw_ingredients]
+    result = []
+    for i in raw_ingredients:
+        pre = _pre_normalize(i)
+        normalized = normalize_ingredient(pre)
+        result.append(normalized or pre.lower())
+    return result
 
 
 def emit_data_py(recipes: list[dict], source: Optional[str] = None) -> str:

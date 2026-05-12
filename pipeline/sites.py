@@ -88,6 +88,22 @@ SITES: dict[str, dict] = {
         "delay": 2.0,
         "extraction": "nextdata",
     },
+    # ── Shivangi Kooks ────────────────────────────────────────────────────────
+    # No JSON-LD — uses heading-based HTML extraction (see extract.py).
+    # Cuisine set to Indian for all categories; Korean-inspired recipes
+    # included under the same label as an acceptable approximation.
+    "shivangi_kooks": {
+        "name": "Shivangi Kooks",
+        "discovery": "category",
+        "delay": 2.0,
+        "max_pages": 3,
+        "extraction": "html",
+        "categories": [
+            ("https://shivangikooks.com/category/my-recipes/breakfast/", "Indian"),
+            ("https://shivangikooks.com/category/my-recipes/lunch/", "Indian"),
+            ("https://shivangikooks.com/category/my-recipes/dinner/", "Indian"),
+        ],
+    },
     # ── Nyonya Cooking ────────────────────────────────────────────────────────
     "nyonya_cooking": {
         "name": "Nyonya Cooking",
