@@ -335,6 +335,18 @@ uv run python pipeline/run.py --site my_site
 # (format is identical — no reformatting needed)
 ```
 
+### Step 7 — update the frontend filter dropdowns
+
+`templates/recipes/index.html` contains two hard-coded `<select>` dropdowns that
+must be kept in sync with `pipeline/sites.py` and `app/recipes/data.py`:
+
+- **Website filter** (`#website-filter`) — add an `<option>` for each new `name`
+  value (the display name from `sites.py`).
+- **Cuisine filter** (`#cuisine-filter`) — add an `<option>` if the cuisine label
+  is not already listed.
+
+Both lists are alphabetically ordered — insert the new entry in the right place.
+
 ---
 
 ## Ingredient Cleaning

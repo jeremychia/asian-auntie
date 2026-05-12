@@ -8,23 +8,33 @@ import re
 from typing import Optional
 
 
+_UNIT_RE = re.compile(
+    r"^[\d½¼¾⅓⅔⅛⅜⅝⅞⅙⅚⅕⅖⅗⅘\s/–-]*\s*"
+    r"(?:heaping\s+|level\s+|rounded\s+)?"
+    r"(?:cup|tbsp|tsp|tablespoon|teaspoon|pound|lb|oz|g|gram|kg|ml|l|liter|litre"
+    r"|piece|clove|stalk|bunch|handful|pinch|dash|sprig|head|slice|sheet"
+    r"|can|tin|package|pkg|bag|bottle|jar|drop|quart|pint|inch|ounce)s?"
+    r"\.?"
+    r"(?=\s|$|,)"
+    r"(?:\s+of)?\s*",
+    re.IGNORECASE,
+)
+_BARE_NUM_RE = re.compile(r"^[\d½¼¾⅓⅔⅛⅜⅝⅞⅙⅚⅕⅖⅗⅘][\d\s/–-]*\s+")
+
+
 def clean_ingredient(text: str) -> str:
     """Strip quantities, units, and parenthetical notes; normalise to lowercase."""
-    text = text.strip().lstrip("+").strip()
+    text = re.sub(r"^[+\xa0\s]+", "", text).strip()
     text = re.sub(r"\s*\(.*?\)", "", text)
-    text = re.sub(
-        r"^[\d½¼¾⅓⅔⅛⅜⅝⅞⅙⅚⅕⅖⅗⅘\s/–-]+\s*"
-        r"(?:heaping\s+|level\s+|rounded\s+)?"
-        r"(?:cup|tbsp|tsp|tablespoon|teaspoon|pound|lb|oz|g|gram|kg|ml|l|liter|litre"
-        r"|piece|clove|stalk|bunch|handful|pinch|dash|sprig|head|slice|sheet"
-        r"|can|tin|package|pkg|bag|bottle|jar|drop|quart|pint)s?"
-        r"(?=\s|$|,)"  # unit must be followed by whitespace, end, or comma
-        r"(?:\s+of)?\s*",
-        "",
-        text,
-        flags=re.IGNORECASE,
-    )
-    text = re.sub(r"^[\d½¼¾⅓⅔⅛⅜⅝⅞⅙⅚⅕⅖⅗⅘][\d\s/–-]*\s+", "", text)
+    # Strip quantity+unit, then leading + and bare numbers, repeated to handle
+    # compound measurements like "1 tsp. + 1 tbsp. salt" → "salt".
+    for _ in range(3):
+        prev = text
+        text = _UNIT_RE.sub("", text)
+        text = re.sub(r"^[+\xa0\s]+", "", text).strip()
+        text = _BARE_NUM_RE.sub("", text)
+        if text == prev:
+            break
     text = re.sub(
         r"^(lots? of|a lot of|a few|a bit of|some)\s+", "", text, flags=re.IGNORECASE
     )

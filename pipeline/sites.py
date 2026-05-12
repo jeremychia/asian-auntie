@@ -114,4 +114,17 @@ SITES: dict[str, dict] = {
             ("https://www.nyonyacooking.com/recipes", "Malaysian"),
         ],
     },
+    # ── The Burmalicious ──────────────────────────────────────────────────────
+    # Squarespace site — no JSON-LD or recipe plugin. Recipes are plain HTML
+    # with "Ingredients" heading and ul/li ingredient lists. Discovered via
+    # flat sitemap; all posts live under /blog/[slug].
+    "theburmalicious": {
+        "name": "The Burmalicious",
+        "discovery": "sitemap",
+        "sitemap_index_url": "https://www.theburmalicious.com/sitemap.xml",
+        "url_pattern": r"https://www\.theburmalicious\.com/blog/[^/]+$",
+        "cuisine_default": "Burmese",
+        "delay": 2.0,
+        "extraction": "html",
+    },
 }

@@ -29,9 +29,15 @@ _TRAILING_NOISE_RE = re.compile(
     re.IGNORECASE,
 )
 _LEADING_STATE_RE = re.compile(
-    r"^(uncooked|cooked|raw|boiled|steamed)\s+",
+    r"^(uncooked|cooked|raw|boiled|steamed"
+    r"|bone-?in|boneless|skin-?on|skin-?off|skinless|free-?range)\s+",
     re.IGNORECASE,
 )
+_COMPOUND_ADJECTIVE_RE = re.compile(r"^\w+-\w+$")
+_STANDALONE_QUALIFIER_RE = re.compile(
+    r"^(large|medium|small|big|whole|ripe)s?$", re.IGNORECASE
+)
+_OR_FRAGMENT_RE = re.compile(r"^(or|and|to)\b", re.IGNORECASE)
 
 _CACHE_DIR = pathlib.Path(__file__).parent / "cache"
 _STAGING_DIR = pathlib.Path(__file__).parent / "staging"
@@ -146,9 +152,26 @@ def _pre_normalize(text: str) -> str:
     normalized_ingredients.
     """
     text = text.strip()
-    text = re.sub(r",.*$", "", text)  # strip after first comma
+    # Drop "or …" / "and …" fragments that are site copy artifacts, not ingredients.
+    if _OR_FRAGMENT_RE.match(text):
+        return ""
+    comma_idx = text.find(",")
+    if comma_idx != -1:
+        pre = text[:comma_idx].strip()
+        # If the pre-comma segment is a compound adjective ("skin-on", "bone-in")
+        # or a bare size/state qualifier ("large", "whole"), the real ingredient
+        # name follows the comma — take the last segment instead of the first.
+        if _COMPOUND_ADJECTIVE_RE.match(pre) or _STANDALONE_QUALIFIER_RE.match(pre):
+            text = text.rsplit(",", 1)[-1].strip()
+        else:
+            text = pre
     text = _TRAILING_NOISE_RE.sub("", text)  # strip "of your choice" etc.
-    text = _LEADING_STATE_RE.sub("", text)  # strip "uncooked", "boiled" etc.
+    prev = None
+    while (
+        text != prev
+    ):  # strip stacked leading adjectives: "bone-in free-range chicken" → "chicken"
+        prev = text
+        text = _LEADING_STATE_RE.sub("", text)
     return text.strip()
 
 

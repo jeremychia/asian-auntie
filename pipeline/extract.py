@@ -339,17 +339,26 @@ class _HTMLRecipeExtractor(html.parser.HTMLParser):
 
     def extract_cook_mins(self) -> Optional[int]:
         full_text = " ".join(self._all_text)
+        # Matches "cook/total time: 1 hour 30 min" in any combination.
+        # Both the hours and minutes groups are optional so each can appear alone.
         pattern = re.compile(
-            r"(total|cook)\s+time\s*[:\-]?\s*(\d+)\s*(?:min|minute)",
+            r"(total|cook)\s+time\s*[:\-]?\s*"
+            r"(?:(\d+)\s*h(?:ou?r?s?)?)?"
+            r"\s*(?:(\d+)\s*(?:min|minute))?",
             re.IGNORECASE,
         )
         best: Optional[int] = None
         for m in pattern.finditer(full_text):
-            label, mins = m.group(1).lower(), int(m.group(2))
+            label = m.group(1).lower()
+            hours = int(m.group(2)) if m.group(2) else 0
+            mins = int(m.group(3)) if m.group(3) else 0
+            total = hours * 60 + mins
+            if total == 0:
+                continue
             if label == "total":
-                return mins
+                return total
             if best is None:
-                best = mins
+                best = total
         return best
 
 
