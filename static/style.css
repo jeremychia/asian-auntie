@@ -1,14 +1,4 @@
 /* ═══════════════════════════════════════════════════
-   Pico CSS reset — any button with a class is fully
-   ours; strip all Pico defaults so they don't leak.
-═══════════════════════════════════════════════════ */
-button[class] {
-  all: unset;
-  box-sizing: border-box;
-  cursor: pointer;
-}
-
-/* ═══════════════════════════════════════════════════
    Design tokens
 ═══════════════════════════════════════════════════ */
 :root {
@@ -491,26 +481,26 @@ nav.container {
   box-sizing: border-box;
 }
 
-.btn-primary {
+.btn.btn-primary {
   background: var(--brand);
   color: #fff;
 }
-.btn-primary:hover {
+.btn.btn-primary:hover {
   background: var(--brand-dark);
   color: #fff;
 }
 
-.btn-secondary {
+.btn.btn-secondary {
   background: var(--surface);
   color: var(--text);
   border-color: var(--border-strong);
 }
-.btn-secondary:hover {
+.btn.btn-secondary:hover {
   background: var(--bg);
   color: var(--text);
 }
 
-.btn-ghost {
+.btn.btn-ghost {
   background: none;
   color: var(--text-muted);
   border-color: transparent;
@@ -519,39 +509,39 @@ nav.container {
   height: auto;
   min-height: auto;
 }
-.btn-ghost:hover {
+.btn.btn-ghost:hover {
   color: var(--text);
 }
 
-.btn-danger {
+.btn.btn-danger {
   background: var(--urgent-tint);
   color: var(--urgent);
 }
-.btn-danger:hover {
+.btn.btn-danger:hover {
   background: var(--urgent);
   color: #fff;
 }
 
-.btn-warn {
+.btn.btn-warn {
   background: var(--warn-tint);
   color: var(--warn);
 }
-.btn-warn:hover {
+.btn.btn-warn:hover {
   background: var(--warn);
   color: #fff;
 }
 
-.btn-sm {
+.btn.btn-sm {
   font-size: var(--font-sm);
   padding: 0 0.875rem;
   border-radius: var(--r-sm);
 }
 
-.btn-full {
+.btn.btn-full {
   width: 100%;
 }
 
-.btn-lg {
+.btn.btn-lg {
   font-size: var(--font-base);
   padding: 0 1.25rem;
   border-radius: var(--r-lg);
@@ -1404,7 +1394,7 @@ select.sort-select:focus {
 }
 
 /* ═══════════════════════════════════════════════════
-   Dashboard: swipe-to-use
+   Dashboard: card wrap
 ═══════════════════════════════════════════════════ */
 .card-wrap {
   position: relative;
@@ -1412,28 +1402,45 @@ select.sort-select:focus {
   overflow: hidden;
 }
 
-.swipe-reveal-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 72px;
-  background: var(--urgent);
-  color: #fff;
+/* ═══════════════════════════════════════════════════
+   Dashboard: action sheet (long-press / right-click)
+═══════════════════════════════════════════════════ */
+.action-sheet {
   border: none;
-  border-radius: 0 var(--r-lg) var(--r-lg) 0;
-  font-family: var(--pico-font-family);
-  font-size: var(--font-caption);
-  font-weight: 700;
-  cursor: pointer;
+  border-radius: var(--r-xl);
+  padding: 1.5rem 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 300px;
+  width: calc(100% - 2rem);
+  background: var(--surface);
+  text-align: center;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  /* override pico */
-  --pico-color: #fff;
-  margin: 0;
-  padding: 0;
-  box-shadow: none;
+  gap: 0;
+}
+.action-sheet::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.action-sheet__handle {
+  display: none;
+}
+.action-sheet__title {
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 1rem;
+}
+.action-sheet__options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.action-sheet__options .btn {
+  min-width: 200px;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1575,6 +1582,114 @@ select.sort-select:focus {
 }
 .confirm-dialog__actions .btn {
   width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════
+   Item detail modal (drawer from bottom)
+═══════════════════════════════════════════════════ */
+.item-modal {
+  border: none;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: 0;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+  max-width: 480px;
+  width: 100%;
+  max-height: 90dvh;
+  overflow-y: auto;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  margin: 0;
+}
+.item-modal::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.item-modal__handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  margin: 0.75rem auto 0;
+}
+.item-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.5rem;
+  gap: 0.75rem;
+}
+.item-modal__title {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.3;
+}
+.item-modal__close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  margin-top: 2px;
+}
+.item-modal__badges {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem 0.75rem;
+  flex-wrap: wrap;
+}
+.item-modal__meta {
+  padding: 0 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.item-modal__meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-md);
+  line-height: 1.4;
+}
+.item-modal__meta-label {
+  color: var(--text-muted);
+}
+.item-modal__meta-value {
+  color: var(--text);
+  font-weight: 500;
+  text-align: right;
+}
+.item-modal__actions {
+  padding: 0.75rem 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+.item-modal__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.25rem 1.25rem;
+}
+.item-modal__secondary-link {
+  text-align: center;
+  font-size: var(--font-md);
+  color: var(--text-muted);
+  padding: 0.25rem 0;
+}
+.item-modal__secondary-link a {
+  color: var(--brand);
+  text-decoration: none;
 }
 
 /* ═══════════════════════════════════════════════════

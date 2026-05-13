@@ -707,6 +707,18 @@ def item_detail(item_id):
     )
 
 
+@perishables_bp.route("/items/<int:item_id>/fragment")
+@login_required
+def item_fragment(item_id):
+    item = _get_user_item(item_id)
+    today = date.today()
+    return render_template(
+        "perishables/item_fragment.html",
+        item=item,
+        today=today,
+    )
+
+
 @perishables_bp.route("/items/<int:item_id>/edit", methods=["GET"])
 @login_required
 def edit_item(item_id):

@@ -1,0 +1,65 @@
+{% set days_left = (item.expiry_date - today).days %}
+<div class="item-modal__handle"></div>
+
+<div class="item-modal__header">
+  <h2 class="item-modal__title">{{ item.name }}</h2>
+  <button class="item-modal__close" onclick="document.getElementById('item-modal').close()" aria-label="Close">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/>
+    </svg>
+  </button>
+</div>
+
+<div class="item-modal__badges">
+  {% if days_left < 0 %}
+  <span class="badge badge--expired">Expired</span>
+  {% elif days_left == 0 %}
+  <span class="badge badge--today">Today</span>
+  {% elif days_left <= 2 %}
+  <span class="badge badge--soon">{{ days_left }} day{{ "s" if days_left != 1 }}</span>
+  {% endif %}
+</div>
+
+<div class="item-modal__meta">
+  <div class="item-modal__meta-row">
+    <span class="item-modal__meta-label">Expires</span>
+    <span class="item-modal__meta-value">{{ item.expiry_date.strftime("%-d %b %Y") }}</span>
+  </div>
+  {% if item.location %}
+  <div class="item-modal__meta-row">
+    <span class="item-modal__meta-label">Location</span>
+    <span class="item-modal__meta-value">{{ item.location | capitalize }}</span>
+  </div>
+  {% endif %}
+  {% if item.item_type and item.item_type != 'unknown' %}
+  <div class="item-modal__meta-row">
+    <span class="item-modal__meta-label">Type</span>
+    <span class="item-modal__meta-value">{{ item.item_type | capitalize }}</span>
+  </div>
+  {% endif %}
+  {% if item.quantity_state %}
+  <div class="item-modal__meta-row">
+    <span class="item-modal__meta-label">Quantity</span>
+    <span class="item-modal__meta-value">
+      {% if item.quantity_state == 'full' %}Full
+      {% elif item.quantity_state == 'three_quarters' %}About ¾
+      {% elif item.quantity_state == 'half' %}About half
+      {% elif item.quantity_state == 'nearly_gone' %}Nearly gone
+      {% endif %}
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+<div class="item-modal__divider"></div>
+
+<div class="item-modal__actions">
+  <form method="post" action="/items/{{ item.id }}/use">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="btn btn-primary btn-full">Mark as used</button>
+  </form>
+
+  <div class="item-modal__secondary-link">
+    <a href="/items/{{ item.id }}">View full details & edit</a>
+  </div>
+</div>
