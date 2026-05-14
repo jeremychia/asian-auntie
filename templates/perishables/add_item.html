@@ -391,7 +391,8 @@ function ensurePhotoInput(idx) {
       '<select name="photo_types" id="type-select-' + idx + '" class="visually-hidden">' +
         '<option value="appearance" selected>Appearance</option>' +
         '<option value="barcode">Barcode</option>' +
-        '<option value="label">Label</option>' +
+        '<option value="nutritional_label">Nutritional label</option>' +
+        '<option value="expiry_date">Expiry date</option>' +
         '<option value="other">Other</option>' +
       '</select>';
     entries.appendChild(wrap);
@@ -422,7 +423,8 @@ function handlePhotoSelected(input) {
       '<select class="photo-type-label" onchange="syncTypeSelect(this, ' + idx + ')">' +
         '<option value="appearance"' + (typeSelect.value === 'appearance' ? ' selected' : '') + '>Appearance</option>' +
         '<option value="barcode"' + (typeSelect.value === 'barcode' ? ' selected' : '') + '>Barcode</option>' +
-        '<option value="label"' + (typeSelect.value === 'label' ? ' selected' : '') + '>Label</option>' +
+        '<option value="nutritional_label"' + (typeSelect.value === 'nutritional_label' ? ' selected' : '') + '>Nutritional label</option>' +
+        '<option value="expiry_date"' + (typeSelect.value === 'expiry_date' ? ' selected' : '') + '>Expiry date</option>' +
         '<option value="other"' + (typeSelect.value === 'other' ? ' selected' : '') + '>Other</option>' +
       '</select>' +
       '<button type="button" onclick="removePhoto(' + idx + ')" aria-label="Remove" ' +
@@ -531,8 +533,8 @@ function handleDoneClick(event) {
     <div id="confirm-all-photos" hidden>
       {% for photo in photo_items %}
       <div class="photo-thumb">
-        <img src="{{ photo['path'] if photo['path'].startswith('http') else url_for('uploaded_file', filename=photo['path']) }}" alt="{{ photo['type'] | capitalize }}">
-        <span class="photo-type-label photo-type-label--static">{{ photo['type'] | capitalize }}</span>
+        <img src="{{ photo['path'] if photo['path'].startswith('http') else url_for('uploaded_file', filename=photo['path']) }}" alt="{{ photo['type'] | replace('_', ' ') | capitalize }}">
+        <span class="photo-type-label photo-type-label--static">{{ photo['type'] | replace('_', ' ') | capitalize }}</span>
       </div>
       {% endfor %}
     </div>
@@ -1259,7 +1261,8 @@ function _createConfirmEntry(idx) {
     '<select name="confirm_photo_types" id="confirm-photo-type-' + idx + '" class="visually-hidden">' +
       '<option value="appearance" selected>Appearance</option>' +
       '<option value="barcode">Barcode</option>' +
-      '<option value="label">Label</option>' +
+      '<option value="nutritional_label">Nutritional label</option>' +
+      '<option value="expiry_date">Expiry date</option>' +
       '<option value="other">Other</option>' +
     '</select>';
   entries.appendChild(wrap);
@@ -1293,7 +1296,8 @@ function handleConfirmPhotoSelected(input) {
       '<select class="photo-type-label" onchange="syncConfirmTypeSelect(this, ' + idx + ')">' +
         '<option value="appearance"' + (typeSelect.value === 'appearance' ? ' selected' : '') + '>Appearance</option>' +
         '<option value="barcode"' + (typeSelect.value === 'barcode' ? ' selected' : '') + '>Barcode</option>' +
-        '<option value="label"' + (typeSelect.value === 'label' ? ' selected' : '') + '>Label</option>' +
+        '<option value="nutritional_label"' + (typeSelect.value === 'nutritional_label' ? ' selected' : '') + '>Nutritional label</option>' +
+        '<option value="expiry_date"' + (typeSelect.value === 'expiry_date' ? ' selected' : '') + '>Expiry date</option>' +
         '<option value="other"' + (typeSelect.value === 'other' ? ' selected' : '') + '>Other</option>' +
       '</select>';
     strip.appendChild(thumb);

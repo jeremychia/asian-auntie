@@ -13,7 +13,7 @@
   <div class="ep-grid">
     {% for photo in item.photos %}
     <div class="ep-cell">
-      <img src="{{ photo.photo_url }}" alt="{{ photo.photo_type | capitalize }} photo" class="ep-cell__img">
+      <img src="{{ photo.photo_url }}" alt="{{ photo.photo_type | replace('_', ' ') | capitalize }} photo" class="ep-cell__img">
 
       {# Editable type — auto-submits on change #}
       <form method="post"
@@ -22,10 +22,11 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <select name="photo_type" class="ep-cell__type-select" onchange="this.form.submit()"
                 aria-label="Photo type">
-          <option value="appearance" {% if photo.photo_type == 'appearance' %}selected{% endif %}>Appearance</option>
-          <option value="label"      {% if photo.photo_type == 'label'      %}selected{% endif %}>Label</option>
-          <option value="barcode"    {% if photo.photo_type == 'barcode'    %}selected{% endif %}>Barcode</option>
-          <option value="other"      {% if photo.photo_type == 'other'      %}selected{% endif %}>Other</option>
+          <option value="appearance"        {% if photo.photo_type == 'appearance'        %}selected{% endif %}>Appearance</option>
+          <option value="nutritional_label" {% if photo.photo_type == 'nutritional_label' %}selected{% endif %}>Nutritional label</option>
+          <option value="expiry_date"       {% if photo.photo_type == 'expiry_date'       %}selected{% endif %}>Expiry date</option>
+          <option value="barcode"           {% if photo.photo_type == 'barcode'           %}selected{% endif %}>Barcode</option>
+          <option value="other"             {% if photo.photo_type == 'other'             %}selected{% endif %}>Other</option>
         </select>
       </form>
 
@@ -98,10 +99,11 @@
     </div>
     <p class="add-field-label" style="margin-bottom: 0.5rem;">Photo type</p>
     <div style="display: flex; gap: var(--s-2); flex-wrap: wrap; margin-bottom: 1rem;">
-      <button type="button" class="add-chip add-chip--active" data-type="appearance" onclick="epSelectType('appearance')">Appearance</button>
-      <button type="button" class="add-chip" data-type="label"      onclick="epSelectType('label')">Label</button>
-      <button type="button" class="add-chip" data-type="barcode"    onclick="epSelectType('barcode')">Barcode</button>
-      <button type="button" class="add-chip" data-type="other"      onclick="epSelectType('other')">Other</button>
+      <button type="button" class="add-chip add-chip--active" data-type="appearance"        onclick="epSelectType('appearance')">Appearance</button>
+      <button type="button" class="add-chip" data-type="nutritional_label" onclick="epSelectType('nutritional_label')">Nutritional label</button>
+      <button type="button" class="add-chip" data-type="expiry_date"       onclick="epSelectType('expiry_date')">Expiry date</button>
+      <button type="button" class="add-chip" data-type="barcode"           onclick="epSelectType('barcode')">Barcode</button>
+      <button type="button" class="add-chip" data-type="other"             onclick="epSelectType('other')">Other</button>
     </div>
     <div style="display: flex; gap: var(--s-3);">
       <button type="button" class="btn btn-ghost" onclick="epCancelPending()" style="flex: 0 0 auto;">Discard</button>

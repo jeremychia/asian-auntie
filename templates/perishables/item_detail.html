@@ -62,14 +62,17 @@ today).days %}
     <figure class="item-photo-figure">
       <img
         src="{{ photo.photo_url }}"
-        alt="{{ photo.photo_type | capitalize }} photo of {{ item.name }}"
+        alt="{{ photo.photo_type | replace('_', ' ') | capitalize }} photo of {{ item.name }}"
         class="item-photo"
       />
-      {% if item.photos | length > 1 %}
       <figcaption class="item-photo-caption">
-        {{ photo.photo_type | capitalize }}
+        {{ photo.photo_type | replace('_', ' ') | capitalize }}
+        {% if photo.photo_path.startswith('https://images.openfoodfacts.org') %}
+        <span class="tooltip-icon" tabindex="0"
+              data-tip="Photo from Open Food Facts, a free and collaborative food products database."
+              style="color:#fff; margin-left:0.2rem;">ⓘ</span>
+        {% endif %}
       </figcaption>
-      {% endif %}
     </figure>
     {% endfor %}
   </div>

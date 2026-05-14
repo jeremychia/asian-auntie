@@ -145,7 +145,7 @@ class Item(db.Model):
 class ItemPhoto(db.Model):
     __tablename__ = "item_photos"
 
-    VALID_TYPES = {"barcode", "appearance", "label", "other"}
+    VALID_TYPES = {"barcode", "appearance", "nutritional_label", "expiry_date", "other"}
 
     id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(
