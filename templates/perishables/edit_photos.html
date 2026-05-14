@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}Photos — {{ item.name }} — Asian Auntie{% endblock %}
+
+{% block content %}
+<div class="content" id="edit-photos">
+
+  <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}" class="back-link">← Edit {{ item.name }}</a>
+
+  <h1 class="add-title">Photos</h1>
+  <p class="add-sub">Add or remove photos for <strong>{{ item.name }}</strong>.</p>
+
+  {% if item.photos %}
+  <div class="ep-grid">
+    {% for photo in item.photos %}
+    <div class="ep-cell">
+      <img src="{{ photo.photo_url }}" alt="{{ photo.photo_type | capitalize }} photo" class="ep-cell__img">
+
+      {# Editable type — auto-submits on change #}
+      <form method="post"
+            action="{{ url_for('perishables.update_photo_type', item_id=item.id, photo_id=photo.id) }}"
+            class="ep-cell__type-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <select name="photo_type" class="ep-cell__type-select" onchange="this.form.submit()"
+                aria-label="Photo type">
+          <option value="appearance" {% if photo.photo_type == 'appearance' %}selected{% endif %}>Appearance</option>
+          <option value="label"      {% if photo.photo_type == 'label'      %}selected{% endif %}>Label</option>
+          <option value="barcode"    {% if photo.photo_type == 'barcode'    %}selected{% endif %}>Barcode</option>
+          <option value="other"      {% if photo.photo_type == 'other'      %}selected{% endif %}>Other</option>
+        </select>
+      </form>
+
+      <form method="post"
+            action="{{ url_for('perishables.delete_photo', item_id=item.id, photo_id=photo.id) }}"
+            class="ep-cell__del-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="ep-cell__del" aria-label="Delete photo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="ep-empty">No photos yet.</p>
+  {% endif %}
+
+  <div class="ep-add-bar" id="ep-add-bar">
+    <label class="btn btn-secondary" for="ep-file-input"
+           style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      Add from library
+    </label>
+    <button type="button" class="btn btn-secondary" id="ep-camera-btn" onclick="epOpenCamera()"
+            style="display:flex; align-items:center; justify-content:center; gap:0.4rem;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      Take photo
+    </button>
+  </div>
+
+  {# Inline camera panel #}
+  <div id="ep-camera-panel" hidden style="margin-bottom: var(--s-4);">
+    <div style="border-radius: var(--r-lg); overflow: hidden; background: #000; margin-bottom: 0.75rem;">
+      <video id="ep-camera-video" autoplay playsinline
+             style="width: 100%; display: block; max-height: 280px; object-fit: cover;"></video>
+    </div>
+    <canvas id="ep-camera-canvas" hidden></canvas>
+    <div style="display: flex; gap: var(--s-3);">
+      <button type="button" class="btn btn-ghost" onclick="epCloseCamera()" style="flex: 0 0 auto;">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="epCapture()" style="flex: 1;">Capture</button>
+    </div>
+  </div>
+
+  {# Pending photo preview — shown after capture or file selection, before submit #}
+  <div id="ep-pending" hidden style="margin-bottom: var(--s-5);">
+    <div style="border-radius: var(--r-lg); overflow: hidden; margin-bottom: 0.75rem; background: var(--brand-tint);">
+      <img id="ep-pending-img" src="" alt="Preview"
+           style="width: 100%; max-height: 260px; object-fit: cover; display: block;">
+    </div>
+    <p class="add-field-label" style="margin-bottom: 0.5rem;">Photo type</p>
+    <div style="display: flex; gap: var(--s-2); flex-wrap: wrap; margin-bottom: 1rem;">
+      <button type="button" class="add-chip add-chip--active" data-type="appearance" onclick="epSelectType('appearance')">Appearance</button>
+      <button type="button" class="add-chip" data-type="label"      onclick="epSelectType('label')">Label</button>
+      <button type="button" class="add-chip" data-type="barcode"    onclick="epSelectType('barcode')">Barcode</button>
+      <button type="button" class="add-chip" data-type="other"      onclick="epSelectType('other')">Other</button>
+    </div>
+    <div style="display: flex; gap: var(--s-3);">
+      <button type="button" class="btn btn-ghost" onclick="epCancelPending()" style="flex: 0 0 auto;">Discard</button>
+      <button type="button" class="btn btn-primary" onclick="epSubmitPending()" style="flex: 1;">Add photo</button>
+    </div>
+  </div>
+
+  {# Camera capture form — submitted programmatically #}
+  <form method="post"
+        action="{{ url_for('perishables.add_photo', item_id=item.id) }}"
+        enctype="multipart/form-data"
+        id="ep-camera-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="file" id="ep-camera-file" name="photos" accept="image/*" class="visually-hidden" />
+    <input type="hidden" id="ep-camera-type" name="photo_types" value="appearance" />
+  </form>
+
+  {# File picker form — submitted programmatically #}
+  <form method="post"
+        action="{{ url_for('perishables.add_photo', item_id=item.id) }}"
+        enctype="multipart/form-data"
+        id="ep-upload-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="file" id="ep-file-input" name="photos" accept="image/*"
+           class="visually-hidden" onchange="epFileSelected(this)" />
+    <input type="hidden" id="ep-upload-type" name="photo_types" value="appearance" />
+  </form>
+
+</div>
+
+<script>
+let _epStream = null;
+let _epPendingSource = null; // 'camera' or 'file'
+
+// ── Type chip selection ───────────────────────────────────────────
+function epSelectType(type) {
+  document.querySelectorAll('#ep-pending [data-type]').forEach(function (btn) {
+    btn.classList.toggle('add-chip--active', btn.dataset.type === type);
+  });
+}
+
+function _epSelectedType() {
+  const active = document.querySelector('#ep-pending [data-type].add-chip--active');
+  return active ? active.dataset.type : 'appearance';
+}
+
+// ── Camera ────────────────────────────────────────────────────────
+function epOpenCamera() {
+  document.getElementById('ep-camera-panel').hidden = false;
+  document.getElementById('ep-add-bar').hidden = true;
+
+  navigator.mediaDevices
+    .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    .then(function (s) {
+      _epStream = s;
+      document.getElementById('ep-camera-video').srcObject = s;
+    })
+    .catch(function () {
+      epCloseCamera();
+      document.getElementById('ep-file-input').click();
+    });
+}
+
+function epCloseCamera() {
+  if (_epStream) {
+    _epStream.getTracks().forEach(function (t) { t.stop(); });
+    _epStream = null;
+  }
+  document.getElementById('ep-camera-panel').hidden = true;
+  document.getElementById('ep-add-bar').hidden = false;
+}
+
+function epCapture() {
+  const video = document.getElementById('ep-camera-video');
+  const canvas = document.getElementById('ep-camera-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  epCloseCamera();
+
+  canvas.toBlob(function (blob) {
+    const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    const input = document.getElementById('ep-camera-file');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+
+    // Show pending preview
+    const reader = new FileReader();
+    reader.onload = function (e) { epShowPending(e.target.result, 'camera'); };
+    reader.readAsDataURL(blob);
+  }, 'image/jpeg', 0.92);
+}
+
+// ── File picker ───────────────────────────────────────────────────
+function epFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) { epShowPending(e.target.result, 'file'); };
+  reader.readAsDataURL(file);
+}
+
+// ── Pending preview ───────────────────────────────────────────────
+function epShowPending(dataUrl, source) {
+  _epPendingSource = source;
+  document.getElementById('ep-pending-img').src = dataUrl;
+  // Reset type chips to 'appearance'
+  epSelectType('appearance');
+  document.getElementById('ep-add-bar').hidden = true;
+  document.getElementById('ep-pending').hidden = false;
+}
+
+function epCancelPending() {
+  document.getElementById('ep-pending').hidden = true;
+  document.getElementById('ep-add-bar').hidden = false;
+  _epPendingSource = null;
+  // Clear file input so the same file can be re-selected
+  document.getElementById('ep-file-input').value = '';
+}
+
+function epSubmitPending() {
+  const type = _epSelectedType();
+  if (_epPendingSource === 'camera') {
+    document.getElementById('ep-camera-type').value = type;
+    document.getElementById('ep-camera-form').submit();
+  } else {
+    document.getElementById('ep-upload-type').value = type;
+    document.getElementById('ep-upload-form').submit();
+  }
+}
+</script>
+{% endblock %}

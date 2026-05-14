@@ -261,3 +261,25 @@ MANAGE-INTEGRATION:
   blockers: |
     Will Trade Perishables have critical mass?
     Do recipe suggestions help or annoy?
+
+MANAGE-012:
+  title: Post-creation photo management
+  status: locked
+  decision: |
+    Dedicated /items/<id>/photos page for adding and removing photos after an item is created.
+    Camera uses a full-screen CSS slide-in overlay (transform translateY) rather than actual
+    page navigation — identical perceived UX, avoids round-tripping captured image bytes through
+    the server.
+    Camera JS extracted to static/camera.js and shared across add-item and edit-photos flows.
+  rationale: |
+    Users regularly want to add a better photo or remove a blurry one after saving an item.
+    Without post-creation photo management, the only fix is deleting and re-adding the item.
+    The dedicated page keeps the edit-item form focused on metadata, and photo management
+    focused on photos — two separate mental modes.
+    Shared camera.js prevents logic drift between the add-item and edit-photos camera
+    implementations (previously duplicated 3× inline in add_item.html alone).
+  mitigations:
+    - Delete does not prompt for confirmation — immediate, with display_order resequenced atomically
+    - GCS object deletion is best-effort (silent warning log on failure; DB record still deleted)
+    - Camera fallback: if getUserMedia fails, immediately triggers file picker
+    - No migration required — ItemPhoto model already has all needed columns

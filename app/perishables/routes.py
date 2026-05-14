@@ -806,6 +806,109 @@ def update_item(item_id):
     return redirect(url_for("perishables.item_detail", item_id=item_id))
 
 
+@perishables_bp.route(
+    "/items/<int:item_id>/photos/<int:photo_id>/type", methods=["POST"]
+)
+@login_required
+def update_photo_type(item_id, photo_id):
+    item = _get_user_item(item_id)
+    photo = ItemPhoto.query.filter_by(id=photo_id, item_id=item.id).first_or_404()
+    new_type = request.form.get("photo_type", "appearance")
+    if new_type not in ItemPhoto.VALID_TYPES:
+        new_type = "appearance"
+    photo.photo_type = new_type
+    db.session.commit()
+    return redirect(url_for("perishables.edit_photos", item_id=item_id))
+
+
+@perishables_bp.route("/items/<int:item_id>/photos", methods=["GET"])
+@login_required
+def edit_photos(item_id):
+    item = _get_user_item(item_id)
+    return render_template("perishables/edit_photos.html", item=item)
+
+
+@perishables_bp.route("/items/<int:item_id>/photos/add", methods=["POST"])
+@login_required
+def add_photo(item_id):
+    item = _get_user_item(item_id)
+    photo_files = request.files.getlist("photos")
+    photo_types = request.form.getlist("photo_types")
+    next_order = len(item.photos)
+    added = 0
+    for i, pf in enumerate(photo_files):
+        if not (pf and pf.filename):
+            continue
+        image_bytes = pf.read()
+        if not image_bytes:
+            continue
+        photo_type = photo_types[i] if i < len(photo_types) else "appearance"
+        if photo_type not in ItemPhoto.VALID_TYPES:
+            photo_type = "appearance"
+        path = _save_photo_bytes(image_bytes, pf.filename)
+        db.session.add(
+            ItemPhoto(
+                item_id=item.id,
+                photo_path=path,
+                photo_type=photo_type,
+                display_order=next_order + added,
+            )
+        )
+        added += 1
+    if added:
+        db.session.commit()
+        logger.info(
+            "photo_added", user_id=current_user.id, item_id=item.id, count=added
+        )
+    return redirect(url_for("perishables.edit_photos", item_id=item_id))
+
+
+@perishables_bp.route(
+    "/items/<int:item_id>/photos/<int:photo_id>/delete", methods=["POST"]
+)
+@login_required
+def delete_photo(item_id, photo_id):
+    item = _get_user_item(item_id)
+    photo = ItemPhoto.query.filter_by(id=photo_id, item_id=item.id).first_or_404()
+
+    bucket_name = current_app.config.get("GCS_BUCKET_NAME")
+    if bucket_name and photo.photo_path.startswith("https://"):
+        try:
+            from app.storage import delete_photo as gcs_delete
+
+            prefix = f"https://storage.googleapis.com/{bucket_name}/"
+            if photo.photo_path.startswith(prefix):
+                gcs_delete(
+                    photo.photo_path[len(prefix) :],
+                    bucket_name,
+                    current_app.config.get("GCS_CREDENTIALS_JSON") or None,
+                )
+        except Exception:
+            logger.warning("gcs_delete_failed", photo_id=photo_id)
+    elif not bucket_name:
+        try:
+            local = os.path.join(current_app.config["UPLOAD_FOLDER"], photo.photo_path)
+            if os.path.exists(local):
+                os.remove(local)
+        except Exception:
+            logger.warning("local_delete_failed", photo_id=photo_id)
+
+    db.session.delete(photo)
+    remaining = (
+        ItemPhoto.query.filter_by(item_id=item.id)
+        .filter(ItemPhoto.id != photo_id)
+        .order_by(ItemPhoto.display_order)
+        .all()
+    )
+    for idx, p in enumerate(remaining):
+        p.display_order = idx
+    db.session.commit()
+    logger.info(
+        "photo_deleted", user_id=current_user.id, item_id=item.id, photo_id=photo_id
+    )
+    return redirect(url_for("perishables.edit_photos", item_id=item_id))
+
+
 @perishables_bp.route("/items/<int:item_id>/use", methods=["POST"])
 @login_required
 def mark_used(item_id):
