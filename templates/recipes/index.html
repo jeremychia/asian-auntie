@@ -23,14 +23,10 @@
         <span>Use my pantry</span>
         <span class="rf-ing__primary-count" id="pantry-count">{{ pantry_items | length }} item{{ 's' if pantry_items | length != 1 }}</span>
       </button>
-      {% else %}
-      <button type="button" class="rf-ing__primary" id="load-pantry-btn" disabled
-              style="opacity:0.5;cursor:default">
-        <span>No pantry items yet</span>
-        <span class="rf-ing__primary-count"><a href="{{ url_for('perishables.add_item') }}" style="color:rgba(255,255,255,0.8)">Add items →</a></span>
-      </button>
-      {% endif %}
       <p class="rf-ing__or">or</p>
+      {% else %}
+      <p class="rf-ing__no-pantry">No pantry items yet — <a href="{{ url_for('perishables.add_item') }}">add items to your pantry</a></p>
+      {% endif %}
       <button type="button" class="rf-btn-ghost-add" id="begin-add-btn"
               onclick="beginAdd()">+ Add an ingredient</button>
     </div>

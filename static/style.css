@@ -4338,6 +4338,12 @@ select.sort-select:focus {
   text-align: center;
   letter-spacing: 0.04em;
 }
+.rf-ing__no-pantry {
+  font-size: var(--t-xs);
+  color: var(--brand-muted);
+  margin: 0 0 var(--s-3);
+  text-align: center;
+}
 
 /* Ghost "add ingredient" button */
 .rf-btn-ghost-add {
