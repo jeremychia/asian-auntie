@@ -8,7 +8,7 @@ Schema
 ------
 Each site dict must contain:
   name         str   — Display name, stored as recipe["source"]
-  discovery    str   — "category" or "sitemap"
+  discovery    str   — "category", "sitemap", or "youtube"
   delay        float — Minimum seconds between requests to this domain
 
 For discovery="category":
@@ -19,6 +19,13 @@ For discovery="sitemap":
   sitemap_index_url  str            — URL of the sitemap index XML
   cuisine_default    str            — Cuisine label to assign all recipes
   url_pattern        str | None     — Regex to filter sitemap URLs (optional)
+
+For discovery="youtube":
+  channel_url  str            — YouTube channel URL (the /videos page)
+  cuisine      str            — Cuisine label applied to all videos
+  max_videos   int | None     — Cap on videos to discover (optional)
+  Requires ANTHROPIC_API_KEY env var. Uses yt-dlp + Claude to extract recipes
+  from video descriptions and auto-generated captions (any language → English).
 """
 
 SITES: dict[str, dict] = {
@@ -126,5 +133,18 @@ SITES: dict[str, dict] = {
         "cuisine_default": "Burmese",
         "delay": 2.0,
         "extraction": "html",
+    },
+    # ── YouTube channels ──────────────────────────────────────────────────────
+    # Add YouTube cooking channels here. Videos can be in any language —
+    # Claude translates descriptions/transcripts to English during extraction.
+    # Requires ANTHROPIC_API_KEY. Uses yt-dlp to fetch captions.
+    #
+    "phyu_home_cooking": {
+        "name": "Phyu Home Cooking",
+        "discovery": "youtube",
+        "channel_url": "https://www.youtube.com/@phyuhomecooking/videos",
+        "cuisine": "Burmese",
+        "delay": 2.0,
+        "max_videos": 100,
     },
 }

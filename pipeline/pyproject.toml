@@ -3,8 +3,10 @@ name = "asian-auntie-pipeline"
 version = "0.1.0"
 description = "Recipe extraction pipeline for Asian food blogs"
 requires-python = ">=3.12"
-# No external dependencies — only stdlib is used (urllib, json, re, html.parser, xml.etree)
-dependencies = []
+dependencies = [
+    "yt-dlp",       # YouTube video/transcript discovery
+    "anthropic",    # LLM extraction + translation for YouTube sources
+]
 
 [project.scripts]
 pipeline-run = "pipeline.run:main"

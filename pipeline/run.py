@@ -49,6 +49,7 @@ from pipeline.extract import (
     map_html_to_recipe,
 )
 from pipeline import store
+from pipeline import youtube as yt_pipeline
 
 
 def _scrape_site(
@@ -69,7 +70,19 @@ def _scrape_site(
     )
 
     # --- URL discovery ---
-    if site["discovery"] == "category":
+    if site["discovery"] == "youtube":
+        video_urls = yt_pipeline.discover_channel_videos(
+            site["channel_url"],
+            max_videos=site.get("max_videos"),
+            delay=site["delay"],
+        )
+        cuisine = site["cuisine"]
+        url_cuisine_pairs = [(u, cuisine) for u in video_urls]
+        print(
+            f"  Discovered {len(url_cuisine_pairs)} videos from YouTube channel",
+            file=sys.stderr,
+        )
+    elif site["discovery"] == "category":
         url_cuisine_pairs = discover_via_categories(
             site["categories"], site["max_pages"], site["delay"]
         )
@@ -107,30 +120,39 @@ def _scrape_site(
             print(f"  Reached --limit {limit}", file=sys.stderr)
             break
 
-        html_text = fetch(url, delay=site["delay"])
-        if not html_text:
-            continue
-
-        if site.get("extraction") == "nextdata":
-            data = find_recipe_nextdata(html_text)
-            if not data:
-                print(f"  [NO NEXT_DATA] {url}", file=sys.stderr)
+        # YouTube videos go through the LLM extraction path
+        if site["discovery"] == "youtube":
+            recipe = yt_pipeline.scrape_video(
+                url, site["name"], cuisine, delay=site["delay"]
+            )
+            if not recipe:
+                print(f"  [NO RECIPE] {url}", file=sys.stderr)
                 continue
-            recipe = map_nextdata_to_recipe(data, site["name"], cuisine, url)
-        elif site.get("extraction") == "html":
-            slug = url.rstrip("/").rsplit("/", 1)[-1]
-            name_hint = slug.replace("-", " ").title()
-            data = find_recipe_html(html_text, name_hint)
-            if not data:
-                print(f"  [NO HTML RECIPE] {url}", file=sys.stderr)
-                continue
-            recipe = map_html_to_recipe(data, site["name"], cuisine, url)
         else:
-            jsonld = find_recipe_jsonld(html_text)
-            if not jsonld:
-                print(f"  [NO JSON-LD] {url}", file=sys.stderr)
+            html_text = fetch(url, delay=site["delay"])
+            if not html_text:
                 continue
-            recipe = map_to_recipe(jsonld, site["name"], cuisine, url)
+
+            if site.get("extraction") == "nextdata":
+                data = find_recipe_nextdata(html_text)
+                if not data:
+                    print(f"  [NO NEXT_DATA] {url}", file=sys.stderr)
+                    continue
+                recipe = map_nextdata_to_recipe(data, site["name"], cuisine, url)
+            elif site.get("extraction") == "html":
+                slug = url.rstrip("/").rsplit("/", 1)[-1]
+                name_hint = slug.replace("-", " ").title()
+                data = find_recipe_html(html_text, name_hint)
+                if not data:
+                    print(f"  [NO HTML RECIPE] {url}", file=sys.stderr)
+                    continue
+                recipe = map_html_to_recipe(data, site["name"], cuisine, url)
+            else:
+                jsonld = find_recipe_jsonld(html_text)
+                if not jsonld:
+                    print(f"  [NO JSON-LD] {url}", file=sys.stderr)
+                    continue
+                recipe = map_to_recipe(jsonld, site["name"], cuisine, url)
 
         if not recipe:
             print(f"  [SKIP] {url} — missing name or ingredients", file=sys.stderr)
@@ -233,7 +255,16 @@ def main():
 
     if args.discover_only:
         count = 0
-        if site["discovery"] == "category":
+        if site["discovery"] == "youtube":
+            urls = yt_pipeline.discover_channel_videos(
+                site["channel_url"],
+                max_videos=site.get("max_videos"),
+                delay=site["delay"],
+            )
+            for url in urls:
+                print(f"{site['cuisine']}\t{url}")
+            count = len(urls)
+        elif site["discovery"] == "category":
             pairs = discover_via_categories(
                 site["categories"], site["max_pages"], site["delay"]
             )
