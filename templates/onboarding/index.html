@@ -25,11 +25,11 @@
       <p class="onboarding-desc">We use this to tailor your experience and apply the right privacy rules.</p>
       <div class="option-grid option-grid--2col">
         {% for label, code in locations %}
-        <label class="option-card {% if existing_location == code %}option-card--selected{% endif %}">
+        <div class="option-card {% if existing_location == code %}option-card--selected{% endif %}">
           <input type="radio" name="location" value="{{ code }}"
                  {% if existing_location == code %}checked{% endif %}>
           {{ label }}
-        </label>
+        </div>
         {% endfor %}
       </div>
       <div class="onboarding-nav">
@@ -46,12 +46,12 @@
       <p class="onboarding-desc">Pick as many as you like. We'll show you what's already available.</p>
       <div class="option-grid option-grid--3col">
         {% for cuisine in all_cuisines %}
-        <label class="option-card {% if cuisine in existing_prefs %}option-card--selected{% endif %}">
+        <div class="option-card {% if cuisine in existing_prefs %}option-card--selected{% endif %}">
           <input type="checkbox" name="cuisine_prefs" value="{{ cuisine }}"
                  {% if cuisine in existing_prefs %}checked{% endif %}>
           {{ cuisine }}
           <span class="option-card__count">{{ cuisine_counts[cuisine] }} recipes</span>
-        </label>
+        </div>
         {% endfor %}
       </div>
       <div class="cuisine-feedback" id="cuisine-feedback" hidden>
@@ -86,11 +86,11 @@
       <p class="onboarding-desc">We'll use this to help with recipe scaling in future.</p>
       <div class="option-grid option-grid--2col">
         {% for label, code in household_sizes %}
-        <label class="option-card {% if existing_household == code %}option-card--selected{% endif %}">
+        <div class="option-card {% if existing_household == code %}option-card--selected{% endif %}">
           <input type="radio" name="household_size" value="{{ code }}"
                  {% if existing_household == code %}checked{% endif %}>
           {{ label }}
-        </label>
+        </div>
         {% endfor %}
       </div>
       <div class="onboarding-nav">
@@ -123,10 +123,13 @@
         <div class="privacy-section">
           <h3 class="privacy-section__heading">How we use it</h3>
           <ul class="privacy-list">
+            <li>To personalise your experience based on your region and cuisine preferences</li>
             <li>To show you recipes that match what you have in your pantry</li>
             <li>To send expiry reminders (only if you turn notifications on)</li>
-            <li>We do <strong>not</strong> sell or share your data with third parties</li>
+            <li>Photos you take are sent to OpenAI for item recognition — they are not stored by OpenAI beyond the request</li>
+            <li>We do <strong>not</strong> sell or share your data with third parties for their own purposes</li>
             <li>We do <strong>not</strong> use your data for advertising</li>
+            <li>We process your data on the basis of your consent, which you may withdraw at any time by deleting your account</li>
           </ul>
         </div>
 
@@ -215,19 +218,26 @@ function updateProgress() {
   document.getElementById('step-label').textContent = `Step ${currentStep} of ${totalSteps}`;
 }
 
-// Option card toggles
-document.querySelectorAll('.option-card input[type="radio"]').forEach(radio => {
-  radio.addEventListener('change', () => {
-    const grid = radio.closest('.option-grid');
-    grid.querySelectorAll('.option-card').forEach(c => c.classList.remove('option-card--selected'));
-    radio.closest('.option-card').classList.add('option-card--selected');
-  });
-});
-
-document.querySelectorAll('.option-card input[type="checkbox"]').forEach(cb => {
-  cb.addEventListener('change', () => {
-    cb.closest('.option-card').classList.toggle('option-card--selected', cb.checked);
-    updateCuisineFeedback();
+// Option card toggles — cards are <div> not <label>, so no browser label-activation
+// magic; we manage checked state and CSS class entirely in JS.
+document.querySelectorAll('.option-card').forEach(card => {
+  const input = card.querySelector('input[type="radio"], input[type="checkbox"]');
+  if (!input) return;
+  card.addEventListener('click', () => {
+    if (input.type === 'radio') {
+      card.closest('.option-grid').querySelectorAll('.option-card').forEach(c => {
+        c.classList.remove('option-card--selected');
+        const r = c.querySelector('input[type="radio"]');
+        if (r) r.checked = false;
+      });
+      card.classList.add('option-card--selected');
+      input.checked = true;
+      updateGdprSection();
+    } else {
+      input.checked = !input.checked;
+      card.classList.toggle('option-card--selected', input.checked);
+      updateCuisineFeedback();
+    }
   });
 });
 
@@ -254,6 +264,10 @@ document.getElementById('back-3').addEventListener('click', () => goTo(2));
 document.getElementById('next-3').addEventListener('click', () => goTo(4));
 document.getElementById('back-4').addEventListener('click', () => goTo(3));
 
+document.querySelectorAll('.step-skip').forEach(btn => {
+  btn.addEventListener('click', () => goTo(parseInt(btn.dataset.target)));
+});
+
 
 // GDPR section visibility — reacts to location selection
 function updateGdprSection() {
@@ -273,9 +287,6 @@ function updateGdprSection() {
   }
 }
 
-document.querySelectorAll('input[name="location"]').forEach(r => {
-  r.addEventListener('change', updateGdprSection);
-});
 
 // Consent gate on submit
 document.getElementById('submit-btn').addEventListener('click', (e) => {
@@ -312,8 +323,8 @@ const CUISINE_SOURCES = {
   'ethiopian':      'Immaculate Bites or Yohanis Gebreyesus',
   'west african':   'Immaculate Bites or My Diaspora Kitchen',
   'caribbean':      'That Girl Cooks Healthy or Simply Trini Cooking',
-  'brazilian':      'Easy Brazilian Food or Olivia's Cuisine',
-  'peruvian':       'Peru Delights or Laylita's Recipes',
+  'brazilian':      "Easy Brazilian Food or Olivia's Cuisine",
+  'peruvian':       "Peru Delights or Laylita's Recipes",
   'spanish':        'Spain on a Fork or The Spanish Radish',
 };
 

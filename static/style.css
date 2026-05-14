@@ -3423,6 +3423,7 @@ select.sort-select:focus {
 }
 
 .option-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -3442,8 +3443,12 @@ select.sort-select:focus {
   min-height: 3.5rem;
 }
 
+/* position:absolute (not display:none) keeps the input activatable via label click */
 .option-card input {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
 .option-card:hover {
@@ -3453,8 +3458,10 @@ select.sort-select:focus {
 
 .option-card--selected {
   border-color: var(--brand);
+  border-width: 2.5px;
   background: var(--brand-tint);
   color: var(--brand-dark);
+  font-weight: 600;
 }
 
 .option-card__count {
@@ -3486,7 +3493,7 @@ select.sort-select:focus {
   border-radius: var(--r-lg);
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
-  max-height: 340px;
+  max-height: 520px;
   overflow-y: auto;
 }
 
