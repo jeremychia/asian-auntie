@@ -333,11 +333,13 @@
     });
 
     if (hidden > 0) {
-      const more = document.createElement('button');
-      more.type = 'button';
+      const more = document.createElement('span');
+      more.setAttribute('role', 'button');
+      more.setAttribute('tabindex', '0');
       more.className = 'rf-chip--more';
       more.textContent = `+${hidden} more`;
       more.addEventListener('click', () => { showAllChips = true; render(); });
+      more.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showAllChips = true; render(); } });
       chipList.appendChild(more);
     }
 

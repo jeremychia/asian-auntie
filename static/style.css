@@ -4389,10 +4389,14 @@ select.sort-select:focus {
   border-style: solid;
 }
 .rf-chip--more {
+  display: inline-flex;
+  align-items: center;
   background: transparent;
   color: var(--brand-muted);
   border: none;
-  padding: 6px var(--s-2);
+  padding: 0 var(--s-2);
+  height: 24px;
+  box-sizing: border-box;
   cursor: pointer;
   font-weight: 600;
   font-size: var(--t-sm);
