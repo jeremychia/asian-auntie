@@ -27,7 +27,7 @@
     />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
+      href="{{ url_for('static', filename='style.css', v=css_version) }}"
     />
     <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
     <script src="{{ url_for('static', filename='camera.js') }}"></script>

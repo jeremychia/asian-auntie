@@ -587,6 +587,7 @@ nav.container {
   border-radius: var(--r-lg) var(--r-lg) 0 0;
 }
 
+.item-card--expired::before,
 .item-card--today::before {
   background: var(--urgent);
 }
@@ -611,7 +612,6 @@ nav.container {
   color: var(--text);
   line-height: 1.35;
   display: block;
-  margin-bottom: 0.2rem;
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -625,13 +625,25 @@ nav.container {
 
 .item-card__badge {
   display: inline-block;
-  margin-top: 0.625rem;
   font-size: var(--font-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 3px 10px;
   border-radius: var(--r-full);
+}
+
+/* Non-photo cards: name centred, badge pinned to bottom-left */
+.item-card:not(.item-card--has-photo) {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 2.5rem;
+}
+.item-card:not(.item-card--has-photo) .item-card__badge {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
 }
 
 /* badge urgency colors consolidated in "Status colors" section below */
@@ -935,11 +947,22 @@ select.inline-edit__select {
 /* ═══════════════════════════════════════════════════
    Status colors (badges, match chips, notif badges)
 ═══════════════════════════════════════════════════ */
-:is(.badge--today, .item-card--today .item-card__badge) {
+.badge--today {
   background: var(--urgent-tint);
   color: var(--urgent);
 }
-:is(.badge--soon, .item-card--soon .item-card__badge, .match--mid) {
+:is(
+    .item-card--expired .item-card__badge,
+    .item-card--today .item-card__badge
+  ) {
+  background: var(--urgent-tint);
+  color: #b91c1c;
+}
+.item-card--soon .item-card__badge {
+  background: var(--warn-tint);
+  color: #92400e;
+}
+:is(.badge--soon, .match--mid) {
   background: var(--warn-tint);
   color: var(--warn);
 }
@@ -1355,12 +1378,19 @@ select.sort-select:focus {
   -webkit-backdrop-filter: blur(4px);
 }
 
-/* Urgency tints on photo overlay badge */
+/* Urgency tints on photo overlay badge — match non-photo badge exactly */
+.item-card--expired .item-card__badge--overlay,
 .item-card--today .item-card__badge--overlay {
-  background: rgba(220, 38, 38, 0.75);
+  background: var(--urgent-tint);
+  color: #b91c1c;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .item-card--soon .item-card__badge--overlay {
-  background: rgba(217, 119, 6, 0.75);
+  background: var(--warn-tint);
+  color: #92400e;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1414,16 +1444,9 @@ select.sort-select:focus {
 [class*="item-card--type-"] {
   background: var(--card-bg, var(--surface));
   border-color: transparent;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  text-align: center;
 }
 [class*="item-card--type-"] .item-card__name {
   color: var(--card-text, var(--text));
-}
-[class*="item-card--type-"] .item-card__badge {
-  margin-top: 0;
 }
 
 /* ═══════════════════════════════════════════════════

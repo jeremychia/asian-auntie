@@ -128,7 +128,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
     {% for item in items %}
       {% set days_left = (item.expiry_date - today).days %}
       {% if days_left < 0 %}
-        {% set urgency = "today" %}
+        {% set urgency = "expired" %}
         {% set urgency_label = "EXPIRED" %}
       {% elif days_left == 0 %}
         {% set urgency = "today" %}
@@ -256,8 +256,8 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
     if (!grid) return;
     const sorted = [...wraps].sort((a, b) => {
       // TODAY/EXPIRED items always float to top, regardless of sort mode
-      const aUrgent = a.dataset.urgency === 'today' ? 0 : 1;
-      const bUrgent = b.dataset.urgency === 'today' ? 0 : 1;
+      const aUrgent = (a.dataset.urgency === 'today' || a.dataset.urgency === 'expired') ? 0 : 1;
+      const bUrgent = (b.dataset.urgency === 'today' || b.dataset.urgency === 'expired') ? 0 : 1;
       if (aUrgent !== bUrgent) return aUrgent - bUrgent;
       // Within the same urgency tier, apply the chosen sort
       if (mode === 'expiry') return a.dataset.expiry.localeCompare(b.dataset.expiry);

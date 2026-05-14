@@ -130,6 +130,12 @@ def create_app():
     def inject_vapid_public_key():
         return {"vapid_public_key": app.config.get("VAPID_PUBLIC_KEY", "")}
 
+    _css_path = os.path.join(root, "static", "style.css")
+
+    @app.context_processor
+    def inject_css_version():
+        return {"css_version": int(os.path.getmtime(_css_path))}
+
     # Start notification scheduler (skip in testing / flask db commands)
     if not app.config.get("TESTING") and os.environ.get("FLASK_RUN_MAIN") != "false":
         from app.notifications.scheduler import start_scheduler
