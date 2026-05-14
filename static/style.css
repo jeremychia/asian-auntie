@@ -4540,6 +4540,46 @@ select.sort-select:focus {
   margin: 0;
 }
 
+/* Cuisine chips inside recipe filter options */
+.rf-cuisine-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  width: 100%;
+}
+.rf-cuisine-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--brand);
+  border: 1px solid var(--brand-faint);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+  user-select: none;
+}
+.rf-cuisine-chip input {
+  display: none;
+}
+.rf-cuisine-chip:hover {
+  border-color: var(--brand);
+}
+.rf-cuisine-chip--on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
 /* Results zone */
 .rf-results__head {
   display: flex;

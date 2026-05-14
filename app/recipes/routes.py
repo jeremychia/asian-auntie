@@ -45,6 +45,8 @@ def _get_pantry_items(user, include_expired_days=None):
 @recipes_bp.route("/recipes")
 @login_required
 def index():
+    import json as _json
+
     pantry_items = _get_pantry_items(current_user)
     skipped_ids = [
         e.recipe_id
@@ -58,12 +60,16 @@ def index():
             user_id=current_user.id, feedback="yes_made"
         ).all()
     ]
+    cuisine_prefs = (
+        _json.loads(current_user.cuisine_prefs) if current_user.cuisine_prefs else []
+    )
     return render_template(
         "recipes/index.html",
         pantry_items=pantry_items,
         skipped_ids=skipped_ids,
         made_ids=made_ids,
         user_expired_items_days=current_user.expired_items_days,
+        cuisine_prefs=cuisine_prefs,
     )
 
 
@@ -78,7 +84,7 @@ def search():
     page: int = max(1, int(data.get("page", 1)))
     show_all: bool = bool(data.get("show_all", False))
     sort_param: str = str(data.get("sort", "match")).strip()
-    cuisine: str = str(data.get("cuisine", "")).strip()
+    cuisines: list[str] = [str(c).strip() for c in data.get("cuisines", []) if c]
     website: str = str(data.get("website", "")).strip()
     cook_time_min: int = int(data.get("cook_time_min", 0))
     cook_time_max: int = int(data.get("cook_time_max", 120))
@@ -96,7 +102,7 @@ def search():
     for idx in candidates:
         recipe = RECIPES[idx]
         # Apply cuisine filter
-        if cuisine and recipe.get("cuisine", "") != cuisine:
+        if cuisines and recipe.get("cuisine", "") not in cuisines:
             continue
         # Apply website filter
         if website and recipe.get("source", "") != website:

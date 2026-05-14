@@ -4,7 +4,7 @@
 
 <div class="rf-page">
   <h1>Find a recipe</h1>
-  <p class="rf-lede">Malaysian and Southeast Asian recipes matched to what you have on hand.</p>
+  <p class="rf-lede">Southeast Asian recipes matched to what you have on hand.</p>
 
   <!-- ── Ingredients zone ──────────────────────────────────────── -->
   <section class="rf-ing" aria-labelledby="ing-heading">
@@ -82,19 +82,17 @@
               <option value="simple">Simplest</option>
               <option value="simple_rev">Most ingredients</option>
             </select>
-            <span style="font-size:var(--t-xs);align-self:center">Cuisine</span>
-            <select id="cuisine-filter" class="rf-filter-select">
-              <option value="">All</option>
-              <option value="Burmese">Burmese</option>
-              <option value="Chinese">Chinese</option>
-              <option value="Filipino">Filipino</option>
-              <option value="Indian">Indian</option>
-              <option value="Indonesian">Indonesian</option>
-              <option value="Malaysian">Malaysian</option>
-              <option value="Singaporean">Singaporean</option>
-              <option value="Thai">Thai</option>
-              <option value="Vietnamese">Vietnamese</option>
-            </select>
+            <span style="font-size:var(--t-xs);align-self:center;width:100%;margin-top:var(--s-2)">Cuisine</span>
+            <div class="rf-cuisine-chips" id="cuisine-chips">
+              {% set all_cuisines_list = ["Burmese","Chinese","Filipino","Indian","Indonesian","Malaysian","Singaporean","Thai","Vietnamese"] %}
+              {% for c in all_cuisines_list %}
+              <label class="rf-cuisine-chip{% if c in cuisine_prefs %} rf-cuisine-chip--on{% endif %}"
+                     data-cuisine="{{ c }}">
+                <input type="checkbox" value="{{ c }}" {% if c in cuisine_prefs %}checked{% endif %}>
+                {{ c }}
+              </label>
+              {% endfor %}
+            </div>
             <span style="font-size:var(--t-xs);align-self:center">Website</span>
             <select id="website-filter" class="rf-filter-select">
               <option value="">All</option>
@@ -196,7 +194,7 @@
   let currentPage = 1;
   let currentIngredients = [];
   let currentSort = 'match';
-  let currentCuisine = '';
+  let currentCuisines = [];
   let currentWebsite = '';
   let totalResults = 0;
   let searchDebounce = null;
@@ -223,14 +221,13 @@
   const loadMoreBtn   = document.getElementById('load-more-btn');
   const showAllBtn    = document.getElementById('show-all-btn');
   const sortFilter    = document.getElementById('sort-filter');
-  const cuisineFilter = document.getElementById('cuisine-filter');
   const websiteFilter = document.getElementById('website-filter');
 
   // ── Save / restore state across recipe detail navigation ────
   function saveState() {
     try {
       sessionStorage.setItem(STATE_KEY, JSON.stringify({
-        ingredients, pantryLoaded, currentSort, currentCuisine, currentWebsite,
+        ingredients, pantryLoaded, currentSort, currentCuisines, currentWebsite,
         scrollY: window.scrollY,
       }));
     } catch (_) {}
@@ -243,15 +240,21 @@
       sessionStorage.removeItem(STATE_KEY);
       const state = JSON.parse(raw);
       if (!state.ingredients || !state.ingredients.length) return;
-      ingredients   = state.ingredients;
-      pantryLoaded  = state.pantryLoaded  || false;
-      currentSort   = state.currentSort   || 'match';
-      currentCuisine = state.currentCuisine || '';
+      ingredients    = state.ingredients;
+      pantryLoaded   = state.pantryLoaded   || false;
+      currentSort    = state.currentSort    || 'match';
+      currentCuisines = Array.isArray(state.currentCuisines) ? state.currentCuisines : [];
       currentWebsite = state.currentWebsite || '';
       pendingScrollY = state.scrollY || 0;
-      if (sortFilter)    sortFilter.value    = currentSort;
-      if (cuisineFilter) cuisineFilter.value = currentCuisine;
+      if (sortFilter)    sortFilter.value = currentSort;
       if (websiteFilter) websiteFilter.value = currentWebsite;
+      // Restore cuisine chip states
+      document.querySelectorAll('#cuisine-chips .rf-cuisine-chip').forEach(chip => {
+        const val = chip.dataset.cuisine;
+        const on = currentCuisines.includes(val);
+        chip.querySelector('input').checked = on;
+        chip.classList.toggle('rf-cuisine-chip--on', on);
+      });
       render();
       search();
     } catch (_) {}
@@ -440,8 +443,24 @@
 
   // ── Filters ──────────────────────────────────────────────────
   if (sortFilter) sortFilter.addEventListener('change', () => { currentSort = sortFilter.value; markDirty(); });
-  if (cuisineFilter) cuisineFilter.addEventListener('change', () => { currentCuisine = cuisineFilter.value; markDirty(); });
   if (websiteFilter) websiteFilter.addEventListener('change', () => { currentWebsite = websiteFilter.value; markDirty(); });
+
+  // Cuisine chips — read initial state from server-rendered checkboxes
+  currentCuisines = [...document.querySelectorAll('#cuisine-chips .rf-cuisine-chip input:checked')].map(el => el.value);
+  document.querySelectorAll('#cuisine-chips .rf-cuisine-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const cb = chip.querySelector('input');
+      cb.checked = !cb.checked;
+      chip.classList.toggle('rf-cuisine-chip--on', cb.checked);
+      currentCuisines = [...document.querySelectorAll('#cuisine-chips .rf-cuisine-chip input:checked')].map(el => el.value);
+      markDirty();
+      fetch('/settings/cuisine-prefs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+        body: JSON.stringify({ cuisine_prefs: currentCuisines }),
+      });
+    });
+  });
 
   const hideSkippedToggle = document.getElementById('hide-skipped-toggle');
   if (hideSkippedToggle) {
@@ -493,7 +512,7 @@
     const resp = await fetch('/recipes/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-      body: JSON.stringify({ ingredients: active, page, show_all: showAll, sort: currentSort, cuisine: currentCuisine, website: currentWebsite, cook_time_min: 0, cook_time_max: 120 }),
+      body: JSON.stringify({ ingredients: active, page, show_all: showAll, sort: currentSort, cuisines: currentCuisines, website: currentWebsite, cook_time_min: 0, cook_time_max: 120 }),
     });
     if (!resp.ok) throw new Error('search failed');
     return resp.json();
