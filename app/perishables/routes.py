@@ -287,7 +287,7 @@ def barcode_lookup():
                 image_bytes = resp.read()
             image_path = _save_photo_bytes(image_bytes, f"{barcode}.jpg")
         except Exception:
-            image_path = None
+            image_path = image_url
 
     brands = (product.get("brands") or "").strip() or None
     quantity = (product.get("quantity") or "").strip() or None

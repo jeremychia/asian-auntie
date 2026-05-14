@@ -521,9 +521,11 @@ function handleDoneClick(event) {
     <div class="add-review-photo">
       {% set first_photo = photo_items[0] %}
       <img src="{{ first_photo['path'] if first_photo['path'].startswith('http') else url_for('uploaded_file', filename=first_photo['path']) }}" alt="Item photo">
+      {% if not first_photo['path'].startswith('http') %}
       <button type="button" class="review-photo__retake" onclick="goBackToCapture()" style="position:absolute;top:0.75rem;right:0.75rem;height:32px;padding:0 0.75rem;background:rgba(255,255,255,0.95);color:var(--brand);border:1px solid var(--brand-faint);border-radius:9999px;cursor:pointer;font-family:inherit;font-size:0.75rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(4px);">
         ↺ Retake
       </button>
+      {% endif %}
     </div>
     {% endif %}
     <div id="confirm-all-photos" hidden>
