@@ -72,9 +72,16 @@
 
   {# Inline camera panel #}
   <div id="ep-camera-panel" hidden style="margin-bottom: var(--s-4);">
-    <div style="border-radius: var(--r-lg); overflow: hidden; background: #000; margin-bottom: 0.75rem;">
+    <div id="ep-camera-wrap"
+         style="border-radius: var(--r-lg); overflow: hidden; background: #000; margin-bottom: 0.75rem;
+                position: relative; aspect-ratio: 1 / 1;">
       <video id="ep-camera-video" autoplay playsinline
-             style="width: 100%; display: block; max-height: 280px; object-fit: cover;"></video>
+             style="width: 100%; height: 100%; display: block; object-fit: cover;"></video>
+      {# Dimmed corners show the square crop area #}
+      <div aria-hidden="true"
+           style="position:absolute; inset:0; pointer-events:none;
+                  box-shadow: inset 0 0 0 3px rgba(255,255,255,0.6);
+                  border-radius: var(--r-lg);"></div>
     </div>
     <canvas id="ep-camera-canvas" hidden></canvas>
     <div style="display: flex; gap: var(--s-3);">
@@ -170,9 +177,12 @@ function epCloseCamera() {
 function epCapture() {
   const video = document.getElementById('ep-camera-video');
   const canvas = document.getElementById('ep-camera-canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  const side = Math.min(vw, vh);
+  canvas.width = side;
+  canvas.height = side;
+  canvas.getContext('2d').drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, side, side);
   epCloseCamera();
 
   canvas.toBlob(function (blob) {

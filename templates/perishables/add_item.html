@@ -64,6 +64,11 @@
     Searching for barcode...
   </div>
   <div id="barcode-looking-up" hidden style="text-align:center; padding:0.75rem 0; color:var(--text-muted); font-size:var(--font-secondary);">
+    <div style="display:flex; justify-content:center; margin-bottom:0.4rem;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linecap="round" style="animation:recipe-spin 0.85s linear infinite;" aria-hidden="true">
+        <path d="M12 2a10 10 0 0 1 10 10" />
+      </svg>
+    </div>
     Looking up product...
   </div>
   <div id="barcode-not-found" hidden style="text-align:center; padding:1rem 0;">
@@ -172,6 +177,11 @@
         <button type="submit" class="btn btn-primary" id="done-btn" onclick="handleDoneClick(event)">Done</button>
       </div>
       <div id="upload-status" hidden style="text-align:center; margin-top:1rem;">
+        <div style="display:flex; justify-content:center; margin-bottom:0.5rem;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linecap="round" style="animation:recipe-spin 0.85s linear infinite;" aria-hidden="true">
+            <path d="M12 2a10 10 0 0 1 10 10" />
+          </svg>
+        </div>
         <p style="font-size:0.9rem; color:#666;">Processing photos...</p>
         <p id="upload-timeout-hint" hidden style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">
           Still working — recognition can take up to 30 seconds.
