@@ -174,8 +174,6 @@ class AddItemForm(FlaskForm):
 
     def validate_expiry_date(self, field):
         today = date.today()
-        if field.data < today:
-            raise ValidationError("That date has already passed.")
         max_date = today.replace(year=today.year + 5)
         if field.data > max_date:
             raise ValidationError(

@@ -26,7 +26,7 @@
 </svg>
 
 {# ── Method landing ── #}
-<div id="method-landing">
+<div id="method-landing" hidden>
   <h1 class="add-title">Add an item</h1>
   <p class="add-sub">Scan the barcode for the quickest result. Or snap the label, or type it in.</p>
 
@@ -49,7 +49,7 @@
 </div>
 
 {# ── Barcode scanner panel ── #}
-<div id="barcode-panel" hidden>
+<div id="barcode-panel">
   <div class="step-header">
     <span class="step-label">Scan barcode</span>
     <p class="step-hint">Point at the barcode on the packaging — it will detect automatically.</p>
@@ -471,6 +471,8 @@ function handleDoneClick(event) {
   }, 8000);
   document.getElementById('photo-form').submit();
 }
+
+startBarcode();
 </script>
 
 
@@ -1016,19 +1018,37 @@ function applyDateDefault() {
   checkExpiryWarning();
 }
 
+function dismissExpiryWarning() {
+  const warnEl = document.getElementById('expiry-warning');
+  if (warnEl) warnEl.hidden = true;
+}
+
 function checkExpiryWarning() {
   const dateEl = document.getElementById('expiry_date');
   const warnEl = document.getElementById('expiry-warning');
   if (!dateEl || !warnEl || !dateEl.value) { if (warnEl) warnEl.hidden = true; return; }
   const chosen = new Date(dateEl.value);
-  const limit = new Date();
-  limit.setMonth(limit.getMonth() + 18);
-  warnEl.hidden = chosen <= limit;
-  if (!warnEl.hidden) warnEl.textContent = "That's over 18 months away — is this right?";
+  const today = new Date(); today.setHours(0,0,0,0);
+  const limit = new Date(); limit.setMonth(limit.getMonth() + 18);
+  let msg = null;
+  if (chosen < today) msg = "This date has already passed.";
+  else if (chosen > limit) msg = "That's over 18 months away — is this right?";
+  if (msg) {
+    warnEl.hidden = false;
+    warnEl.innerHTML = msg + ' <span role="button" tabindex="0" onclick="dismissExpiryWarning()" onkeydown="if(event.key===\'Enter\'||event.key===\' \')dismissExpiryWarning()" aria-label="Dismiss" class="expiry-warning-dismiss">&times;</span>';
+  } else {
+    warnEl.hidden = true;
+  }
 }
 
 document.getElementById('item_type')?.addEventListener('change', applyDateDefault);
 document.getElementById('expiry_date')?.addEventListener('change', checkExpiryWarning);
+document.getElementById('expiry_date')?.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const warnEl = document.getElementById('expiry-warning');
+    if (warnEl && !warnEl.hidden) { e.preventDefault(); dismissExpiryWarning(); }
+  }
+});
 
 applyDateDefault();
 checkExpiryWarning();
