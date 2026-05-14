@@ -620,6 +620,8 @@ def add_item():
                 cache_hit=item.cache_hit,
             )
             flash(f'"{item.name}" added to your pantry.', "success")
+            if "add_another" in request.form:
+                return redirect(url_for("perishables.add_item"))
             return redirect(url_for("perishables.dashboard"))
 
         try:
