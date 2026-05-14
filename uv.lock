@@ -192,6 +192,7 @@ dependencies = [
 dev = [
     { name = "black" },
     { name = "pre-commit" },
+    { name = "pyyaml" },
     { name = "ruff" },
 ]
 
@@ -223,6 +224,7 @@ requires-dist = [
 dev = [
     { name = "black", specifier = ">=24.10.0,<25" },
     { name = "pre-commit", specifier = ">=4.4.0,<5" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", specifier = ">=0.0.360,<1" },
 ]
 

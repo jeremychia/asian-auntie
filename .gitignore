@@ -32,3 +32,6 @@ logs/
 
 # Pipeline build artefacts
 pipeline/cache/
+
+# Migration config — contains credentials
+migration.yaml
