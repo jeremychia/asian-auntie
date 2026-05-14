@@ -22,8 +22,8 @@ def search():
         return jsonify({"results": []})
 
     results = []
-    for recipe in RECIPES:
-        scored = score_recipe(recipe, ingredients)
+    for idx, recipe in enumerate(RECIPES):
+        scored = score_recipe(recipe, idx, ingredients)
         if scored:
             results.append(scored)
 
