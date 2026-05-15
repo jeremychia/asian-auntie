@@ -2,8 +2,12 @@ name: Keep Alive
 
 on:
   schedule:
+    - cron: "7 * * * *"
     - cron: "17 * * * *"
-    - cron: "43 * * * *"
+    - cron: "27 * * * *"
+    - cron: "37 * * * *"
+    - cron: "47 * * * *"
+    - cron: "57 * * * *"
 
 jobs:
   ping:
@@ -11,6 +15,6 @@ jobs:
     steps:
       - name: Ping
         run: |
-          DELAY=$(( RANDOM % 1800 ))
+          DELAY=$(( RANDOM % 100 ))
           sleep $DELAY
           curl -sf https://asian-auntie.onrender.com/ -o /dev/null
