@@ -113,6 +113,8 @@ _CUISINE_ORDER = [
 
 
 def _repr_list(items: list[str], indent: int) -> str:
+    if not items:
+        return "[]"
     pad = " " * indent
     inner = (",\n" + pad + "    ").join(f'"{i}"' for i in items)
     return f"[\n{pad}    {inner},\n{pad}]"

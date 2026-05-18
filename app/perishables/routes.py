@@ -21,7 +21,12 @@ from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models import Item, ItemPhoto
-from app.perishables.forms import AddItemForm, ITEM_TYPES, PANTRY_ITEMS
+from app.perishables.forms import (
+    AddItemForm,
+    INGREDIENT_TYPE_MAP,
+    ITEM_TYPES,
+    PANTRY_ITEMS,
+)
 from app.notifications.routes import get_user_locations
 from app.recognition.service import recognize_items_multi
 from app.logging_config import get_logger
@@ -375,9 +380,15 @@ def add_item():
                 step="manual",
                 form=AddItemForm(),
                 user_locations=user_locs,
+                pantry_items=PANTRY_ITEMS,
+                ingredient_type_map=INGREDIENT_TYPE_MAP,
             )
         return render_template(
-            "perishables/add_item.html", step="photo", user_locations=user_locs
+            "perishables/add_item.html",
+            step="photo",
+            user_locations=user_locs,
+            pantry_items=PANTRY_ITEMS,
+            ingredient_type_map=INGREDIENT_TYPE_MAP,
         )
 
     step = request.form.get("step", "photo")
@@ -424,6 +435,8 @@ def add_item():
                 step="manual",
                 form=AddItemForm(),
                 user_locations=get_user_locations(current_user),
+                pantry_items=PANTRY_ITEMS,
+                ingredient_type_map=INGREDIENT_TYPE_MAP,
             )
 
         logger.info("add_item_recognition_start", num_photos=len(saved_photos))
@@ -475,6 +488,8 @@ def add_item():
             expiry_source=expiry_source,
             source="photo",
             user_locations=get_user_locations(current_user),
+            pantry_items=PANTRY_ITEMS,
+            ingredient_type_map=INGREDIENT_TYPE_MAP,
         )
 
     # ── POST step=barcode_confirm: barcode lookup result → show confirmation ──
@@ -532,6 +547,8 @@ def add_item():
             expiry_source="estimated",
             source="barcode",
             user_locations=get_user_locations(current_user),
+            pantry_items=PANTRY_ITEMS,
+            ingredient_type_map=INGREDIENT_TYPE_MAP,
         )
 
     # ── POST step=confirm: save item from confirmation card ───────────────────
@@ -641,6 +658,8 @@ def add_item():
             photo_items=photo_items,
             source=form.source.data or "photo",
             user_locations=get_user_locations(current_user),
+            pantry_items=PANTRY_ITEMS,
+            ingredient_type_map=INGREDIENT_TYPE_MAP,
         )
 
     # ── POST step=manual: save item from manual form ──────────────────────────
@@ -690,6 +709,8 @@ def add_item():
             step="manual",
             form=form,
             user_locations=get_user_locations(current_user),
+            pantry_items=PANTRY_ITEMS,
+            ingredient_type_map=INGREDIENT_TYPE_MAP,
         )
 
     return redirect(url_for("perishables.add_item"))

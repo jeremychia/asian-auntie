@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
+from app.perishables.forms import PANTRY_ITEMS as _PANTRY_ITEMS_VOCAB
 
 from app.extensions import db
 from app.models import Item, RecipeEngagement
@@ -66,6 +67,7 @@ def index():
     return render_template(
         "recipes/index.html",
         pantry_items=pantry_items,
+        pantry_vocab=_PANTRY_ITEMS_VOCAB,
         skipped_ids=skipped_ids,
         made_ids=made_ids,
         user_expired_items_days=current_user.expired_items_days,

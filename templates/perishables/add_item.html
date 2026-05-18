@@ -780,31 +780,7 @@ function toggleMore() {
 
 {# ── Fuzzy autocomplete ─────────────────────────────────────────── #}
 <script>
-const PANTRY_ITEMS = [
-  "Fish sauce","Light soy sauce","Dark soy sauce","Oyster sauce","Hoisin sauce",
-  "Sweet soy sauce","Kecap manis","Sesame oil","Chilli oil","Coconut milk",
-  "Coconut cream","Rice vinegar","Black vinegar","Chinkiang vinegar","Mirin",
-  "Sake","Shaoxing wine","Miso paste","White miso","Red miso",
-  "Gochujang","Doenjang","Sambal oelek","Sriracha","XO sauce",
-  "Doubanjiang","Chilli bean paste","Black bean sauce","Char siu sauce","Plum sauce",
-  "Sweet chilli sauce","Teriyaki sauce","Ponzu","Maggi seasoning","Shrimp paste",
-  "Belacan","Tamarind paste","Laksa paste","Pad Thai sauce","Coconut sugar",
-  "Palm sugar","Rock sugar","Condensed milk","Evaporated milk","Pandan extract",
-  "Gochugaru","Five spice powder","Curry powder","Turmeric powder","White pepper",
-  "Sichuan peppercorn","Star anise","Dried chillies","Chilli flakes","Togarashi",
-  "Lemongrass paste","Galangal powder","Dashi powder","Agar agar",
-  "Jasmine rice","Glutinous rice","Brown rice","Rice flour","Tapioca starch",
-  "Cornstarch","Potato starch","Panko breadcrumbs",
-  "Rice noodles","Glass noodles","Egg noodles","Udon noodles","Soba noodles",
-  "Instant noodles","Wonton wrappers","Spring roll wrappers","Dumpling wrappers",
-  "Silken tofu","Firm tofu","Tofu puffs",
-  "Dried shiitake mushrooms","Wood ear mushrooms","Dried shrimp","Dried scallops",
-  "Fermented black beans","Lily buds","Bean curd skin","Dried red dates",
-  "Kombu","Nori","Wakame","Bonito flakes","Dashi stock",
-  "Fish balls","Fish cakes","Lap cheong",
-  "Water chestnuts","Bamboo shoots","Baby corn",
-  "Sesame seeds","Black sesame seeds",
-];
+const PANTRY_ITEMS = {{ pantry_items | tojson }};
 
 function fuzzyScore(item, q) {
   const s = item.toLowerCase();
@@ -942,43 +918,7 @@ function fuzzyScore(item, q) {
 
 
 <script>
-// Map standard ingredient names to their default types
-const ingredientTypeMap = {
-  "Fish sauce": "condiment", "Light soy sauce": "condiment", "Dark soy sauce": "condiment",
-  "Oyster sauce": "sauce", "Hoisin sauce": "sauce", "Sweet soy sauce": "sauce",
-  "Kecap manis": "sauce", "Sesame oil": "oil", "Chilli oil": "oil",
-  "Coconut milk": "dairy", "Coconut cream": "dairy", "Rice vinegar": "condiment",
-  "Black vinegar": "condiment", "Chinkiang vinegar": "condiment", "Mirin": "condiment",
-  "Sake": "other", "Shaoxing wine": "other", "Miso paste": "condiment",
-  "White miso": "condiment", "Red miso": "condiment", "Gochujang": "condiment",
-  "Doenjang": "condiment", "Sambal oelek": "condiment", "Sriracha": "condiment",
-  "XO sauce": "sauce", "Doubanjiang": "condiment", "Chilli bean paste": "condiment",
-  "Black bean sauce": "sauce", "Char siu sauce": "sauce", "Plum sauce": "sauce",
-  "Sweet chilli sauce": "sauce", "Teriyaki sauce": "sauce", "Ponzu": "condiment",
-  "Maggi seasoning": "condiment", "Shrimp paste": "condiment", "Belacan": "condiment",
-  "Tamarind paste": "condiment", "Laksa paste": "condiment", "Pad Thai sauce": "sauce",
-  "Coconut sugar": "other", "Palm sugar": "other", "Rock sugar": "other",
-  "Condensed milk": "dairy", "Evaporated milk": "dairy", "Pandan extract": "other",
-  "Gochugaru": "spice", "Five spice powder": "spice", "Curry powder": "spice",
-  "Turmeric powder": "spice", "White pepper": "spice", "Sichuan peppercorn": "spice",
-  "Star anise": "spice", "Dried chillies": "spice", "Chilli flakes": "spice",
-  "Togarashi": "spice", "Lemongrass paste": "condiment", "Galangal powder": "spice",
-  "Dashi powder": "condiment", "Agar agar": "dried", "Jasmine rice": "dried",
-  "Glutinous rice": "dried", "Brown rice": "dried", "Rice flour": "dried",
-  "Tapioca starch": "dried", "Cornstarch": "dried", "Potato starch": "dried",
-  "Panko breadcrumbs": "dried", "Rice noodles": "dried", "Glass noodles": "dried",
-  "Egg noodles": "dried", "Udon noodles": "dried", "Soba noodles": "dried",
-  "Instant noodles": "dried", "Wonton wrappers": "dried", "Spring roll wrappers": "dried",
-  "Dumpling wrappers": "dried", "Silken tofu": "tofu", "Firm tofu": "tofu",
-  "Tofu puffs": "tofu", "Dried shiitake mushrooms": "dried", "Wood ear mushrooms": "dried",
-  "Dried shrimp": "seafood", "Dried scallops": "seafood", "Fermented black beans": "dried",
-  "Lily buds": "dried", "Bean curd skin": "dried", "Dried red dates": "dried",
-  "Kombu": "dried", "Nori": "dried", "Wakame": "dried", "Bonito flakes": "seafood",
-  "Dashi stock": "condiment", "Fish balls": "seafood", "Fish cakes": "seafood",
-  "Lap cheong": "seafood", "Water chestnuts": "produce", "Bamboo shoots": "produce",
-  "Baby corn": "produce", "Sesame seeds": "spice", "Black sesame seeds": "spice",
-  "Desiccated coconut": "other", "Grated coconut": "other", "Toasted coconut": "other",
-};
+const ingredientTypeMap = {{ ingredient_type_map | tojson }};
 
 function updateTypeFromIngredient() {
   const standardNameEl = document.getElementById('standard_name');
