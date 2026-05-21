@@ -624,13 +624,18 @@ nav.container {
 }
 
 .item-card__badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: var(--font-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 3px 10px;
   border-radius: var(--r-full);
+}
+.badge-icon {
+  flex-shrink: 0;
 }
 
 /* Non-photo cards: name centred, badge pinned to bottom-left */
