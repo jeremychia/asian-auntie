@@ -597,6 +597,7 @@ startBarcode();
         {{ form.location(id="location", style="display:none", maxlength="32") }}
         <div class="add-chips" id="location-chips" role="group" aria-label="Storage location"></div>
       </div>
+      <span id="chip-announce" class="visually-hidden" aria-live="polite" aria-atomic="true"></span>
 
       <div>
         <div class="add-field-row">
@@ -722,6 +723,7 @@ function toggleMore() {
         </div>
         {{ form.location(id="location", style="display:none", maxlength="32") }}
         <div class="add-chips" id="location-chips" role="group" aria-label="Storage location"></div>
+      <span id="chip-announce" class="visually-hidden" aria-live="polite" aria-atomic="true"></span>
       </div>
 
       <div>
@@ -1060,14 +1062,24 @@ checkExpiryWarning();
     }).join('');
   }
 
+  function announce(msg) {
+    const el = document.getElementById('chip-announce');
+    if (!el) return;
+    el.textContent = '';
+    requestAnimationFrame(() => { el.textContent = msg; });
+  }
+
   window.selectType = function(id) {
     const select = document.getElementById('item_type');
     if (select) { select.value = id; select.dispatchEvent(new Event('change')); }
+    const label = TYPES.find(t => t.id === id)?.label;
+    if (label) announce(label + ' selected');
     renderTypeChips();
   };
   window.selectLocation = function(id, label) {
     const input = document.getElementById('location');
     if (input) { input.value = label; }
+    announce(label + ' selected');
     renderLocationChips();
   };
   window.selectExpiry = function(days) {

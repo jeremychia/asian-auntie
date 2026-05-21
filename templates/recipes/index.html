@@ -35,6 +35,7 @@
     <div id="chip-area" hidden>
       <div class="rf-chips" id="chip-list" aria-label="Selected ingredients" role="list"></div>
     </div>
+    <span id="rf-announce" class="visually-hidden" aria-live="polite" aria-atomic="true"></span>
 
     <!-- Inline add input: summoned by "+ Add" chip -->
     <div id="add-input-row" class="rf-ing__input-row" hidden>
@@ -311,7 +312,7 @@
       x.className = 'rf-chip__x';
       x.setAttribute('aria-label', 'Remove ' + ing.label);
       x.textContent = '×';
-      x.addEventListener('click', () => { ingredients.splice(idx, 1); showAllChips = false; render(); markDirty(); });
+      x.addEventListener('click', () => { rfAnnounce(ing.label + ' removed'); ingredients.splice(idx, 1); showAllChips = false; render(); markDirty(); });
       chip.appendChild(x);
       chipList.appendChild(chip);
     });
@@ -341,6 +342,13 @@
   }
 
   // ── Manual add ───────────────────────────────────────────────
+  function rfAnnounce(msg) {
+    const el = document.getElementById('rf-announce');
+    if (!el) return;
+    el.textContent = '';
+    requestAnimationFrame(() => { el.textContent = msg; });
+  }
+
   function addIngredient(name) {
     name = name.trim();
     if (!name) return;
@@ -350,6 +358,7 @@
       return;
     }
     ingredients.push({ label: name, active: true, source: 'manual' });
+    rfAnnounce(name + ' added');
     manualInput.value = '';
     showAddInput = false;
     closeAC();
