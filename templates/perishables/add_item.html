@@ -656,6 +656,15 @@ function toggleMore() {
   toggle.setAttribute('aria-expanded', String(!open));
   toggle.querySelector('span') && (toggle.querySelector('span').textContent = open ? 'Add notes or barcode' : 'Hide extras');
 }
+(function() {
+  const nameEl = document.getElementById('name');
+  if (!nameEl) return;
+  const form = nameEl.closest('form');
+  const submits = form ? form.querySelectorAll('[type=submit]') : [];
+  function sync() { submits.forEach(b => { b.disabled = !nameEl.value.trim(); }); }
+  sync();
+  nameEl.addEventListener('input', sync);
+})();
 </script>
 
 
@@ -772,6 +781,15 @@ function toggleMore() {
   fields.hidden = open;
   toggle.setAttribute('aria-expanded', String(!open));
 }
+(function() {
+  const nameEl = document.getElementById('name');
+  if (!nameEl) return;
+  const form = nameEl.closest('form');
+  const submits = form ? form.querySelectorAll('[type=submit]') : [];
+  function sync() { submits.forEach(b => { b.disabled = !nameEl.value.trim(); }); }
+  sync();
+  nameEl.addEventListener('input', sync);
+})();
 </script>
 {% endif %}
 
