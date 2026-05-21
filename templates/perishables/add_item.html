@@ -344,6 +344,15 @@ function capturePhoto() {
   document.getElementById('camera-panel').hidden = true;
   document.getElementById('photo-panel').hidden = false;
 
+  // Show immediate feedback while the photo blob and thumbnail are prepared
+  const statusEl = document.getElementById('upload-status');
+  const statusMsg = statusEl.querySelector('p');
+  if (statusMsg) statusMsg.textContent = 'Photo captured…';
+  document.getElementById('capture-zone').hidden = true;
+  document.getElementById('photo-actions').hidden = false;
+  document.getElementById('done-btn').disabled = true;
+  statusEl.hidden = false;
+
   canvas.toBlob(function(blob) {
     const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
     const input = ensurePhotoInput(currentPhotoIdx);
@@ -430,6 +439,12 @@ function handlePhotoSelected(input) {
     document.getElementById('capture-zone').hidden = true;
     document.getElementById('photo-actions').hidden = false;
     document.getElementById('add-more-btn').hidden = false;
+    // Restore state after capture preview: hide spinner, re-enable Done
+    const statusEl = document.getElementById('upload-status');
+    statusEl.hidden = true;
+    const statusMsg = statusEl.querySelector('p');
+    if (statusMsg) statusMsg.textContent = 'Processing photos...';
+    document.getElementById('done-btn').disabled = false;
   };
   reader.readAsDataURL(file);
 }
