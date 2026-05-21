@@ -84,6 +84,22 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
   });
   document.getElementById('onboarding-overlay').remove();
 });
+
+(function() {
+  const modal = document.querySelector('.onboarding-modal');
+  if (!modal) return;
+  const focusable = 'button, input, [tabindex]:not([tabindex="-1"])';
+  function getFocusable() { return [...modal.querySelectorAll(focusable)]; }
+  modal.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const els = getFocusable();
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  getFocusable()[0]?.focus();
+})();
 </script>
 {% endif %}
 
