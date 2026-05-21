@@ -218,6 +218,17 @@ Create a project at [neon.tech](https://neon.tech). Copy the **pooled connection
 ## Repository Layout
 
 - `app/` — Flask application package
+  - `auth/` — login / register routes and forms
+  - `perishables/` — pantry item CRUD
+  - `recipes/` — recipe search and display
+  - `api/` — JWT-auth REST endpoints
+  - `recognition/` — AI vision service for item identification
+  - `notifications/` — Web Push scheduler
+  - `onboarding/` — onboarding flows
+  - `main/` — landing page routes
+  - `ingredient_normalization.py` — fuzzy ingredient matching
+  - `logging_config.py` — structured logging setup
+  - `storage.py` — photo storage abstraction (GCS / local)
 - `config.py` — application configuration
 - `wsgi.py` — application entry point
 - `migrations/` — Alembic migration files

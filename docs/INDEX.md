@@ -173,4 +173,4 @@ feature/
 
 ---
 
-_Last updated: 2026-04-17 — Restructured: removed features.md, added mvp-checklist.yaml & future-features.yaml_
+_Last updated: 2026-05-18_

@@ -90,7 +90,7 @@ def upgrade():
         batch_op.add_column(sa.Column("my_col", sa.String(64), nullable=True))
 ```
 
-Revision IDs must be unique across all files in `migrations/versions/`. The current head is `c9d0e1f2a3b4`.
+Revision IDs must be unique across all files in `migrations/versions/`. The current head is `b1c2d3e4f5a6`.
 
 ## Environment variables
 
