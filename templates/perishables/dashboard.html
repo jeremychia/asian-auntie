@@ -98,7 +98,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
-  getFocusable()[0]?.focus();
+  (modal.querySelector('button') || getFocusable()[0])?.focus();
 })();
 </script>
 {% endif %}
