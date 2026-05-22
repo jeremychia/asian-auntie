@@ -55,6 +55,11 @@ class Config:
     OFF_PASSWORD = os.environ.get("OFF_PASSWORD", "")
     OFF_API_URL = os.environ.get("OFF_API_URL", "https://world.openfoodfacts.org")
 
+    # Session cookies — Secure flag is added by ProductionConfig only (requires HTTPS)
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_HTTPONLY = True
+
     # Logging
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 
@@ -65,12 +70,8 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    # Enforce secure cookies in production
     SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
     REMEMBER_COOKIE_SECURE = True
-    REMEMBER_COOKIE_HTTPONLY = True
 
     @classmethod
     def validate(cls):
@@ -98,8 +99,12 @@ config_by_name = {
 
 
 def get_config():
-    env = os.environ.get("FLASK_ENV", "development")
-    cfg = config_by_name.get(env, DevelopmentConfig)
+    env = os.environ.get("FLASK_ENV", "production")
+    cfg = config_by_name.get(env)
+    if cfg is None:
+        raise RuntimeError(
+            f"Unknown FLASK_ENV={env!r}. Must be one of: {list(config_by_name)}"
+        )
     if hasattr(cfg, "validate"):
         cfg.validate()
     return cfg
