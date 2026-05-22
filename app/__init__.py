@@ -102,6 +102,19 @@ def create_app():
         response.headers["Permissions-Policy"] = (
             "geolocation=(), microphone=(), camera=()"
         )
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' https://storage.googleapis.com data:; "
+            "connect-src 'self'; "
+            "font-src 'self'; "
+            "frame-ancestors 'none';"
+        )
+        if not app.debug:
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
         return response
 
     # Serve uploaded files (local dev only — GCS serves directly in production)
