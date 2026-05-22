@@ -1,7 +1,11 @@
 """Backfill normalized_ingredients into app/recipes/data.py.
 
+By default only fills in recipes whose normalized_ingredients list is empty,
+so manually curated entries are preserved. Pass --force to regenerate all.
+
 Run once (and again whenever PANTRY_ITEMS changes):
     uv run python scripts/normalize_recipe_data.py
+    uv run python scripts/normalize_recipe_data.py --force
 """
 
 import pathlib
@@ -15,8 +19,15 @@ from pipeline.store import emit_data_py
 
 
 def main() -> None:
+    force = "--force" in sys.argv
     enriched = []
+    skipped = 0
     for recipe in RECIPES:
+        existing = recipe.get("normalized_ingredients", [])
+        if existing and not force:
+            enriched.append(recipe)
+            skipped += 1
+            continue
         normalized = [
             normalize_ingredient(i) or i.lower().strip() for i in recipe["ingredients"]
         ]
@@ -31,7 +42,14 @@ def main() -> None:
     )
     out_path = pathlib.Path(__file__).parent.parent / "app" / "recipes" / "data.py"
     out_path.write_text(output)
-    print(f"Wrote {len(enriched)} recipes to {out_path}")
+    print(
+        f"Wrote {len(enriched)} recipes to {out_path}"
+        + (
+            f"  ({skipped} skipped — already had normalized_ingredients; use --force to regenerate)"
+            if skipped
+            else ""
+        )
+    )
 
 
 if __name__ == "__main__":
