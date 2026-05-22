@@ -6932,3 +6932,109 @@ dialog.id-sheet::backdrop {
   text-align: center;
   text-decoration: none;
 }
+
+/* ── Delete account ───────────────────────────────────────────────────── */
+.settings-section--danger {
+  border-color: #fca5a5;
+  background: #fff5f5;
+}
+.settings-section--danger .settings-section__title {
+  color: #b91c1c;
+}
+.content--narrow {
+  max-width: 560px;
+  margin: 0 auto;
+}
+.delete-hero {
+  text-align: center;
+  padding: var(--s-6) 0 var(--s-4);
+}
+.delete-hero__icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: var(--s-2);
+}
+.delete-hero__title {
+  font-size: var(--t-lg);
+  font-weight: 700;
+  color: var(--brand);
+  margin: 0 0 var(--s-1);
+}
+.delete-hero__subtitle {
+  font-size: var(--t-md);
+  color: var(--brand-muted);
+  margin: 0;
+}
+.delete-stats {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: center;
+  margin: var(--s-5) 0;
+}
+.delete-stat {
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-faint);
+  border-radius: 12px;
+  padding: var(--s-3) var(--s-4);
+  text-align: center;
+  flex: 1;
+}
+.delete-stat__number {
+  display: block;
+  font-size: var(--t-lg);
+  font-weight: 700;
+  color: var(--brand);
+  line-height: 1.1;
+}
+.delete-stat__label {
+  display: block;
+  font-size: var(--t-xs);
+  color: var(--brand-muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.delete-farewell {
+  text-align: center;
+  font-size: var(--t-sm);
+  color: var(--brand-muted);
+  margin: 0 0 var(--s-5);
+  font-style: italic;
+}
+.delete-will-remove {
+  background: #fff;
+  border: 1px solid var(--brand-faint);
+  border-radius: 14px;
+  padding: var(--s-4) var(--s-5);
+  margin-bottom: var(--s-5);
+}
+.delete-will-remove__title {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--brand);
+  margin: 0 0 var(--s-3);
+}
+.delete-will-remove__list {
+  font-size: var(--t-sm);
+  color: var(--brand-muted);
+  padding-left: var(--s-4);
+  margin: 0 0 var(--s-3);
+  line-height: 1.8;
+}
+.delete-will-remove__warning {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: #b91c1c;
+  margin: 0;
+}
+.delete-confirm-field {
+  margin-bottom: var(--s-4);
+}
+.delete-confirm-field .settings-label {
+  display: block;
+  margin-bottom: var(--s-2);
+}
+.delete-actions {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}

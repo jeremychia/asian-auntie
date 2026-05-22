@@ -1,7 +1,17 @@
 import json
+import os
+from datetime import datetime, timezone
 
-from flask import current_app, jsonify, render_template, request
-from flask_login import current_user, login_required
+from flask import (
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_login import current_user, login_required, logout_user
 from pywebpush import WebPushException, webpush
 
 from app.extensions import db
@@ -125,6 +135,93 @@ def save_locations():
         current_user.custom_locations = json.dumps(cleaned)
     db.session.commit()
     return jsonify({"ok": True})
+
+
+@notifications_bp.route("/settings/delete-account", methods=["GET"])
+@login_required
+def delete_account_confirm():
+    from app.models import Item, ItemPhoto, RecipeEngagement
+
+    now = datetime.now(timezone.utc)
+    joined = current_user.created_at
+    if joined.tzinfo is None:
+        joined = joined.replace(tzinfo=timezone.utc)
+    days_since_joined = (now - joined).days
+
+    items_tracked = Item.query.filter_by(user_id=current_user.id).count()
+    items_used = Item.query.filter_by(
+        user_id=current_user.id, removal_reason="used"
+    ).count()
+    recipes_explored = RecipeEngagement.query.filter_by(user_id=current_user.id).count()
+    photo_count = (
+        ItemPhoto.query.join(Item).filter(Item.user_id == current_user.id).count()
+    )
+
+    return render_template(
+        "settings_delete.html",
+        days_since_joined=days_since_joined,
+        items_tracked=items_tracked,
+        items_used=items_used,
+        recipes_explored=recipes_explored,
+        photo_count=photo_count,
+    )
+
+
+@notifications_bp.route("/settings/delete-account", methods=["POST"])
+@login_required
+def delete_account():
+    if request.form.get("confirm") != "DELETE MY ACCOUNT":
+        flash("Confirmation text didn't match. Account not deleted.", "error")
+        return redirect(url_for("notifications.delete_account_confirm"))
+
+    from app.models import Item, ItemPhoto, RecipeEngagement, RefreshToken
+
+    user_id = current_user.id
+    bucket_name = current_app.config.get("GCS_BUCKET_NAME")
+    credentials_json = current_app.config.get("GCS_CREDENTIALS_JSON") or None
+
+    # Collect and delete stored photos before removing DB rows
+    photos = ItemPhoto.query.join(Item).filter(Item.user_id == user_id).all()
+    for photo in photos:
+        if bucket_name:
+            try:
+                from app.storage import delete_photo as gcs_delete
+
+                path = photo.photo_path
+                prefix = f"https://storage.googleapis.com/{bucket_name}/"
+                if path.startswith(prefix):
+                    path = path[len(prefix) :]
+                gcs_delete(path, bucket_name, credentials_json)
+            except Exception:
+                pass
+        else:
+            try:
+                local = os.path.join(
+                    current_app.config["UPLOAD_FOLDER"], photo.photo_path
+                )
+                if os.path.isfile(local):
+                    os.remove(local)
+            except Exception:
+                pass
+
+    RecipeEngagement.query.filter_by(user_id=user_id).delete()
+    RefreshToken.query.filter_by(user_id=user_id).delete()
+    # Item cascade deletes ItemPhoto rows via relationship
+    Item.query.filter_by(user_id=user_id).delete()
+
+    from app.models import User
+
+    user = db.session.get(User, user_id)
+    logout_user()
+    db.session.delete(user)
+    db.session.commit()
+
+    flash(
+        "Your account and all your data have been permanently deleted. "
+        "Thanks for the time you spent here — take care.",
+        "info",
+    )
+    return redirect(url_for("main.landing"))
 
 
 def send_push_notification(user, title, body, url="/"):

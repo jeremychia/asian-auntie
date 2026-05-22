@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Delete Account — Asian Auntie{% endblock %}
+{% block content %}
+<div class="content content--narrow">
+
+  <div class="delete-hero">
+    <div class="delete-hero__icon" aria-hidden="true">🫙</div>
+    <h1 class="delete-hero__title">Before you go…</h1>
+    <p class="delete-hero__subtitle">
+      You've been part of Asian Auntie for <strong>{{ days_since_joined }} day{{ 's' if days_since_joined != 1 else '' }}</strong>.
+    </p>
+  </div>
+
+  <div class="delete-stats">
+    <div class="delete-stat">
+      <span class="delete-stat__number">{{ items_tracked }}</span>
+      <span class="delete-stat__label">items tracked</span>
+    </div>
+    <div class="delete-stat">
+      <span class="delete-stat__number">{{ items_used }}</span>
+      <span class="delete-stat__label">used up before they expired</span>
+    </div>
+    <div class="delete-stat">
+      <span class="delete-stat__number">{{ recipes_explored }}</span>
+      <span class="delete-stat__label">recipes explored</span>
+    </div>
+  </div>
+
+  {% if items_used > 0 %}
+  <p class="delete-farewell">
+    That's {{ items_used }} item{{ 's' if items_used != 1 else '' }} that didn't end up in the bin.
+    Not bad at all.
+  </p>
+  {% endif %}
+
+  <div class="delete-will-remove">
+    <h2 class="delete-will-remove__title">Deleting your account will permanently remove:</h2>
+    <ul class="delete-will-remove__list">
+      <li>Your profile and all account data</li>
+      <li>{{ items_tracked }} pantry item{{ 's' if items_tracked != 1 else '' }} (including removed ones)</li>
+      <li>{{ photo_count }} photo{{ 's' if photo_count != 1 else '' }}</li>
+      <li>{{ recipes_explored }} recipe engagement{{ 's' if recipes_explored != 1 else '' }}</li>
+      <li>All notification preferences and subscriptions</li>
+    </ul>
+    <p class="delete-will-remove__warning">
+      This is permanent. There is no undo.
+    </p>
+  </div>
+
+  <form method="POST" action="{{ url_for('notifications.delete_account') }}" id="delete-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="delete-confirm-field">
+      <label class="settings-label" for="confirm-input">
+        Type <strong>DELETE MY ACCOUNT</strong> to confirm
+      </label>
+      <input type="text" id="confirm-input" name="confirm" autocomplete="off"
+             class="settings-input" placeholder="DELETE MY ACCOUNT">
+    </div>
+    <div class="delete-actions">
+      <a href="{{ url_for('notifications.settings') }}" class="btn btn-secondary">
+        Cancel — keep my account
+      </a>
+      <button type="submit" id="delete-btn" class="btn btn-danger" disabled>
+        Delete everything
+      </button>
+    </div>
+  </form>
+
+</div>
+
+<script>
+const confirmInput = document.getElementById('confirm-input');
+const deleteBtn = document.getElementById('delete-btn');
+confirmInput.addEventListener('input', () => {
+  deleteBtn.disabled = confirmInput.value !== 'DELETE MY ACCOUNT';
+});
+</script>
+{% endblock %}
