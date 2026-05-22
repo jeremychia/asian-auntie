@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import Schema, fields, validate, validates, ValidationError
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import Item, User
 from app.recognition.service import recognize_item
 from app.logging_config import get_logger
@@ -195,6 +195,7 @@ def delete_item(item_id):
 
 @api_items_bp.route("/items/recognize", methods=["POST"])
 @jwt_required()
+@limiter.limit("20 per hour", key_func=lambda: str(get_jwt_identity()))
 def recognize():
     if "photo" not in request.files:
         return jsonify({"error": "No photo provided."}), 422

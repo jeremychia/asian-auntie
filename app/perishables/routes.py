@@ -22,7 +22,7 @@ from flask import (
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import Item, ItemPhoto
 from app.perishables.forms import (
     AddItemForm,
@@ -447,6 +447,7 @@ def group_detail(group_key):
 
 @perishables_bp.route("/items/add", methods=["GET", "POST"])
 @login_required
+@limiter.limit("30 per hour", key_func=lambda: str(current_user.id), methods=["POST"])
 def add_item():
     # ── GET: photo capture page (or skip directly to manual form) ─────────────
     if request.method == "GET":
