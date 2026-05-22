@@ -600,6 +600,7 @@ nav.container {
 
 .item-card:hover {
   transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .item-card__top {
@@ -638,17 +639,21 @@ nav.container {
   flex-shrink: 0;
 }
 
-/* Non-photo cards: name centred, badge pinned to bottom-left */
+/* Non-photo cards: left-aligned content with badge at bottom */
 .item-card:not(.item-card--has-photo) {
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding-bottom: 2.5rem;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
 }
+
+.item-card:not(.item-card--has-photo) .item-card__top {
+  width: 100%;
+}
+
 .item-card:not(.item-card--has-photo) .item-card__badge {
-  position: absolute;
-  bottom: 1rem;
-  left: 1rem;
+  align-self: flex-start;
+  margin-top: auto;
 }
 
 /* badge urgency colors consolidated in "Status colors" section below */
@@ -1354,6 +1359,15 @@ select.sort-select:focus {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.item-card__overlay-bottom {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.3rem;
 }
 
@@ -1452,6 +1466,34 @@ select.sort-select:focus {
 }
 [class*="item-card--type-"] .item-card__name {
   color: var(--card-text, var(--text));
+}
+[class*="item-card--type-"] .item-card__type {
+  color: var(--card-text, var(--text));
+  opacity: 0.7;
+}
+[class*="item-card--type-"] .item-card__batches {
+  color: var(--card-text, var(--text));
+  opacity: 0.8;
+}
+[class*="item-card--type-"] .item-card__count {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--card-text, var(--text));
+}
+
+/* Type-tinted photo cards: slightly lighten the overlay */
+.item-card--has-photo[class*="item-card--type-"] .item-card__overlay {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.65) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+.item-card--has-photo[class*="item-card--type-"] .item-card__name--overlay {
+  color: #fff;
+}
+.item-card--has-photo[class*="item-card--type-"] .item-card__badge--overlay {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -3755,6 +3797,216 @@ select.sort-select:focus {
 
 .quantity-pip--filled {
   background: var(--brand);
+}
+
+/* ── Batch count hint on grouped cards ── */
+/* Batch count: flex row with pill-styled count */
+.item-card__batches {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 8px;
+  letter-spacing: 0.01em;
+}
+
+.item-card__count {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(112, 1, 67, 0.08);
+  color: var(--text);
+  border-radius: var(--r-full);
+  padding: 2px 8px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.item-card__batches--overlay {
+  margin-top: 4px;
+}
+
+.item-card--has-photo .item-card__batches {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.item-card--has-photo .item-card__batches--overlay {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.item-card--has-photo .item-card__count {
+  background: rgba(0, 0, 0, 0.15);
+  color: #fff;
+}
+
+.item-card--has-photo .item-card__batches--overlay .item-card__count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Stacked shadow for multi-count cards */
+.item-card--stacked {
+  position: relative;
+}
+
+.item-card--stacked::after {
+  content: "";
+  position: absolute;
+  inset: 4px -4px -4px 4px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  opacity: 0.6;
+  z-index: -1;
+  border: 1px solid var(--border);
+}
+
+/* ── Group detail page ── */
+.meta-subhead {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
+/* ── Simplified batch list on group detail page ── */
+.group-batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.group-batch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  border-left-width: 3px;
+}
+
+.group-batch-item--expired,
+.group-batch-item--today {
+  border-left-color: var(--urgent);
+  background: rgba(220, 38, 38, 0.02);
+}
+
+.group-batch-item--soon {
+  border-left-color: var(--warn);
+  background: rgba(217, 119, 6, 0.02);
+}
+
+.group-batch-item--ok {
+  border-left-color: var(--border);
+}
+
+/* ── Group detail batch cards ── */
+.group-detail-batch {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.group-detail-batch__header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+}
+
+.group-detail-batch__content {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Batch cards on group detail page ── */
+.batch-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 1rem;
+  border-left-width: 3px;
+}
+
+.batch-card--expired,
+.batch-card--today {
+  border-left-color: var(--urgent);
+}
+
+.batch-card--soon {
+  border-left-color: var(--warn);
+}
+
+.batch-card--ok {
+  border-left-color: var(--border);
+}
+
+.batch-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem 0.5rem;
+}
+
+.batch-card__expiry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.batch-card__expiry-date {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
+.batch-card__expiry-date--ok {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.batch-card .meta-list {
+  border: none;
+  border-radius: 0;
+  background: none;
+  margin-bottom: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.batch-card .meta-row {
+  padding: 0 1rem;
+}
+
+.batch-card .meta-row:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.batch-card__quantity {
+  padding: 0.75rem 1rem 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.batch-card__quantity .quantity-tracker__label {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  font-weight: 500;
+  margin: 0 0 0.5rem;
+}
+
+.batch-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface-raised, var(--surface));
 }
 
 /* ── Responsive ── */

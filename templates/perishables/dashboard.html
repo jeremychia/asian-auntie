@@ -4,6 +4,7 @@
 
 {% set undo_id = request.args.get('undo') %}
 {% set undo_name = request.args.get('undo_name') %}
+{% set undo_expiry = request.args.get('undo_expiry') %}
 
 {% if current_user.cooking_days is none %}
 <div class="onboarding-overlay" id="onboarding-overlay">
@@ -103,7 +104,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 </script>
 {% endif %}
 
-{% if items %}
+{% if grouped %}
 <div class="toolbar">
   <input
     id="search-input"
@@ -125,7 +126,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
   <div class="page-header">
     <h1 class="page-title">
       Your pantry
-      {% if items %}<small>{{ items | length }} item{{ 's' if items | length != 1 }}</small>{% endif %}
+      {% if grouped %}<small>{{ grouped | length }} item{{ 's' if grouped | length != 1 }}</small>{% endif %}
     </h1>
   </div>
 
@@ -139,9 +140,10 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
   </div>
   {% endif %}
 
-  {% if items %}
+  {% if grouped %}
   <div class="item-grid" id="item-grid">
-    {% for item in items %}
+    {% for group in grouped %}
+      {% set item = group.representative %}
       {% set days_left = (item.expiry_date - today).days %}
       {% if days_left < 0 %}
         {% set urgency = "expired" %}
@@ -161,6 +163,8 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
         {% set urgency_icon = "" %}
       {% endif %}
       {% set photo = item.display_photo %}
+      {% set open_count = group['items'] | selectattr('quantity_state') | list | length %}
+      {% set show_batch_line = group['count'] > 1 or open_count > 0 %}
 
       <div class="card-wrap"
            data-name="{{ item.name | lower }}"
@@ -171,8 +175,8 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
            data-item-id="{{ item.id }}"
            data-item-name="{{ item.name }}">
         <a
-          href="{{ url_for('perishables.item_detail', item_id=item.id) }}"
-          class="item-card item-card--{{ urgency }}{% if photo %} item-card--has-photo{% else %} item-card--type-{{ item.item_type }}{% endif %}"
+          href="{% if group['count'] > 1 %}{{ url_for('perishables.group_detail', group_key=group['key']) }}{% else %}{{ url_for('perishables.item_detail', item_id=item.id) }}{% endif %}"
+          class="item-card item-card--{{ urgency }}{% if photo %} item-card--has-photo{% if urgency == 'ok' %} item-card--type-{{ item.item_type }}{% endif %}{% else %} item-card--type-{{ item.item_type }}{% endif %}{% if group['count'] > 1 %} item-card--stacked{% endif %}"
         >
           {% if photo %}
           <img
@@ -182,19 +186,34 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
           />
           <div class="item-card__overlay">
             <span class="item-card__name item-card__name--overlay">{{ item.name }}</span>
-            <span class="item-card__badge item-card__badge--overlay">{{ urgency_icon }}{{ urgency_label }}</span>
+            <div class="item-card__overlay-bottom">
+              {% if show_batch_line %}
+              <div class="item-card__batches item-card__batches--overlay">
+                {% if group['count'] > 1 %}<span class="item-card__count">× {{ group['count'] }}</span>{% endif %}
+                {% if open_count > 0 %}
+                  {% if group['count'] > 1 %}<span aria-hidden="true" style="opacity: 0.5">·</span>{% endif %}
+                  <span>{{ open_count }} open</span>
+                {% endif %}
+              </div>
+              {% endif %}
+              <span class="item-card__badge item-card__badge--overlay">{{ urgency_icon }}{{ urgency_label }}</span>
+            </div>
           </div>
           {% else %}
-          <span class="item-card__name">{{ item.name }}</span>
-          <span class="item-card__badge">{{ urgency_icon }}{{ urgency_label }}</span>
-          {% endif %}
-          {% if item.quantity_state %}
-          <div class="item-card__quantity-pips">
-            <span class="quantity-pip {% if item.quantity_state in ('full', 'three_quarters', 'half', 'nearly_gone') %}quantity-pip--filled{% endif %}"></span>
-            <span class="quantity-pip {% if item.quantity_state in ('full', 'three_quarters', 'half') %}quantity-pip--filled{% endif %}"></span>
-            <span class="quantity-pip {% if item.quantity_state in ('full', 'three_quarters') %}quantity-pip--filled{% endif %}"></span>
-            <span class="quantity-pip {% if item.quantity_state == 'full' %}quantity-pip--filled{% endif %}"></span>
+          <div class="item-card__top">
+            <span class="item-card__name">{{ item.name }}</span>
+            <span class="item-card__type">{{ item.item_type }}</span>
+            {% if show_batch_line %}
+            <div class="item-card__batches">
+              {% if group['count'] > 1 %}<span class="item-card__count">× {{ group['count'] }}</span>{% endif %}
+              {% if open_count > 0 %}
+                {% if group['count'] > 1 %}<span aria-hidden="true" style="opacity: 0.5">·</span>{% endif %}
+                <span>{{ open_count }} open</span>
+              {% endif %}
+            </div>
+            {% endif %}
           </div>
+          <span class="item-card__badge">{{ urgency_icon }}{{ urgency_label }}</span>
           {% endif %}
         </a>
       </div>
@@ -237,7 +256,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 <!-- Undo toast -->
 {% if undo_id and undo_name %}
 <div id="undo-toast" class="undo-toast" role="status" aria-live="polite">
-  <span class="undo-toast__msg">Removed {{ undo_name }}</span>
+  <span class="undo-toast__msg">Removed {{ undo_name }}{% if undo_expiry %} expiring {{ undo_expiry }}{% endif %}</span>
   <form method="post" action="{{ url_for('perishables.undo_use', item_id=undo_id) }}" style="margin:0">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <button type="submit" class="undo-toast__btn">Undo</button>

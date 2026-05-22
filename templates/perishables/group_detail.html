@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}{{ items[0].standard_name or items[0].name }} — Asian Auntie{% endblock %}
+{% block content %}
+
+{% set rep = items[0] %}
+{% set group_url = request.url %}
+
+<div class="content">
+  <a href="{{ url_for('perishables.dashboard') }}" class="back-link">← Pantry</a>
+
+  {# ── Photos: show once, using the first item that has one ── #}
+  {% set ns = namespace(photo_item=none) %}
+  {% for item in items %}
+    {% if ns.photo_item is none and item.display_photo %}
+      {% set ns.photo_item = item %}
+    {% endif %}
+  {% endfor %}
+  {% if ns.photo_item %}
+  <div class="item-photos">
+    {% for photo in ns.photo_item.photos %}
+    <figure class="item-photo-figure">
+      <img src="{{ photo.photo_url }}"
+           alt="{{ photo.photo_type | replace('_', ' ') | capitalize }} photo of {{ rep.name }}"
+           class="item-photo" />
+      <figcaption class="item-photo-caption">
+        {{ photo.photo_type | replace('_', ' ') | capitalize }}
+        {% if photo.photo_path.startswith('https://images.openfoodfacts.org') %}
+        <span class="tooltip-icon" tabindex="0"
+              data-tip="Photo from Open Food Facts, a free and collaborative food products database."
+              style="color:#fff; margin-left:0.2rem;">ⓘ</span>
+        {% endif %}
+      </figcaption>
+    </figure>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="detail-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div>
+      <h1 style="margin: 0 0 4px; letter-spacing: -0.02em;">{{ rep.standard_name or rep.name }}</h1>
+      <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">
+        {% if rep.item_type and rep.item_type != 'unknown' %}<span style="text-transform: capitalize;">{{ rep.item_type }}</span>{% if rep.location %}<span style="opacity: 0.4; margin: 0 0.4em;">·</span>{{ rep.location | capitalize }}{% endif %}{% endif %}
+      </p>
+    </div>
+    <a href="{{ url_for('perishables.edit_item', item_id=rep.id) }}" class="btn-icon" aria-label="Edit item details"
+       style="width: 36px; height: 36px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--r-full); color: var(--text-muted); background: none; cursor: pointer; transition: color 0.15s, border-color 0.15s, background 0.15s;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+    </a>
+  </div>
+
+  {# ── Shared product metadata ── #}
+  {% if rep.brands or rep.quantity or rep.barcode or (rep.off_nutriscore_grade and rep.off_nutriscore_grade != 'U') or rep.off_nova_group or (rep.off_ecoscore_grade and rep.off_ecoscore_grade != 'U') %}
+  <div class="meta-list" style="margin-bottom: 1.5rem;">
+    {% if rep.brands %}
+    <div class="meta-row">
+      <span class="meta-label">Brand</span>
+      <span class="meta-value">{{ rep.brands }}</span>
+    </div>
+    {% endif %}
+    {% if rep.quantity %}
+    <div class="meta-row">
+      <span class="meta-label">Size</span>
+      <span class="meta-value">{{ rep.quantity }}</span>
+    </div>
+    {% endif %}
+    {% if rep.barcode %}
+    <div class="meta-row">
+      <span class="meta-label">Barcode</span>
+      <span class="meta-value">{{ rep.barcode }}</span>
+    </div>
+    {% endif %}
+    {% if rep.off_nutriscore_grade and rep.off_nutriscore_grade != 'U' %}
+    <div class="meta-row">
+      <span class="meta-label">
+        Nutri-Score
+        <span class="tooltip-icon" data-tip="Nutritional quality score from A (best) to E (worst), based on nutrients per 100g/100ml.">ⓘ</span>
+      </span>
+      <div class="meta-value">
+        <span class="grade-badge nutriscore-grade--{{ rep.off_nutriscore_grade | lower }}">{{ rep.off_nutriscore_grade | upper }}</span>
+      </div>
+    </div>
+    {% endif %}
+    {% if rep.off_nova_group %}
+    <div class="meta-row">
+      <span class="meta-label">
+        NOVA group
+        <span class="tooltip-icon" data-tip="Food processing level: 1 = unprocessed, 4 = ultra-processed.">ⓘ</span>
+      </span>
+      <span class="meta-value">{{ rep.off_nova_group }}</span>
+    </div>
+    {% endif %}
+    {% if rep.off_ecoscore_grade and rep.off_ecoscore_grade != 'U' %}
+    <div class="meta-row">
+      <span class="meta-label">
+        Eco-Score
+        <span class="tooltip-icon" data-tip="Environmental impact from A (low) to E (high).">ⓘ</span>
+      </span>
+      <div class="meta-value">
+        <span class="grade-badge ecoscore-grade--{{ rep.off_ecoscore_grade | lower }}">{{ rep.off_ecoscore_grade | upper }}</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 0; line-height: 1.2;">Batches {{ items | length }}</h2>
+    <a href="{{ url_for('perishables.add_item') }}" style="font-size: 0.875rem; color: var(--brand); text-decoration: none; font-weight: 500;">+ Add another</a>
+  </div>
+
+  <div class="group-batch-list">
+    {% for item in items %}
+      {% set days = (item.expiry_date - today).days %}
+      {% if days < 0 %}{% set urg = "expired" %}
+      {% elif days == 0 %}{% set urg = "today" %}
+      {% elif days <= 3 %}{% set urg = "soon" %}
+      {% else %}{% set urg = "ok" %}{% endif %}
+
+    <div class="group-detail-batch">
+      <div class="group-detail-batch__header">
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0;"></span>
+            <span style="font-weight: 600; color: var(--text);">{{ item.standard_name or item.name }}</span>
+            <span class="badge badge--{{ urg }}">
+              {% if days < 0 %}Expired{% elif days == 0 %}Today{% elif days <= 3 %}{{ days }}d{% else %}{{ item.expiry_date.strftime("%-d %b") }}{% endif %}
+            </span>
+          </div>
+          <div style="font-size: 0.8125rem; color: var(--text-muted); display: flex; gap: 1rem;">
+            <span>Expires {{ item.expiry_date.strftime("%-d %b %Y") }}</span>
+            <span>added {{ item.date_added.strftime("%-d %b") }}</span>
+          </div>
+        </div>
+        <a href="{{ url_for('perishables.edit_item', item_id=item.id, next=group_url) }}"
+           class="btn-icon" aria-label="Edit this item"
+           style="flex-shrink: 0; color: var(--text-muted); padding: 0; border: none; background: none; cursor: pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="12" cy="6" r="2"/>
+            <circle cx="12" cy="12" r="2"/>
+            <circle cx="12" cy="18" r="2"/>
+          </svg>
+        </a>
+      </div>
+
+      <div class="meta-list">
+        <div class="meta-row">
+          <span class="meta-label">Location</span>
+          <span class="meta-value">{{ item.location | capitalize if item.location else 'Not specified' }}</span>
+        </div>
+      </div>
+
+      <div class="group-detail-batch__content">
+        <div class="quantity-tracker">
+          <h3 class="quantity-tracker__label">How much is left?</h3>
+          <form method="post" action="{{ url_for('perishables.update_quantity_state', item_id=item.id) }}" class="quantity-buttons">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="next" value="{{ group_url }}" />
+            <button type="submit" name="quantity_state" value="full"
+                    class="quantity-btn {% if item.quantity_state == 'full' %}quantity-btn--active{% endif %}">Full</button>
+            <button type="submit" name="quantity_state" value="three_quarters"
+                    class="quantity-btn {% if item.quantity_state == 'three_quarters' %}quantity-btn--active{% endif %}">About 3/4</button>
+            <button type="submit" name="quantity_state" value="half"
+                    class="quantity-btn {% if item.quantity_state == 'half' %}quantity-btn--active{% endif %}">About half</button>
+            <button type="submit" name="quantity_state" value="nearly_gone"
+                    class="quantity-btn {% if item.quantity_state == 'nearly_gone' %}quantity-btn--active{% endif %}">Nearly gone</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <form method="post" action="{{ url_for('perishables.mark_used', item_id=items[0].id) }}" style="margin-top: 1.5rem;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="next" value="{{ group_url }}" />
+    <button type="submit" class="btn btn-primary btn-full" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+      <span style="font-size: 1.2rem;">✓</span> Mark earliest as used
+    </button>
+  </form>
+
+</div>
+
+{% endblock %}

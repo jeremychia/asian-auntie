@@ -3,11 +3,14 @@ import os
 import hashlib
 import urllib.request
 import urllib.error
+from collections import defaultdict
 from datetime import datetime, timezone, date, timedelta
+from urllib.parse import urlparse
 from io import BytesIO
 from PIL import Image
 from flask import (
     Blueprint,
+    abort,
     render_template,
     redirect,
     url_for,
@@ -34,6 +37,12 @@ from app.ingredient_normalization import normalize_ingredient
 
 perishables_bp = Blueprint("perishables", __name__)
 logger = get_logger(__name__)
+
+
+def _safe_next(url):
+    parsed = urlparse(url)
+    return url if (url and not parsed.netloc and url.startswith("/")) else None
+
 
 # Open Food Facts family — tried in order; all share the same API structure
 _OFF_DOMAINS = [
@@ -355,16 +364,68 @@ def barcode_lookup():
 @perishables_bp.route("/dashboard")
 @login_required
 def dashboard():
-    items = (
+    raw_items = (
         Item.query.filter_by(user_id=current_user.id)
         .filter(Item.removed_at.is_(None))
         .order_by(Item.expiry_date.asc())
         .all()
     )
     today = date.today()
-    all_expired = bool(items) and all(item.expiry_date < today for item in items)
+
+    # Group by most-specific available key: barcode > standard_name > name.
+    # defaultdict preserves insertion order (Python 3.7+) and raw_items is
+    # already sorted by expiry_date, so items[0] in each group is always the
+    # soonest-expiring — no re-sort needed.
+    groups: dict = defaultdict(list)
+    for item in raw_items:
+        key = item.barcode or item.standard_name or item.name
+        groups[key].append(item)
+
+    grouped = [
+        {
+            "key": key,
+            "items": items,
+            "representative": items[0],
+            "count": len(items),
+        }
+        for key, items in groups.items()
+    ]
+
+    all_expired = bool(grouped) and all(
+        g["representative"].expiry_date < today for g in grouped
+    )
     return render_template(
-        "perishables/dashboard.html", items=items, today=today, all_expired=all_expired
+        "perishables/dashboard.html",
+        grouped=grouped,
+        today=today,
+        all_expired=all_expired,
+    )
+
+
+@perishables_bp.route("/items/group/<path:group_key>")
+@login_required
+def group_detail(group_key):
+    today = date.today()
+    items = (
+        Item.query.filter(
+            Item.user_id == current_user.id,
+            Item.removed_at.is_(None),
+            db.or_(
+                Item.barcode == group_key,
+                Item.standard_name == group_key,
+                Item.name == group_key,
+            ),
+        )
+        .order_by(Item.expiry_date.asc())
+        .all()
+    )
+    if not items:
+        abort(404)
+    return render_template(
+        "perishables/group_detail.html",
+        items=items,
+        group_key=group_key,
+        today=today,
     )
 
 
@@ -753,6 +814,7 @@ def edit_item(item_id):
         today=today,
         is_editing=True,
         pantry_items_list=PANTRY_ITEMS,
+        next_url=request.args.get("next"),
     )
 
 
@@ -782,7 +844,10 @@ def update_quantity_state(item_id):
         return redirect(url_for("perishables.item_detail", item_id=item_id))
     item.quantity_state = new_state
     db.session.commit()
-    return redirect(url_for("perishables.item_detail", item_id=item_id))
+    return redirect(
+        _safe_next(request.form.get("next"))
+        or url_for("perishables.item_detail", item_id=item_id)
+    )
 
 
 @perishables_bp.route("/items/<int:item_id>/edit", methods=["POST"])
@@ -826,7 +891,10 @@ def update_item(item_id):
     item.location = new_location or None
     item.barcode = new_barcode or None
     db.session.commit()
-    return redirect(url_for("perishables.item_detail", item_id=item_id))
+    return redirect(
+        _safe_next(request.form.get("next"))
+        or url_for("perishables.item_detail", item_id=item_id)
+    )
 
 
 @perishables_bp.route(
@@ -937,6 +1005,7 @@ def delete_photo(item_id, photo_id):
 def mark_used(item_id):
     item = _get_user_item(item_id)
     item_name = item.name
+    item_expiry = item.expiry_date.strftime("%-d %b")
     item.removed_at = datetime.now(timezone.utc)
     item.removal_reason = "used"
     db.session.commit()
@@ -946,7 +1015,14 @@ def mark_used(item_id):
         item_id=item.id,
         item_name=item_name,
     )
-    return redirect(url_for("perishables.dashboard", undo=item.id, undo_name=item_name))
+    return redirect(
+        url_for(
+            "perishables.dashboard",
+            undo=item.id,
+            undo_name=item_name,
+            undo_expiry=item_expiry,
+        )
+    )
 
 
 @perishables_bp.route("/items/<int:item_id>/undo", methods=["POST"])
