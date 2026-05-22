@@ -216,7 +216,16 @@ document.querySelectorAll('#cuisine-chips .cuisine-chip').forEach(chip => {
     const div = document.createElement('div');
     div.className = 'loc-item';
     div.dataset.loc = name;
-    div.innerHTML = `<span class="loc-item__name">${name}</span><span class="loc-item__remove" tabindex="0" aria-label="Remove ${name}"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></span>`;
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'loc-item__name';
+    nameSpan.textContent = name;
+    const removeSpan = document.createElement('span');
+    removeSpan.className = 'loc-item__remove';
+    removeSpan.setAttribute('tabindex', '0');
+    removeSpan.setAttribute('aria-label', 'Remove ' + name);
+    removeSpan.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>';
+    div.appendChild(nameSpan);
+    div.appendChild(removeSpan);
     bindRemove(div.querySelector('.loc-item__remove'));
     list.appendChild(div);
   }

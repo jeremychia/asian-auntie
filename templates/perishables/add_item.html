@@ -1060,10 +1060,20 @@ checkExpiryWarning();
     const input = document.getElementById('location');
     if (!container || !input) return;
     const current = (input.value || 'pantry').toLowerCase();
-    container.innerHTML = LOCATIONS.map(l => {
+    container.innerHTML = '';
+    LOCATIONS.forEach(l => {
       const active = current === l.id;
-      return `<button type="button" class="add-chip${active ? ' add-chip--active' : ''}" data-loc="${l.id}" onclick="selectLocation('${l.id}', '${l.label}')">${active ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}${l.label}</button>`;
-    }).join('');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'add-chip' + (active ? ' add-chip--active' : '');
+      btn.dataset.loc = l.id;
+      btn.addEventListener('click', () => selectLocation(l.id, l.label));
+      if (active) {
+        btn.insertAdjacentHTML('beforeend', '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>');
+      }
+      btn.appendChild(document.createTextNode(l.label));
+      container.appendChild(btn);
+    });
   }
 
   function renderExpiryChips() {
