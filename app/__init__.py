@@ -96,6 +96,12 @@ def create_app():
             duration_ms=duration_ms,
             user_id=user_id,
         )
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), microphone=(), camera=()"
+        )
         return response
 
     # Serve uploaded files (local dev only — GCS serves directly in production)
