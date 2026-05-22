@@ -344,29 +344,50 @@ function hintFor(cuisine) {
 
 function renderChips() {
   const list = document.getElementById('tag-chip-list');
-  list.innerHTML = otherCuisines.map((c, i) =>
-    `<span class="tag-chip">${c}<button type="button" class="tag-chip__remove" data-index="${i}" aria-label="Remove ${c}">&times;</button></span>`
-  ).join('');
-  list.querySelectorAll('.tag-chip__remove').forEach(btn => {
+  list.innerHTML = '';
+  otherCuisines.forEach((c, i) => {
+    const span = document.createElement('span');
+    span.className = 'tag-chip';
+    span.textContent = c;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tag-chip__remove';
+    btn.dataset.index = i;
+    btn.setAttribute('aria-label', 'Remove ' + c);
+    btn.textContent = '×';
     btn.addEventListener('click', () => {
       otherCuisines.splice(+btn.dataset.index, 1);
       renderChips();
       renderHints();
     });
+    span.appendChild(btn);
+    list.appendChild(span);
   });
   document.getElementById('other-cuisine-hidden').value = JSON.stringify(otherCuisines);
 }
 
 function renderHints() {
   const container = document.getElementById('tag-hints');
-  if (otherCuisines.length === 0) { container.innerHTML = ''; return; }
-  container.innerHTML = otherCuisines.map(c => {
+  container.innerHTML = '';
+  otherCuisines.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'tag-hint';
+    const cuisineSpan = document.createElement('span');
+    cuisineSpan.className = 'tag-hint__cuisine';
+    cuisineSpan.textContent = c;
+    div.appendChild(cuisineSpan);
     const source = hintFor(c);
     if (source) {
-      return `<div class="tag-hint"><span class="tag-hint__cuisine">${c}</span> — no recipes yet, but try <span class="tag-hint__source">${source}</span></div>`;
+      div.appendChild(document.createTextNode(' — no recipes yet, but try '));
+      const sourceSpan = document.createElement('span');
+      sourceSpan.className = 'tag-hint__source';
+      sourceSpan.textContent = source;
+      div.appendChild(sourceSpan);
+    } else {
+      div.appendChild(document.createTextNode(" — we'll look into adding these. Try searching on YouTube in the meantime."));
     }
-    return `<div class="tag-hint"><span class="tag-hint__cuisine">${c}</span> — we'll look into adding these. Try searching on YouTube in the meantime.</div>`;
-  }).join('');
+    container.appendChild(div);
+  });
 }
 
 function addCuisine(raw) {
