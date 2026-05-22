@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 
-from app.extensions import db, bcrypt
+from app.extensions import db, bcrypt, limiter
 from app.models import User
 from app.auth.forms import LoginForm, RegisterForm
 from app.logging_config import get_logger
@@ -17,6 +17,7 @@ def _is_safe_next_url(target):
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("perishables.dashboard"))
@@ -42,6 +43,7 @@ def login():
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per minute", methods=["POST"])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("perishables.dashboard"))
