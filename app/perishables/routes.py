@@ -285,13 +285,26 @@ def barcode_lookup():
     item_type = _map_off_categories(categories)
     shelf_life_days = _SHELF_LIFE_DEFAULTS.get(item_type, 90)
 
+    _OFF_IMAGE_HOSTS = (
+        "images.openfoodfacts.org",
+        "images.openfoodfacts.net",
+        "static.openfoodfacts.org",
+    )
+
+    def _is_safe_off_image_url(url):
+        try:
+            p = urlparse(url)
+            return p.scheme == "https" and p.netloc in _OFF_IMAGE_HOSTS
+        except Exception:
+            return False
+
     image_path = None
     image_url = (
         product.get("image_front_url")
         or product.get("image_url")
         or product.get("image_front_small_url")
     )
-    if image_url:
+    if image_url and _is_safe_off_image_url(image_url):
         try:
             req = urllib.request.Request(
                 image_url,
