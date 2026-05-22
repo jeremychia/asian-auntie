@@ -218,7 +218,12 @@
 
     const shapeEl = document.getElementById('sweep-item-shape');
     if (item.photo) {
-      shapeEl.innerHTML = `<img src="${item.photo}" alt="" class="sweep-item-photo">`;
+      shapeEl.innerHTML = '';
+      const img = document.createElement('img');
+      img.setAttribute('src', item.photo);
+      img.alt = '';
+      img.className = 'sweep-item-photo';
+      shapeEl.appendChild(img);
     } else {
       shapeEl.innerHTML = `<svg width="64" height="96" viewBox="0 0 40 68" aria-hidden="true">${SHAPES[item.type] || DEFAULT_SHAPE}</svg>`;
     }
