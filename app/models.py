@@ -194,9 +194,7 @@ class ItemPhoto(db.Model):
 
     @property
     def photo_url(self) -> str:
-        if self.photo_path.startswith("https://"):
-            return self.photo_path
-        return f"/uploads/{self.photo_path}"
+        return f"/photo/{self.id}"
 
     def __repr__(self):
         return f"<ItemPhoto {self.photo_type} {self.photo_path[:32]}>"

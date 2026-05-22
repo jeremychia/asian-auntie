@@ -18,6 +18,7 @@ from flask import (
     request,
     current_app,
     jsonify,
+    session as flask_session,
 )
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -1005,17 +1006,21 @@ def delete_photo(item_id, photo_id):
     photo = ItemPhoto.query.filter_by(id=photo_id, item_id=item.id).first_or_404()
 
     bucket_name = current_app.config.get("GCS_BUCKET_NAME")
-    if bucket_name and photo.photo_path.startswith("https://"):
+    if bucket_name:
         try:
             from app.storage import delete_photo as gcs_delete
 
+            # New-style: photo_path is the object name directly.
+            # Legacy: photo_path was the full public URL.
+            path = photo.photo_path
             prefix = f"https://storage.googleapis.com/{bucket_name}/"
-            if photo.photo_path.startswith(prefix):
-                gcs_delete(
-                    photo.photo_path[len(prefix) :],
-                    bucket_name,
-                    current_app.config.get("GCS_CREDENTIALS_JSON") or None,
-                )
+            if path.startswith(prefix):
+                path = path[len(prefix) :]
+            gcs_delete(
+                path,
+                bucket_name,
+                current_app.config.get("GCS_CREDENTIALS_JSON") or None,
+            )
         except Exception:
             logger.warning("gcs_delete_failed", photo_id=photo_id)
     elif not bucket_name:
@@ -1198,57 +1203,147 @@ def bulk_action():
     return jsonify({"ok": True, "count": count, "action": action})
 
 
-@perishables_bp.route("/audit")
-@login_required
-def audit():
-    raw_items = (
-        Item.query.filter_by(user_id=current_user.id)
-        .filter(Item.removed_at.is_(None))
-        .all()
-    )
+_GL_ORDER = {"red": 0, "amber": 1, None: 2}
 
-    _gl_order = {"red": 0, "amber": 1, None: 2}
 
+def _build_audit_zones(raw_items):
     zones: dict = defaultdict(list)
     for item in raw_items:
         zones[item.location or "__unsorted__"].append(item)
-
     for key in zones:
-        zones[key].sort(key=lambda i: (_gl_order[i.ghost_level], -i.staleness_days))
-
-    sorted_zones = dict(
+        zones[key].sort(key=lambda i: (_GL_ORDER[i.ghost_level], -i.staleness_days))
+    return dict(
         sorted(
             zones.items(),
             key=lambda kv: (-sum(1 for i in kv[1] if i.ghost_level), -len(kv[1])),
         )
     )
 
-    audit_json = {
-        zone_key: [
-            {
-                "id": item.id,
-                "name": item.name,
-                "type": item.item_type or "unknown",
-                "staleness": item.staleness_days,
-                "expiry": item.expiry_date.isoformat() if item.expiry_date else None,
-                "ghost": item.ghost_level,
-                "location": item.location or "",
-                "photo": item.display_photo.photo_url if item.display_photo else None,
+
+@perishables_bp.route("/audit")
+@login_required
+def audit():
+    zone = request.args.get("zone", "").strip()
+    done = request.args.get("done", "")
+
+    if zone and done:
+        stats = flask_session.pop(
+            "audit_stats",
+            {"checkin": 0, "used": 0, "relocate": 0, "discard": 0, "skipped": 0},
+        )
+        return render_template(
+            "perishables/audit.html",
+            view="summary",
+            zone=zone,
+            stats=stats,
+        )
+
+    if zone:
+        raw_items = (
+            Item.query.filter_by(user_id=current_user.id)
+            .filter(Item.removed_at.is_(None))
+            .all()
+        )
+        if flask_session.get("audit_zone") != zone:
+            zone_items = [
+                i for i in raw_items if (i.location or "__unsorted__") == zone
+            ]
+            zone_items.sort(key=lambda i: (_GL_ORDER[i.ghost_level], -i.staleness_days))
+            flask_session["audit_zone"] = zone
+            flask_session["audit_queue"] = [i.id for i in zone_items]
+            flask_session["audit_idx"] = 0
+            flask_session["audit_stats"] = {
+                "checkin": 0,
+                "used": 0,
+                "relocate": 0,
+                "discard": 0,
+                "skipped": 0,
             }
-            for item in zone_items
-        ]
-        for zone_key, zone_items in sorted_zones.items()
-    }
 
+        queue = flask_session.get("audit_queue", [])
+        idx = flask_session.get("audit_idx", 0)
+
+        item = None
+        while idx < len(queue):
+            candidate = Item.query.filter_by(
+                id=queue[idx], user_id=current_user.id
+            ).first()
+            if candidate and candidate.removed_at is None:
+                item = candidate
+                break
+            idx += 1
+        flask_session["audit_idx"] = idx
+
+        if item is None:
+            return redirect(url_for("perishables.audit", zone=zone, done=1))
+
+        progress = {"idx": idx, "total": len(queue)}
+        return render_template(
+            "perishables/audit.html",
+            view="session",
+            zone=zone,
+            item=item,
+            progress=progress,
+            user_locations=get_user_locations(current_user),
+        )
+
+    raw_items = (
+        Item.query.filter_by(user_id=current_user.id)
+        .filter(Item.removed_at.is_(None))
+        .all()
+    )
+    sorted_zones = _build_audit_zones(raw_items)
     ghost_count = sum(1 for i in raw_items if i.ghost_level)
-    unsorted_count = sum(1 for i in raw_items if not i.location)
-
     return render_template(
         "perishables/audit.html",
+        view="intro",
         zones=sorted_zones,
-        audit_json=audit_json,
         ghost_count=ghost_count,
-        unsorted_count=unsorted_count,
         total_count=len(raw_items),
-        user_locations=get_user_locations(current_user),
     )
+
+
+@perishables_bp.route("/audit/commit", methods=["POST"])
+@login_required
+def audit_commit():
+    action = request.form.get("action", "").strip()
+    item_id_str = request.form.get("item_id", "").strip()
+    zone = request.form.get("zone", "").strip()
+    new_location = request.form.get("new_location", "").strip().lower()
+
+    if action not in {"checkin", "used", "discard", "relocate", "skip"}:
+        abort(400)
+
+    if action != "skip" and item_id_str.isdigit():
+        item_id = int(item_id_str)
+        item = Item.query.filter_by(id=item_id, user_id=current_user.id).first_or_404()
+        now = datetime.now(timezone.utc)
+        if action == "checkin":
+            item.last_checked_at = now
+        elif action == "used":
+            item.removed_at = now
+            item.removal_reason = "used"
+        elif action == "discard":
+            item.removed_at = now
+            item.removal_reason = "discarded"
+        elif action == "relocate":
+            if len(new_location) > 32:
+                abort(400)
+            item.location = new_location or None
+        db.session.commit()
+
+    stats = flask_session.get(
+        "audit_stats",
+        {"checkin": 0, "used": 0, "relocate": 0, "discard": 0, "skipped": 0},
+    )
+    key = "skipped" if action == "skip" else action
+    stats[key] = stats.get(key, 0) + 1
+    flask_session["audit_stats"] = stats
+
+    idx = flask_session.get("audit_idx", 0) + 1
+    flask_session["audit_idx"] = idx
+    queue = flask_session.get("audit_queue", [])
+
+    if idx >= len(queue):
+        return redirect(url_for("perishables.audit", zone=zone, done=1))
+    return redirect(url_for("perishables.audit", zone=zone))

@@ -117,15 +117,43 @@ def create_app():
             )
         return response
 
-    # Serve uploaded files (local dev only — GCS serves directly in production)
-    from flask import send_from_directory
+    from flask import abort, send_from_directory
     from flask_login import login_required
 
+    @app.route("/photo/<int:photo_id>")
+    @login_required
+    def serve_photo(photo_id):
+        from app.models import ItemPhoto
+
+        photo = db.session.get(ItemPhoto, photo_id)
+        if not photo or photo.item.user_id != current_user.id:
+            abort(403)
+
+        bucket_name = app.config.get("GCS_BUCKET_NAME")
+        if bucket_name:
+            from flask import Response
+            from app.storage import download_photo
+
+            # New-style: photo_path is the object name.
+            # Legacy: photo_path was the full public URL — extract object name.
+            path = photo.photo_path
+            prefix = f"https://storage.googleapis.com/{bucket_name}/"
+            if path.startswith(prefix):
+                path = path[len(prefix) :]
+            data = download_photo(
+                path,
+                bucket_name,
+                app.config.get("GCS_CREDENTIALS_JSON"),
+            )
+            return Response(data, content_type="image/jpeg")
+
+        return send_from_directory(app.config["UPLOAD_FOLDER"], photo.photo_path)
+
+    # Keep the /uploads/ route as a fallback for any direct links already in the
+    # wild, but enforce ownership.
     @app.route("/uploads/<path:filename>")
     @login_required
     def uploaded_file(filename):
-        from flask import abort
-
         expected_prefix = f"users/{current_user.id}/"
         if not filename.startswith(expected_prefix):
             abort(403)
