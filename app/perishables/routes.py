@@ -394,11 +394,13 @@ def dashboard():
     all_expired = bool(grouped) and all(
         g["representative"].expiry_date < today for g in grouped
     )
+    ghost_count = sum(1 for item in raw_items if item.ghost_level)
     return render_template(
         "perishables/dashboard.html",
         grouped=grouped,
         today=today,
         all_expired=all_expired,
+        ghost_count=ghost_count,
     )
 
 
@@ -844,11 +846,16 @@ def edit_item(item_id):
 def update_location(item_id):
     item = _get_user_item(item_id)
     new_location = request.form.get("location", "").strip().lower()
+    wants_json = request.headers.get("Accept") == "application/json"
     if len(new_location) > 32:
+        if wants_json:
+            return jsonify({"ok": False, "error": "Location name is too long."}), 400
         flash("Location name is too long.", "error")
         return redirect(url_for("perishables.item_detail", item_id=item_id))
     item.location = new_location or None
     db.session.commit()
+    if wants_json:
+        return jsonify({"ok": True})
     return redirect(url_for("perishables.item_detail", item_id=item_id))
 
 
@@ -1107,3 +1114,127 @@ def remove_expired():
     logger.info("bulk_remove_expired", user_id=current_user.id, count=count)
     flash(f"Removed {count} expired item{'s' if count != 1 else ''}.", "success")
     return redirect(url_for("perishables.dashboard"))
+
+
+_VALID_ITEM_TYPES = {v for v, _ in ITEM_TYPES}
+_VALID_FREQUENCIES = {"high", "medium", "low"}
+_VALID_BULK_ACTIONS = {"used", "discard", "checkin", "relocate"}
+
+
+@perishables_bp.route("/items/<int:item_id>/type", methods=["POST"])
+@login_required
+def update_type(item_id):
+    item = _get_user_item(item_id)
+    new_type = request.form.get("item_type", "").strip()
+    if new_type not in _VALID_ITEM_TYPES:
+        return jsonify({"ok": False, "error": "Invalid type."}), 400
+    item.item_type = new_type
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@perishables_bp.route("/items/<int:item_id>/frequency", methods=["POST"])
+@login_required
+def update_frequency(item_id):
+    item = _get_user_item(item_id)
+    freq = request.form.get("usage_frequency", "").strip()
+    item.usage_frequency = freq if freq in _VALID_FREQUENCIES else None
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@perishables_bp.route("/items/bulk-action", methods=["POST"])
+@login_required
+def bulk_action():
+    raw_ids = request.form.getlist("item_ids")
+    item_ids = [int(i) for i in raw_ids if i.strip().isdigit()]
+    action = request.form.get("action", "").strip()
+
+    if action not in _VALID_BULK_ACTIONS or not item_ids:
+        return jsonify({"ok": False, "error": "Nothing to do."}), 400
+
+    items = Item.query.filter(
+        Item.id.in_(item_ids),
+        Item.user_id == current_user.id,
+        Item.removed_at.is_(None),
+    ).all()
+    now = datetime.now(timezone.utc)
+    count = len(items)
+
+    if action == "used":
+        for item in items:
+            item.removed_at = now
+            item.removal_reason = "used"
+    elif action == "discard":
+        for item in items:
+            item.removed_at = now
+            item.removal_reason = "discarded"
+    elif action == "checkin":
+        for item in items:
+            item.last_checked_at = now
+    elif action == "relocate":
+        new_location = request.form.get("new_location", "").strip().lower()
+        if len(new_location) > 32:
+            return jsonify({"ok": False, "error": "Location too long."}), 400
+        for item in items:
+            item.location = new_location or None
+
+    db.session.commit()
+    logger.info("bulk_action", user_id=current_user.id, action=action, count=count)
+    return jsonify({"ok": True, "count": count, "action": action})
+
+
+@perishables_bp.route("/audit")
+@login_required
+def audit():
+    raw_items = (
+        Item.query.filter_by(user_id=current_user.id)
+        .filter(Item.removed_at.is_(None))
+        .all()
+    )
+
+    _gl_order = {"red": 0, "amber": 1, None: 2}
+
+    zones: dict = defaultdict(list)
+    for item in raw_items:
+        zones[item.location or "__unsorted__"].append(item)
+
+    for key in zones:
+        zones[key].sort(key=lambda i: (_gl_order[i.ghost_level], -i.staleness_days))
+
+    sorted_zones = dict(
+        sorted(
+            zones.items(),
+            key=lambda kv: (-sum(1 for i in kv[1] if i.ghost_level), -len(kv[1])),
+        )
+    )
+
+    audit_json = {
+        zone_key: [
+            {
+                "id": item.id,
+                "name": item.name,
+                "type": item.item_type or "unknown",
+                "staleness": item.staleness_days,
+                "expiry": item.expiry_date.isoformat() if item.expiry_date else None,
+                "ghost": item.ghost_level,
+                "location": item.location or "",
+                "photo": item.display_photo.photo_url if item.display_photo else None,
+            }
+            for item in zone_items
+        ]
+        for zone_key, zone_items in sorted_zones.items()
+    }
+
+    ghost_count = sum(1 for i in raw_items if i.ghost_level)
+    unsorted_count = sum(1 for i in raw_items if not i.location)
+
+    return render_template(
+        "perishables/audit.html",
+        zones=sorted_zones,
+        audit_json=audit_json,
+        ghost_count=ghost_count,
+        unsorted_count=unsorted_count,
+        total_count=len(raw_items),
+        user_locations=get_user_locations(current_user),
+    )

@@ -87,6 +87,10 @@ class Item(db.Model):
     # Partial consumption: full, three_quarters, half, nearly_gone; null = unknown/full
     quantity_state = db.Column(db.String(16), nullable=True)
 
+    # Audit fields — usage_frequency drives ghost thresholds; last_checked_at resets on "Still Here"
+    usage_frequency = db.Column(db.String(16), nullable=True)  # "high", "medium", "low"
+    last_checked_at = db.Column(db.DateTime, nullable=True)
+
     # Soft delete — set on removal, null while in inventory
     removed_at = db.Column(db.DateTime, nullable=True)
     removal_reason = db.Column(
@@ -137,6 +141,34 @@ class Item(db.Model):
         if appearance:
             return appearance[0]
         return self.photos[0] if self.photos else None
+
+    @property
+    def effective_last_seen(self):
+        return self.last_checked_at or self.date_added
+
+    @property
+    def staleness_days(self):
+        now = datetime.now(timezone.utc)
+        base = self.effective_last_seen
+        if base.tzinfo is None:
+            base = base.replace(tzinfo=timezone.utc)
+        return (now - base).days
+
+    @property
+    def ghost_level(self):
+        d = self.staleness_days
+        freq = self.usage_frequency or "medium"
+        thresholds = {
+            "high": (30, 60),
+            "medium": (90, 180),
+            "low": (180, 365),
+        }
+        amber_t, red_t = thresholds.get(freq, thresholds["medium"])
+        if d > red_t:
+            return "red"
+        if d > amber_t:
+            return "amber"
+        return None
 
     def __repr__(self):
         return f"<Item {self.name} expires={self.expiry_date}>"
