@@ -124,6 +124,11 @@ def create_app():
     @app.route("/uploads/<path:filename>")
     @login_required
     def uploaded_file(filename):
+        from flask import abort
+
+        expected_prefix = f"users/{current_user.id}/"
+        if not filename.startswith(expected_prefix):
+            abort(403)
         return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
     # Register blueprints
