@@ -1,53 +1,62 @@
-{% extends "base.html" %} {% block title %}{{ item.name }} — Asian Auntie{%
-endblock %} {% block content %} {% set days_left = (item.expiry_date -
-today).days %}
+{% extends "base.html" %}
+{% block title %}{{ item.name }} — Asian Auntie{% endblock %}
+{% block content %}
+
+{# ── Helpers ─────────────────────────────────────────────────────── #}
+{% macro rel_phrase(days) %}
+  {%- if days < 0 -%}{{ days | abs }}d ago
+  {%- elif days == 0 -%}today
+  {%- elif days == 1 -%}tomorrow
+  {%- elif days <= 7 -%}in {{ days }} days
+  {%- elif days <= 30 -%}in {{ ((days / 7) | round(0, 'floor')) | int }} wks
+  {%- elif days <= 365 -%}in {{ ((days / 30) | round(0, 'floor')) | int }} mo
+  {%- else -%}in {{ ((days / 365) | round(0, 'floor')) | int }}y
+  {%- endif -%}
+{% endmacro %}
+
+{% macro fill_label(qs) %}
+  {%- if qs == 'full' -%}Full
+  {%- elif qs == 'three_quarters' -%}¾ left
+  {%- elif qs == 'half' -%}Half left
+  {%- elif qs == 'nearly_gone' -%}Nearly gone
+  {%- else -%}Opened
+  {%- endif -%}
+{% endmacro %}
+
+{% set days_left = (item.expiry_date - today).days %}
+{%- if days_left < 0 -%}{%- set urgency = "expired" -%}{%- set hero_urg = "urgent" -%}
+{%- elif days_left == 0 -%}{%- set urgency = "today" -%}{%- set hero_urg = "urgent" -%}
+{%- elif days_left <= 3 -%}{%- set urgency = "soon" -%}{%- set hero_urg = "soon" -%}
+{%- elif days_left <= 14 -%}{%- set urgency = "watch" -%}{%- set hero_urg = "" -%}
+{%- else -%}{%- set urgency = "ok" -%}{%- set hero_urg = "" -%}
+{%- endif -%}
+
+{%- if days_left < 0 -%}{%- set hero_headline = "Expired" -%}
+{%- elif days_left == 0 -%}{%- set hero_headline = "Use today" -%}
+{%- elif days_left <= 3 -%}{%- set hero_headline = "Use in " ~ days_left ~ "d" -%}
+{%- else -%}{%- set hero_headline = days_left | string ~ "d left" -%}
+{%- endif -%}
+
+{% set is_open = item.quantity_state is not none %}
+{% set has_standard = item.standard_name and item.standard_name != item.name %}
+{% set has_enrichment = item.brands or item.barcode or item.off_nutriscore_grade or item.off_nova_group %}
 
 <div class="content" id="item-detail">
-  <a href="{{ url_for('perishables.dashboard') }}" class="back-link"
-    >← Pantry</a
-  >
 
-  <div class="detail-header">
-    <div class="detail-header__title-row">
-      {% if is_editing %}
-      <input
-        type="text"
-        form="edit-form"
-        name="name"
-        value="{{ item.name }}"
-        maxlength="256"
-        required
-        class="manual-input edit-name-input"
-      />
-      {% else %}
-      <h1>{{ item.name }}</h1>
-      {% endif %}
-    </div>
-    <div class="detail-header__right">
-      {% if days_left == 0 %}
-      <span class="badge badge--today">Today</span>
-      {% elif days_left < 0 %}
-      <span class="badge badge--expired">Expired</span>
-      {% elif days_left <= 2 %}
-      <span class="badge badge--soon"
-        >{{ days_left }} day{{ "s" if days_left != 1 }}</span
-      >
-      {% endif %}
-      {% if not is_editing %}
-      <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}" class="btn-icon" aria-label="Edit item details">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      </a>
-      {% endif %}
-    </div>
-  </div>
+  {# ── Back link ─────────────────────────────────────────────────── #}
+  <a href="{{ url_for('perishables.dashboard') }}" class="id-back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+    </svg>
+    Pantry
+  </a>
 
+  {# ── Header — photo hero, plain header, or edit mode ──────────── #}
   {% if is_editing %}
+
   <a href="{{ url_for('perishables.edit_photos', item_id=item.id) }}"
      class="btn btn-secondary btn-full"
-     style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:1.5rem;">
+     style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:1rem">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -56,101 +65,108 @@ today).days %}
     </svg>
     {% if item.has_photo %}Edit photos ({{ item.photos | length }}){% else %}Add photos{% endif %}
   </a>
-  {% elif item.has_photo %}
-  <div class="item-photos">
-    {% for photo in item.photos %}
-    <figure class="item-photo-figure">
-      <img
-        src="{{ photo.photo_url }}"
-        alt="{{ photo.photo_type | replace('_', ' ') | capitalize }} photo of {{ item.name }}"
-        class="item-photo"
-      />
-      <figcaption class="item-photo-caption">
-        {{ photo.photo_type | replace('_', ' ') | capitalize }}
-        {% if photo.photo_path.startswith('https://images.openfoodfacts.org') %}
-        <span class="tooltip-icon" tabindex="0"
-              data-tip="Photo from Open Food Facts, a free and collaborative food products database."
-              style="color:#fff; margin-left:0.2rem;">ⓘ</span>
-        {% endif %}
-      </figcaption>
-    </figure>
-    {% endfor %}
+
+  <div class="id-header" style="margin-bottom:1rem">
+    <div style="flex:1;min-width:0">
+      <p style="font-size:var(--font-xs);color:var(--color-muted);margin:0 0 4px">Item name</p>
+      <input type="text" form="edit-form" name="name" value="{{ item.name }}"
+             maxlength="256" required class="manual-input edit-name-input" style="margin:0"/>
+    </div>
   </div>
+
+  {% elif item.has_photo %}
+
+  <div class="id-photo-hero">
+    <img src="{{ item.display_photo.photo_url }}"
+         alt="{{ item.name }}"
+         class="id-photo-hero__img"/>
+    <div class="id-photo-hero__overlay"></div>
+    <div class="id-photo-hero__body">
+      <div style="min-width:0">
+        <h1 class="id-photo-hero__name">{{ item.standard_name or item.name }}</h1>
+        <p class="id-photo-hero__meta">
+          <span style="text-transform:capitalize">{{ item.item_type }}</span>
+          {% if item.location %}<span style="opacity:0.5;margin:0 0.4em">·</span>{{ item.location | capitalize }}{% endif %}
+        </p>
+      </div>
+      <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}"
+         class="id-photo-hero__edit" aria-label="Edit item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
   {% else %}
-  <a href="{{ url_for('perishables.edit_photos', item_id=item.id) }}"
-     class="btn btn-secondary btn-full"
-     style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:1.5rem;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-      <circle cx="8.5" cy="8.5" r="1.5"/>
-      <polyline points="21 15 16 10 5 21"/>
-    </svg>
-    Add photos
-  </a>
+
+  <div class="id-header">
+    <div style="flex:1;min-width:0">
+      <h1 class="id-header__title">{{ item.standard_name or item.name }}</h1>
+      <p class="id-header__meta">
+        <span style="text-transform:capitalize">{{ item.item_type }}</span>
+        {% if item.location %}<span style="opacity:0.4;margin:0 0.4em">·</span>{{ item.location | capitalize }}{% endif %}
+      </p>
+    </div>
+    <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}"
+       class="id-edit-btn" aria-label="Edit item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+    </a>
+  </div>
+
   {% endif %}
 
-  <div class="meta-list">
+  {# ── Product info card / edit fields ──────────────────────────── #}
+  {% if is_editing %}
+
+  <div class="pi-card" style="display:flex;flex-direction:column;gap:12px">
     <div class="meta-row">
       <span class="meta-label">Ingredient</span>
       <div class="meta-value">
-        {% if is_editing %}
-        <input
-          type="text"
-          form="edit-form"
-          name="standard_name"
-          list="standard-name-options"
-          value="{{ item.standard_name or '' }}"
-          placeholder="e.g. Coconut milk"
-          maxlength="256"
-          class="inline-edit__select"
-        />
+        <input type="text" form="edit-form" name="standard_name"
+               list="standard-name-options"
+               value="{{ item.standard_name or '' }}"
+               placeholder="e.g. Coconut milk"
+               maxlength="256"
+               class="inline-edit__select"/>
         <datalist id="standard-name-options">
           {% for pantry_item in pantry_items_list %}
-          <option value="{{ pantry_item }}" />
+          <option value="{{ pantry_item }}"/>
           {% endfor %}
         </datalist>
-        {% else %}
-        <span>{{ item.standard_name or '—' }}</span>
-        {% endif %}
       </div>
     </div>
     <div class="meta-row">
       <span class="meta-label">Type</span>
       <div class="meta-value">
-        {% if is_editing %}
         <select form="edit-form" name="item_type" class="inline-edit__select">
           <option value="unknown" {% if item.item_type == "unknown" %}selected{% endif %}>Unknown</option>
-          <option value="sauce" {% if item.item_type == "sauce" %}selected{% endif %}>Sauce</option>
-          <option value="oil" {% if item.item_type == "oil" %}selected{% endif %}>Oil</option>
-          <option value="spice" {% if item.item_type == "spice" %}selected{% endif %}>Spice</option>
+          <option value="sauce"   {% if item.item_type == "sauce"   %}selected{% endif %}>Sauce</option>
+          <option value="oil"     {% if item.item_type == "oil"     %}selected{% endif %}>Oil</option>
+          <option value="spice"   {% if item.item_type == "spice"   %}selected{% endif %}>Spice</option>
           <option value="condiment" {% if item.item_type == "condiment" %}selected{% endif %}>Condiment</option>
           <option value="produce" {% if item.item_type == "produce" %}selected{% endif %}>Produce</option>
-          <option value="dried" {% if item.item_type == "dried" %}selected{% endif %}>Dried goods</option>
-          <option value="tofu" {% if item.item_type == "tofu" %}selected{% endif %}>Tofu</option>
+          <option value="dried"   {% if item.item_type == "dried"   %}selected{% endif %}>Dried goods</option>
+          <option value="tofu"    {% if item.item_type == "tofu"    %}selected{% endif %}>Tofu</option>
           <option value="seafood" {% if item.item_type == "seafood" %}selected{% endif %}>Seafood</option>
-          <option value="dairy" {% if item.item_type == "dairy" %}selected{% endif %}>Dairy</option>
-          <option value="other" {% if item.item_type == "other" %}selected{% endif %}>Other</option>
+          <option value="dairy"   {% if item.item_type == "dairy"   %}selected{% endif %}>Dairy</option>
+          <option value="other"   {% if item.item_type == "other"   %}selected{% endif %}>Other</option>
         </select>
-        {% else %}
-        <span>{{ item.item_type | capitalize }}</span>
-        {% endif %}
       </div>
     </div>
     <div class="meta-row">
       <span class="meta-label">Location</span>
       <div class="meta-value">
-        {% if is_editing %}
-        <input
-          type="text"
-          form="edit-form"
-          name="location"
-          list="location-options"
-          value="{{ item.location | capitalize if item.location else '' }}"
-          placeholder="e.g. Fridge"
-          maxlength="32"
-          class="inline-edit__select"
-        />
+        <input type="text" form="edit-form" name="location"
+               list="location-options"
+               value="{{ item.location | capitalize if item.location else '' }}"
+               placeholder="e.g. Fridge"
+               maxlength="32"
+               class="inline-edit__select"/>
         <datalist id="location-options">
           <option value="Fridge">
           <option value="Freezer">
@@ -158,278 +174,255 @@ today).days %}
           <option value="Cupboard">
           <option value="Counter">
         </datalist>
-        {% else %}
-        <span>{{ item.location | capitalize if item.location else "Not specified" }}</span>
-        {% endif %}
       </div>
     </div>
     <div class="meta-row">
       <span class="meta-label">Expires</span>
       <div class="meta-value">
-        {% if is_editing %}
-        <input
-          type="date"
-          form="edit-form"
-          name="expiry_date"
-          value="{{ item.expiry_date.strftime('%Y-%m-%d') }}"
-          required
-          class="inline-edit__select"
-        />
-        {% else %}
-        <span>{{ item.expiry_date.strftime("%-d %b %Y") }}</span>
-        {% endif %}
+        <input type="date" form="edit-form" name="expiry_date"
+               value="{{ item.expiry_date.strftime('%Y-%m-%d') }}"
+               required
+               class="inline-edit__select"/>
       </div>
     </div>
-    <div class="meta-row">
-      <span class="meta-label">Added</span>
-      <span class="meta-value">{{ item.date_added.strftime("%-d %b %Y") }}</span>
-    </div>
-    {% if is_editing or item.barcode %}
     <div class="meta-row">
       <span class="meta-label">Barcode</span>
       <div class="meta-value">
-        {% if is_editing %}
-        <input
-          type="text"
-          form="edit-form"
-          name="barcode"
-          value="{{ item.barcode or '' }}"
-          placeholder="Optional"
-          maxlength="64"
-          inputmode="numeric"
-          class="inline-edit__select"
-        />
+        <input type="text" form="edit-form" name="barcode"
+               value="{{ item.barcode or '' }}"
+               placeholder="Optional"
+               maxlength="64"
+               inputmode="numeric"
+               class="inline-edit__select"/>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+
+  <div class="pi-card">
+    {% if not has_enrichment and not has_standard %}
+      <p class="pi-sparse">
+        <strong style="color:#700143">{{ item.standard_name or item.name }}</strong>
+        · Manual entry · <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}" style="color:#700143;font-weight:600">Add product details</a>
+      </p>
+      {% if tags %}
+      <div class="pi-tags">
+        {% for tag in tags %}<span class="pi-tag">{{ tag }}</span>{% endfor %}
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="pi-main">
+        {% if item.off_nutriscore_grade and item.off_nutriscore_grade != 'U' %}
+          <span class="pi-ns pi-ns--{{ item.off_nutriscore_grade | upper }}"
+                aria-label="Nutri-Score {{ item.off_nutriscore_grade | upper }}"
+                title="Nutri-Score {{ item.off_nutriscore_grade | upper }} — nutritional quality from A (best) to E (worst)">{{ item.off_nutriscore_grade | upper }}</span>
         {% else %}
-        <span>{{ item.barcode }}</span>
+          <span class="pi-ns pi-ns--empty" aria-label="Nutri-Score unavailable" title="Nutri-Score not available">–</span>
+        {% endif %}
+        <div class="pi-body">
+          <span class="pi-std">{{ item.standard_name or item.name }}</span>
+          {% if item.brands or item.quantity %}
+          <p class="pi-sub">
+            {% if item.brands %}{{ item.brands }}{% endif %}
+            {% if item.brands and item.quantity %}<span class="pi-sub__sep">·</span>{% endif %}
+            {% if item.quantity %}{{ item.quantity }}{% endif %}
+          </p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if tags %}
+      <div class="pi-tags">
+        {% for tag in tags %}<span class="pi-tag">{{ tag }}</span>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% set has_more = item.off_nova_group or item.barcode or item.location %}
+      {% if has_more %}
+      <button class="pi-more-toggle" type="button"
+              aria-expanded="false"
+              onclick="this.setAttribute('aria-expanded', this.getAttribute('aria-expanded')==='false' ? 'true' : 'false');
+                       this.nextElementSibling.hidden = !this.nextElementSibling.hidden;
+                       this.querySelector('span').textContent = this.getAttribute('aria-expanded')==='true' ? 'Hide product details' : 'Show product details';">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+        <span>Show product details</span>
+      </button>
+      <div class="pi-more" hidden>
+        {% if item.off_nutriscore_grade and item.off_nutriscore_grade != 'U' %}
+          {% set ns_desc = {'A':'Healthy choice','B':'Good','C':'Average','D':'Less healthy','E':'Avoid often'} %}
+          <span class="pi-more__label">Nutrition</span>
+          <span class="pi-more__value">{{ ns_desc.get(item.off_nutriscore_grade | upper, '') }}</span>
+        {% endif %}
+        {% if item.off_nova_group %}
+          {% set nova_desc = {1:'Unprocessed',2:'Culinary ingredient',3:'Processed food',4:'Ultra-processed'} %}
+          <span class="pi-more__label">Processing</span>
+          <span class="pi-more__value">
+            <span class="pi-nova-chip pi-nova-chip--{{ item.off_nova_group }}"
+                  title="NOVA group {{ item.off_nova_group }} — food processing level: 1 = unprocessed, 2 = culinary ingredient, 3 = processed, 4 = ultra-processed">{{ item.off_nova_group }}</span>
+            {{ nova_desc.get(item.off_nova_group, '') }}
+          </span>
+        {% endif %}
+        {% if item.location %}
+          <span class="pi-more__label">Location</span>
+          <span class="pi-more__value">{{ item.location | capitalize }}</span>
+        {% endif %}
+        {% if item.barcode %}
+          <span class="pi-more__label">Barcode</span>
+          <span class="pi-more__value pi-more__value--mono">{{ item.barcode }}</span>
         {% endif %}
       </div>
-    </div>
-    {% endif %}
-    {% if item.brands or item.quantity %}
-    <div class="meta-row">
-      <span class="meta-label">Brand</span>
-      <span class="meta-value">{{ item.brands or '—' }}</span>
-    </div>
-    {% if item.quantity %}
-    <div class="meta-row">
-      <span class="meta-label">Size</span>
-      <span class="meta-value">{{ item.quantity }}</span>
-    </div>
-    {% endif %}
-    {% endif %}
-    {% if item.off_nutriscore_grade and item.off_nutriscore_grade != 'U' %}
-    <div class="meta-row">
-      <span class="meta-label">
-        Nutri-Score
-        <span class="tooltip-icon" data-tip="Nutritional quality score from A (best) to E (worst), based on nutrients per 100g/100ml.">ⓘ</span>
-      </span>
-      <div class="meta-value">
-        <span class="grade-badge nutriscore-grade--{{ item.off_nutriscore_grade | lower }}">{{ item.off_nutriscore_grade | upper }}</span>
-      </div>
-    </div>
-    {% endif %}
-    {% if item.off_nova_group %}
-    <div class="meta-row">
-      <span class="meta-label">
-        NOVA group
-        <span class="tooltip-icon" data-tip="Food processing level: 1 = unprocessed, 2 = processed ingredients, 3 = processed food, 4 = ultra-processed.">ⓘ</span>
-      </span>
-      <span class="meta-value">{{ item.off_nova_group }}</span>
-    </div>
-    {% endif %}
-    {% if item.off_ecoscore_grade and item.off_ecoscore_grade != 'U' %}
-    <div class="meta-row">
-      <span class="meta-label">
-        Eco-Score
-        <span class="tooltip-icon" data-tip="Environmental impact from A (low) to E (high), covering production, transport, and packaging.">ⓘ</span>
-      </span>
-      <div class="meta-value">
-        <span class="grade-badge ecoscore-grade--{{ item.off_ecoscore_grade | lower }}">{{ item.off_ecoscore_grade | upper }}</span>
-      </div>
-    </div>
+      {% endif %}
     {% endif %}
   </div>
 
-  {% if not is_editing %}
-  <div class="quantity-tracker">
-    <h3 class="quantity-tracker__label">How much is left?</h3>
-    <form method="post" action="{{ url_for('perishables.update_quantity_state', item_id=item.id) }}" class="quantity-buttons">
+  {# ── Summary strip ─────────────────────────────────────────────── #}
+  <div class="id-summary">
+    <div class="id-summary__cell">
+      <p class="id-summary__label">In stock</p>
+      <p class="id-summary__value">1 batch</p>
+    </div>
+    <div class="id-summary__cell">
+      <p class="id-summary__label">Open</p>
+      <p class="id-summary__value">{% if is_open %}Yes{% else %}—{% endif %}</p>
+    </div>
+    <div class="id-summary__cell">
+      <p class="id-summary__label">Soonest</p>
+      <p class="id-summary__value{% if urgency in ('expired','today') %} id-summary__value--urgent{% elif urgency == 'soon' %} id-summary__value--soon{% endif %}">
+        {%- if days_left < 0 -%}EXPIRED
+        {%- elif days_left == 0 -%}TODAY
+        {%- elif days_left <= 3 -%}{{ days_left }} day{{ "s" if days_left != 1 }}
+        {%- else -%}{{ item.expiry_date.strftime("%-d %b %Y") }}
+        {%- endif -%}
+      </p>
+    </div>
+  </div>
+
+  {# ── Use-next hero ─────────────────────────────────────────────── #}
+  <div class="un-hero{% if hero_urg == 'urgent' %} un-hero--urgent{% elif hero_urg == 'soon' %} un-hero--soon{% endif %}">
+    <p class="un-hero__eyebrow">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg>
+      Use this one next
+    </p>
+    <h2 class="un-hero__expiry{% if hero_urg == 'urgent' %} un-hero__expiry--urgent{% elif hero_urg == 'soon' %} un-hero__expiry--soon{% endif %}">{{ hero_headline }}</h2>
+    <p class="un-hero__date">Expires {{ item.expiry_date.strftime("%-d %b %Y") }} · added {{ item.date_added.strftime("%-d %b") }}</p>
+    <span class="un-hero__state-chip">
+      {% if is_open %}
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 3v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V3"/><rect x="5" y="9" width="14" height="12" rx="2"/>
+        </svg>
+        {{ fill_label(item.quantity_state) }}
+      {% else %}
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16"/>
+        </svg>
+        Sealed
+      {% endif %}
+    </span>
+    <div class="un-hero__actions">
+      <form method="post" action="{{ url_for('perishables.mark_used', item_id=item.id) }}" style="flex:1;display:contents">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="un-hero__cta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          Mark as used
+        </button>
+      </form>
+      <button type="button" class="un-hero__more" aria-label="More actions"
+              onclick="document.getElementById('sheet-{{ item.id }}').showModal()">
+        ⋮
+      </button>
+    </div>
+  </div>
+
+  {% endif %}{# end is_editing / view split #}
+
+  {# ── Edit form actions ─────────────────────────────────────────── #}
+  {% if is_editing %}
+  <form id="edit-form" method="post"
+        action="{{ url_for('perishables.update_item', item_id=item.id) }}"
+        class="edit-actions-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}"/>{% endif %}
+    <button type="submit" class="btn btn-primary btn-full">Save changes</button>
+    <a href="{{ url_for('perishables.item_detail', item_id=item.id) }}"
+       class="btn btn-secondary btn-full"
+       style="text-decoration:none;display:flex;align-items:center;justify-content:center">Cancel</a>
+  </form>
+  {% endif %}
+
+</div>{# /content #}
+
+{# ── Per-item action sheet ─────────────────────────────────────────── #}
+{% if not is_editing %}
+{% set bd = days_left %}
+{%- if bd < 0 -%}{%- set blabel = "EXPIRED" -%}
+{%- elif bd == 0 -%}{%- set blabel = "TODAY" -%}
+{%- elif bd <= 3 -%}{%- set blabel = bd ~ " day" ~ ("s" if bd != 1 else "") -%}
+{%- else -%}{%- set blabel = item.expiry_date.strftime("%-d %b %Y") -%}
+{%- endif -%}
+<dialog id="sheet-{{ item.id }}" class="id-sheet"
+        onclick="if(event.target===this)this.close()">
+<div class="id-sheet__card">
+  <div class="v2-sheet-head">
+    <p class="v2-sheet-head__title">{% if is_open %}Opened batch{% else %}Sealed batch{% endif %}</p>
+    <p class="v2-sheet-head__meta">Expires {{ item.expiry_date.strftime("%-d %b %Y") }} · {{ blabel }}</p>
+  </div>
+
+  {# How much is left? #}
+  <div style="padding:8px 16px 4px">
+    <p style="font-size:var(--font-xs);color:var(--color-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px">How much is left?</p>
+    <form method="post" action="{{ url_for('perishables.update_quantity_state', item_id=item.id) }}"
+          style="display:flex;flex-direction:column;gap:6px">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <button
-        type="submit"
-        name="quantity_state"
-        value="full"
-        class="quantity-btn {% if item.quantity_state == 'full' %}quantity-btn--active{% endif %}"
-      >
-        Full
-      </button>
-      <button
-        type="submit"
-        name="quantity_state"
-        value="three_quarters"
-        class="quantity-btn {% if item.quantity_state == 'three_quarters' %}quantity-btn--active{% endif %}"
-      >
-        About 3/4
-      </button>
-      <button
-        type="submit"
-        name="quantity_state"
-        value="half"
-        class="quantity-btn {% if item.quantity_state == 'half' %}quantity-btn--active{% endif %}"
-      >
-        About half
-      </button>
-      <button
-        type="submit"
-        name="quantity_state"
-        value="nearly_gone"
-        class="quantity-btn {% if item.quantity_state == 'nearly_gone' %}quantity-btn--active{% endif %}"
-      >
-        Nearly gone
-      </button>
+      <input type="hidden" name="next" value="{{ url_for('perishables.item_detail', item_id=item.id) }}"/>
+      {% for val, label in [('full','Full'),('three_quarters','¾'),('half','½'),('nearly_gone','Nearly gone')] %}
+      <button type="submit" name="quantity_state" value="{{ val }}"
+              class="quantity-btn {% if item.quantity_state == val %}quantity-btn--active{% endif %}"
+              onclick="this.closest('dialog').close()">{{ label }}</button>
+      {% endfor %}
     </form>
   </div>
-  {% endif %}
 
-  {% if is_editing %}
-  <form
-    id="edit-form"
-    method="post"
-    action="{{ url_for('perishables.update_item', item_id=item.id) }}"
-    class="edit-actions-form"
-  >
+  <form method="post" action="{{ url_for('perishables.mark_used', item_id=item.id) }}" style="display:contents">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-    <button type="submit" class="btn btn-primary btn-full">Save changes</button>
-    <a href="{{ url_for('perishables.item_detail', item_id=item.id) }}" class="btn btn-secondary btn-full" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">Cancel</a>
-  </form>
-  {% else %}
-  <div class="item-actions">
-    <button
-      type="button"
-      class="btn btn-primary btn-full"
-      onclick="document.getElementById('use-confirm-dialog').showModal()"
-    >
+    <button type="submit" class="v2-sheet-action">
+      <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
       Mark as used
     </button>
+  </form>
+  <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}" class="v2-sheet-action">
+    <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg></span>
+    Edit item details
+  </a>
 
-    <dialog id="use-confirm-dialog" class="confirm-dialog">
-      <p class="confirm-dialog__question">
-        Done with <strong>{{ item.name }}</strong>?
-      </p>
-      <div class="confirm-dialog__actions">
-        <form
-          method="post"
-          action="{{ url_for('perishables.mark_used', item_id=item.id) }}"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button type="submit" class="btn btn-primary">Yes, used it</button>
-        </form>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          onclick="document.getElementById('use-confirm-dialog').close()"
-        >
-          Not yet
-        </button>
-      </div>
-    </dialog>
+  <form method="post" action="{{ url_for('perishables.remove_item', item_id=item.id) }}" style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" name="reason" value="discarded" class="v2-sheet-action v2-sheet-action--destructive">
+      <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+      Threw it away
+    </button>
+  </form>
+  <form method="post" action="{{ url_for('perishables.remove_item', item_id=item.id) }}" style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" name="reason" value="unwanted" class="v2-sheet-action v2-sheet-action--destructive">
+      <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+      Don't want it
+    </button>
+  </form>
+  <form method="post" action="{{ url_for('perishables.remove_item', item_id=item.id) }}" style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" name="reason" value="mistake" class="v2-sheet-action v2-sheet-action--destructive">
+      <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
+      Keyed in by mistake
+    </button>
+  </form>
 
-    <details class="remove-panel">
-      <summary>Remove from pantry</summary>
-      <div class="remove-options">
-        {% if days_left < 0 %}
-        {# Expired: recommend "Threw it away" #}
-        <form
-          method="post"
-          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button
-            type="submit"
-            name="reason"
-            value="discarded"
-            class="btn btn-danger btn-sm"
-          >
-            Threw it away
-          </button>
-        </form>
-        <form
-          method="post"
-          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button
-            type="submit"
-            name="reason"
-            value="unwanted"
-            class="btn btn-secondary btn-sm"
-          >
-            Don't want it
-          </button>
-        </form>
-        <form
-          method="post"
-          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button
-            type="submit"
-            name="reason"
-            value="mistake"
-            class="btn btn-secondary btn-sm"
-          >
-            Keyed in by mistake
-          </button>
-        </form>
-        {% else %}
-        {# Not expired: recommend "Don't want it" #}
-        <form
-          method="post"
-          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button
-            type="submit"
-            name="reason"
-            value="unwanted"
-            class="btn btn-primary btn-sm"
-          >
-            Don't want it
-          </button>
-        </form>
-        <form
-          method="post"
-          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button
-            type="submit"
-            name="reason"
-            value="discarded"
-            class="btn btn-secondary btn-sm"
-          >
-            Threw it away
-          </button>
-        </form>
-        <form
-          method="post"
-          action="{{ url_for('perishables.remove_item', item_id=item.id) }}"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button
-            type="submit"
-            name="reason"
-            value="mistake"
-            class="btn btn-secondary btn-sm"
-          >
-            Keyed in by mistake
-          </button>
-        </form>
-        {% endif %}
-      </div>
-    </details>
-  </div>
-  {% endif %}
+  <button class="v2-sheet-cancel" type="button"
+          onclick="document.getElementById('sheet-{{ item.id }}').close()">Cancel</button>
 </div>
+</dialog>
+{% endif %}
 
 {% endblock %}

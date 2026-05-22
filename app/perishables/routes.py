@@ -426,6 +426,7 @@ def group_detail(group_key):
         items=items,
         group_key=group_key,
         today=today,
+        tags=_parse_tags(items[0].labels_tags),
     )
 
 
@@ -777,6 +778,24 @@ def add_item():
     return redirect(url_for("perishables.add_item"))
 
 
+def _parse_tags(labels_tags_json: str | None) -> list[str]:
+    """Parse labels_tags JSON into display-ready strings, stripping language prefixes."""
+    if not labels_tags_json:
+        return []
+    try:
+        raw = json.loads(labels_tags_json)
+    except (json.JSONDecodeError, TypeError):
+        return []
+    result = []
+    for tag in raw:
+        if ":" in tag:
+            tag = tag.split(":", 1)[1]
+        tag = tag.replace("-", " ").capitalize()
+        if tag:
+            result.append(tag)
+    return result
+
+
 @perishables_bp.route("/items/<int:item_id>")
 @login_required
 def item_detail(item_id):
@@ -788,6 +807,7 @@ def item_detail(item_id):
         today=today,
         is_editing=False,
         pantry_items_list=PANTRY_ITEMS,
+        tags=_parse_tags(item.labels_tags),
     )
 
 
@@ -815,6 +835,7 @@ def edit_item(item_id):
         is_editing=True,
         pantry_items_list=PANTRY_ITEMS,
         next_url=request.args.get("next"),
+        tags=_parse_tags(item.labels_tags),
     )
 
 

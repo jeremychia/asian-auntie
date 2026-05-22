@@ -145,26 +145,31 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
     {% for group in grouped %}
       {% set item = group.representative %}
       {% set days_left = (item.expiry_date - today).days %}
-      {% if days_left < 0 %}
-        {% set urgency = "expired" %}
-        {% set urgency_label = "EXPIRED" %}
-        {% set urgency_icon %}<svg class="badge-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>{% endset %}
-      {% elif days_left == 0 %}
-        {% set urgency = "today" %}
-        {% set urgency_label = "TODAY" %}
-        {% set urgency_icon %}<svg class="badge-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>{% endset %}
-      {% elif days_left <= 3 %}
-        {% set urgency = "soon" %}
-        {% set urgency_label = days_left ~ " DAY" ~ ("S" if days_left != 1 else "") %}
-        {% set urgency_icon %}<svg class="badge-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>{% endset %}
-      {% else %}
-        {% set urgency = "ok" %}
-        {% set urgency_label = item.expiry_date.strftime("%-d %b %Y") %}
-        {% set urgency_icon = "" %}
-      {% endif %}
+      {%- if days_left < 0 -%}
+        {%- set urgency = "expired" -%}
+        {%- set urgency_label = "EXPIRED" -%}
+        {%- set strip_color = "#dc2626" -%}
+      {%- elif days_left == 0 -%}
+        {%- set urgency = "today" -%}
+        {%- set urgency_label = "TODAY" -%}
+        {%- set strip_color = "#dc2626" -%}
+      {%- elif days_left <= 3 -%}
+        {%- set urgency = "soon" -%}
+        {%- set urgency_label = days_left ~ " DAY" ~ ("S" if days_left != 1 else "") -%}
+        {%- set strip_color = "#d97706" -%}
+      {%- elif days_left <= 14 -%}
+        {%- set urgency = "watch" -%}
+        {%- set urgency_label = item.expiry_date.strftime("%-d %b") -%}
+        {%- set strip_color = "#a8a29e" -%}
+      {%- else -%}
+        {%- set urgency = "ok" -%}
+        {%- set urgency_label = item.expiry_date.strftime("%-d %b %Y") -%}
+        {%- set strip_color = "rgba(112,1,67,0.22)" -%}
+      {%- endif -%}
       {% set photo = item.display_photo %}
+      {% set multi = group['count'] > 1 %}
       {% set open_count = group['items'] | selectattr('quantity_state') | list | length %}
-      {% set show_batch_line = group['count'] > 1 or open_count > 0 %}
+      {% set aria_label = item.name ~ ", " ~ group['count'] ~ (" batch" if group['count'] == 1 else " batches") ~ (", " ~ open_count ~ " opened" if open_count > 0 else "") ~ ", soonest expires " ~ urgency_label %}
 
       <div class="card-wrap"
            data-name="{{ item.name | lower }}"
@@ -175,46 +180,53 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
            data-item-id="{{ item.id }}"
            data-item-name="{{ item.name }}">
         <a
-          href="{% if group['count'] > 1 %}{{ url_for('perishables.group_detail', group_key=group['key']) }}{% else %}{{ url_for('perishables.item_detail', item_id=item.id) }}{% endif %}"
-          class="item-card item-card--{{ urgency }}{% if photo %} item-card--has-photo{% if urgency == 'ok' %} item-card--type-{{ item.item_type }}{% endif %}{% else %} item-card--type-{{ item.item_type }}{% endif %}{% if group['count'] > 1 %} item-card--stacked{% endif %}"
+          href="{% if multi %}{{ url_for('perishables.group_detail', group_key=group['key']) }}{% else %}{{ url_for('perishables.item_detail', item_id=item.id) }}{% endif %}"
+          class="item-card item-card--{{ urgency }}{% if photo %} item-card--photo item-card--has-photo{% else %} item-card--tint item-card--type-{{ item.item_type }}{% endif %}"
+          aria-label="{{ aria_label }}"
         >
+          {# Full-bleed photo #}
           {% if photo %}
-          <img
-            src="{{ photo.photo_url }}"
-            alt="{{ item.name }}"
-            class="item-card__photo"
-          />
-          <div class="item-card__overlay">
-            <span class="item-card__name item-card__name--overlay">{{ item.name }}</span>
-            <div class="item-card__overlay-bottom">
-              {% if show_batch_line %}
-              <div class="item-card__batches item-card__batches--overlay">
-                {% if group['count'] > 1 %}<span class="item-card__count">× {{ group['count'] }}</span>{% endif %}
-                {% if open_count > 0 %}
-                  {% if group['count'] > 1 %}<span aria-hidden="true" style="opacity: 0.5">·</span>{% endif %}
-                  <span>{{ open_count }} open</span>
-                {% endif %}
-              </div>
-              {% endif %}
-              <span class="item-card__badge item-card__badge--overlay">{{ urgency_icon }}{{ urgency_label }}</span>
+          <img src="{{ photo.photo_url }}" alt="" class="item-card__photo" aria-hidden="true"/>
+          <div class="item-card__photo-overlay" aria-hidden="true"></div>
+          {% endif %}
+
+          {# Left urgency strip #}
+          <span class="item-card__urgency-strip" style="background:{{ strip_color }}" aria-hidden="true"></span>
+
+          {# Badge: top-right #}
+          <span class="item-card__badge badge-{{ urgency }}">{{ urgency_label }}</span>
+
+          {# Body: bottom-anchored #}
+          <div class="item-card__body">
+            {# Stock bar for multi-batch items #}
+            {% if multi %}
+            <div class="stockbar" role="img" aria-label="{{ group['count'] }} batches">
+              {% for batch_item in group['items'] %}
+                {%- set bd = (batch_item.expiry_date - today).days -%}
+                {%- if bd < 0 -%}{%- set bc = "#dc2626" -%}
+                {%- elif bd == 0 -%}{%- set bc = "#dc2626" -%}
+                {%- elif bd <= 3 -%}{%- set bc = "#d97706" -%}
+                {%- elif bd <= 14 -%}{%- set bc = "#a8a29e" -%}
+                {%- else -%}{%- set bc = "rgba(112,1,67,0.22)" -%}
+                {%- endif -%}
+                {%- set batch_open = batch_item.quantity_state is not none -%}
+                <span class="stockbar__seg{% if batch_open %} stockbar__seg--opened{% endif %}"
+                      style="{% if batch_open %}color:{{ bc }}{% else %}background:{{ bc }}{% endif %}"></span>
+              {% endfor %}
             </div>
-          </div>
-          {% else %}
-          <div class="item-card__top">
-            <span class="item-card__name">{{ item.name }}</span>
-            <span class="item-card__type">{{ item.item_type }}</span>
-            {% if show_batch_line %}
-            <div class="item-card__batches">
-              {% if group['count'] > 1 %}<span class="item-card__count">× {{ group['count'] }}</span>{% endif %}
+            <div class="stockbar__legend">
+              <b>{{ group['count'] }}</b> batches
               {% if open_count > 0 %}
-                {% if group['count'] > 1 %}<span aria-hidden="true" style="opacity: 0.5">·</span>{% endif %}
-                <span>{{ open_count }} open</span>
+                <span aria-hidden="true" style="opacity:0.4">·</span>
+                <span class="stockbar__open-dot" aria-hidden="true"></span>
+                {{ open_count }} open
               {% endif %}
             </div>
             {% endif %}
+
+            <span class="item-card__name">{{ item.name }}</span>
+            <span class="item-card__type">{{ item.item_type }}</span>
           </div>
-          <span class="item-card__badge">{{ urgency_icon }}{{ urgency_label }}</span>
-          {% endif %}
         </a>
       </div>
     {% endfor %}

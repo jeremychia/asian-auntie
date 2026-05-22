@@ -2,185 +2,360 @@
 {% block title %}{{ items[0].standard_name or items[0].name }} — Asian Auntie{% endblock %}
 {% block content %}
 
+{# ── Helpers ─────────────────────────────────────────────────────── #}
+{% macro rel_phrase(days) %}
+  {%- if days < 0 -%}{{ days | abs }}d ago
+  {%- elif days == 0 -%}today
+  {%- elif days == 1 -%}tomorrow
+  {%- elif days <= 7 -%}in {{ days }} days
+  {%- elif days <= 30 -%}in {{ ((days / 7) | round(0, 'floor')) | int }} wks
+  {%- elif days <= 365 -%}in {{ ((days / 30) | round(0, 'floor')) | int }} mo
+  {%- else -%}in {{ ((days / 365) | round(0, 'floor')) | int }}y
+  {%- endif -%}
+{% endmacro %}
+
+{% macro fill_label(qs) %}
+  {%- if qs == 'full' -%}Full
+  {%- elif qs == 'three_quarters' -%}¾ left
+  {%- elif qs == 'half' -%}Half left
+  {%- elif qs == 'nearly_gone' -%}Nearly gone
+  {%- else -%}Opened
+  {%- endif -%}
+{% endmacro %}
+
+
 {% set rep = items[0] %}
-{% set group_url = request.url %}
+{% set soonest = items[0] %}
+{% set soonest_days = (soonest.expiry_date - today).days %}
+{% set total_count = items | length %}
+{% set open_count = items | selectattr('quantity_state') | list | length %}
 
-<div class="content">
-  <a href="{{ url_for('perishables.dashboard') }}" class="back-link">← Pantry</a>
+{%- if soonest_days < 0 -%}{%- set soon_urgency = "expired" -%}
+{%- elif soonest_days == 0 -%}{%- set soon_urgency = "today" -%}
+{%- elif soonest_days <= 3 -%}{%- set soon_urgency = "soon" -%}
+{%- elif soonest_days <= 14 -%}{%- set soon_urgency = "watch" -%}
+{%- else -%}{%- set soon_urgency = "ok" -%}
+{%- endif -%}
 
-  {# ── Photos: show once, using the first item that has one ── #}
-  {% set ns = namespace(photo_item=none) %}
-  {% for item in items %}
-    {% if ns.photo_item is none and item.display_photo %}
-      {% set ns.photo_item = item %}
-    {% endif %}
-  {% endfor %}
+{%- if soonest_days < 0 -%}{%- set soonest_label = "EXPIRED" -%}
+{%- elif soonest_days == 0 -%}{%- set soonest_label = "TODAY" -%}
+{%- elif soonest_days <= 3 -%}{%- set soonest_label = soonest_days ~ " day" ~ ("s" if soonest_days != 1 else "") -%}
+{%- else -%}{%- set soonest_label = soonest.expiry_date.strftime("%-d %b %Y") -%}
+{%- endif -%}
+
+{# Collect photo from first item that has one #}
+{% set ns = namespace(photo_item=none) %}
+{% for item in items %}
+  {% if ns.photo_item is none and item.display_photo %}
+    {% set ns.photo_item = item %}
+  {% endif %}
+{% endfor %}
+
+<div class="content" id="item-detail">
+
+  {# ── Back link ─────────────────────────────────────────────────── #}
+  <a href="{{ url_for('perishables.dashboard') }}" class="id-back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+    </svg>
+    Pantry
+  </a>
+
+  {# ── Photo hero ────────────────────────────────────────────────── #}
   {% if ns.photo_item %}
-  <div class="item-photos">
-    {% for photo in ns.photo_item.photos %}
-    <figure class="item-photo-figure">
-      <img src="{{ photo.photo_url }}"
-           alt="{{ photo.photo_type | replace('_', ' ') | capitalize }} photo of {{ rep.name }}"
-           class="item-photo" />
-      <figcaption class="item-photo-caption">
-        {{ photo.photo_type | replace('_', ' ') | capitalize }}
-        {% if photo.photo_path.startswith('https://images.openfoodfacts.org') %}
-        <span class="tooltip-icon" tabindex="0"
-              data-tip="Photo from Open Food Facts, a free and collaborative food products database."
-              style="color:#fff; margin-left:0.2rem;">ⓘ</span>
-        {% endif %}
-      </figcaption>
-    </figure>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <div class="detail-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <div>
-      <h1 style="margin: 0 0 4px; letter-spacing: -0.02em;">{{ rep.standard_name or rep.name }}</h1>
-      <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">
-        {% if rep.item_type and rep.item_type != 'unknown' %}<span style="text-transform: capitalize;">{{ rep.item_type }}</span>{% if rep.location %}<span style="opacity: 0.4; margin: 0 0.4em;">·</span>{{ rep.location | capitalize }}{% endif %}{% endif %}
-      </p>
-    </div>
-    <a href="{{ url_for('perishables.edit_item', item_id=rep.id) }}" class="btn-icon" aria-label="Edit item details"
-       style="width: 36px; height: 36px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--r-full); color: var(--text-muted); background: none; cursor: pointer; transition: color 0.15s, border-color 0.15s, background 0.15s;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-      </svg>
-    </a>
-  </div>
-
-  {# ── Shared product metadata ── #}
-  {% if rep.brands or rep.quantity or rep.barcode or (rep.off_nutriscore_grade and rep.off_nutriscore_grade != 'U') or rep.off_nova_group or (rep.off_ecoscore_grade and rep.off_ecoscore_grade != 'U') %}
-  <div class="meta-list" style="margin-bottom: 1.5rem;">
-    {% if rep.brands %}
-    <div class="meta-row">
-      <span class="meta-label">Brand</span>
-      <span class="meta-value">{{ rep.brands }}</span>
-    </div>
-    {% endif %}
-    {% if rep.quantity %}
-    <div class="meta-row">
-      <span class="meta-label">Size</span>
-      <span class="meta-value">{{ rep.quantity }}</span>
-    </div>
-    {% endif %}
-    {% if rep.barcode %}
-    <div class="meta-row">
-      <span class="meta-label">Barcode</span>
-      <span class="meta-value">{{ rep.barcode }}</span>
-    </div>
-    {% endif %}
-    {% if rep.off_nutriscore_grade and rep.off_nutriscore_grade != 'U' %}
-    <div class="meta-row">
-      <span class="meta-label">
-        Nutri-Score
-        <span class="tooltip-icon" data-tip="Nutritional quality score from A (best) to E (worst), based on nutrients per 100g/100ml.">ⓘ</span>
-      </span>
-      <div class="meta-value">
-        <span class="grade-badge nutriscore-grade--{{ rep.off_nutriscore_grade | lower }}">{{ rep.off_nutriscore_grade | upper }}</span>
-      </div>
-    </div>
-    {% endif %}
-    {% if rep.off_nova_group %}
-    <div class="meta-row">
-      <span class="meta-label">
-        NOVA group
-        <span class="tooltip-icon" data-tip="Food processing level: 1 = unprocessed, 4 = ultra-processed.">ⓘ</span>
-      </span>
-      <span class="meta-value">{{ rep.off_nova_group }}</span>
-    </div>
-    {% endif %}
-    {% if rep.off_ecoscore_grade and rep.off_ecoscore_grade != 'U' %}
-    <div class="meta-row">
-      <span class="meta-label">
-        Eco-Score
-        <span class="tooltip-icon" data-tip="Environmental impact from A (low) to E (high).">ⓘ</span>
-      </span>
-      <div class="meta-value">
-        <span class="grade-badge ecoscore-grade--{{ rep.off_ecoscore_grade | lower }}">{{ rep.off_ecoscore_grade | upper }}</span>
-      </div>
-    </div>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-    <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 0; line-height: 1.2;">Batches {{ items | length }}</h2>
-    <a href="{{ url_for('perishables.add_item') }}" style="font-size: 0.875rem; color: var(--brand); text-decoration: none; font-weight: 500;">+ Add another</a>
-  </div>
-
-  <div class="group-batch-list">
-    {% for item in items %}
-      {% set days = (item.expiry_date - today).days %}
-      {% if days < 0 %}{% set urg = "expired" %}
-      {% elif days == 0 %}{% set urg = "today" %}
-      {% elif days <= 3 %}{% set urg = "soon" %}
-      {% else %}{% set urg = "ok" %}{% endif %}
-
-    <div class="group-detail-batch">
-      <div class="group-detail-batch__header">
-        <div style="flex: 1;">
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-            <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0;"></span>
-            <span style="font-weight: 600; color: var(--text);">{{ item.standard_name or item.name }}</span>
-            <span class="badge badge--{{ urg }}">
-              {% if days < 0 %}Expired{% elif days == 0 %}Today{% elif days <= 3 %}{{ days }}d{% else %}{{ item.expiry_date.strftime("%-d %b") }}{% endif %}
-            </span>
-          </div>
-          <div style="font-size: 0.8125rem; color: var(--text-muted); display: flex; gap: 1rem;">
-            <span>Expires {{ item.expiry_date.strftime("%-d %b %Y") }}</span>
-            <span>added {{ item.date_added.strftime("%-d %b") }}</span>
-          </div>
+    {% set hero_photo = ns.photo_item.display_photo %}
+    <div class="id-photo-hero">
+      <img src="{{ hero_photo.photo_url }}"
+           alt="{{ rep.name }}"
+           class="id-photo-hero__img"/>
+      <div class="id-photo-hero__overlay"></div>
+      <div class="id-photo-hero__body">
+        <div style="min-width:0">
+          <h1 class="id-photo-hero__name">{{ rep.standard_name or rep.name }}</h1>
+          <p class="id-photo-hero__meta">
+            <span style="text-transform:capitalize">{{ rep.item_type }}</span>
+            {% if rep.location %}<span style="opacity:0.5;margin:0 0.4em">·</span>{{ rep.location | capitalize }}{% endif %}
+          </p>
         </div>
-        <a href="{{ url_for('perishables.edit_item', item_id=item.id, next=group_url) }}"
-           class="btn-icon" aria-label="Edit this item"
-           style="flex-shrink: 0; color: var(--text-muted); padding: 0; border: none; background: none; cursor: pointer;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <circle cx="12" cy="6" r="2"/>
-            <circle cx="12" cy="12" r="2"/>
-            <circle cx="12" cy="18" r="2"/>
+        <a href="{{ url_for('perishables.edit_item', item_id=rep.id) }}"
+           class="id-photo-hero__edit" aria-label="Edit item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
         </a>
       </div>
+    </div>
+  {% else %}
+    <div class="id-header">
+      <div style="flex:1;min-width:0">
+        <h1 class="id-header__title">{{ rep.standard_name or rep.name }}</h1>
+        <p class="id-header__meta">
+          <span style="text-transform:capitalize">{{ rep.item_type }}</span>
+          {% if rep.location %}<span style="opacity:0.4;margin:0 0.4em">·</span>{{ rep.location | capitalize }}{% endif %}
+        </p>
+      </div>
+      <a href="{{ url_for('perishables.edit_item', item_id=rep.id) }}"
+         class="id-edit-btn" aria-label="Edit item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </a>
+    </div>
+  {% endif %}
 
-      <div class="meta-list">
-        <div class="meta-row">
-          <span class="meta-label">Location</span>
-          <span class="meta-value">{{ item.location | capitalize if item.location else 'Not specified' }}</span>
+  {# ── Product info card ─────────────────────────────────────────── #}
+  <div class="pi-card">
+    {% set has_enrichment = rep.brands or rep.barcode or rep.off_nutriscore_grade or rep.off_nova_group %}
+    {% set has_standard_name = rep.standard_name and rep.standard_name != rep.name %}
+
+    {% if not has_enrichment and not has_standard_name %}
+      {# Sparse: manual entry #}
+      <p class="pi-sparse">
+        <strong style="color:#700143">{{ rep.standard_name or rep.name }}</strong>
+        · Manual entry · <a href="{{ url_for('perishables.edit_item', item_id=rep.id) }}" style="color:#700143;font-weight:600">Add product details</a>
+      </p>
+      {% if tags %}
+      <div class="pi-tags">
+        {% for tag in tags %}<span class="pi-tag">{{ tag }}</span>{% endfor %}
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="pi-main">
+        {% if rep.off_nutriscore_grade and rep.off_nutriscore_grade != 'U' %}
+          <span class="pi-ns pi-ns--{{ rep.off_nutriscore_grade | upper }}"
+                aria-label="Nutri-Score {{ rep.off_nutriscore_grade | upper }}"
+                title="Nutri-Score {{ rep.off_nutriscore_grade | upper }} — nutritional quality from A (best) to E (worst)">{{ rep.off_nutriscore_grade | upper }}</span>
+        {% else %}
+          <span class="pi-ns pi-ns--empty" aria-label="Nutri-Score unavailable" title="Nutri-Score not available">–</span>
+        {% endif %}
+        <div class="pi-body">
+          <span class="pi-std">{{ rep.standard_name or rep.name }}</span>
+          {% if rep.brands or rep.quantity %}
+          <p class="pi-sub">
+            {% if rep.brands %}{{ rep.brands }}{% endif %}
+            {% if rep.brands and rep.quantity %}<span class="pi-sub__sep">·</span>{% endif %}
+            {% if rep.quantity %}{{ rep.quantity }}{% endif %}
+          </p>
+          {% endif %}
         </div>
       </div>
 
-      <div class="group-detail-batch__content">
-        <div class="quantity-tracker">
-          <h3 class="quantity-tracker__label">How much is left?</h3>
-          <form method="post" action="{{ url_for('perishables.update_quantity_state', item_id=item.id) }}" class="quantity-buttons">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <input type="hidden" name="next" value="{{ group_url }}" />
-            <button type="submit" name="quantity_state" value="full"
-                    class="quantity-btn {% if item.quantity_state == 'full' %}quantity-btn--active{% endif %}">Full</button>
-            <button type="submit" name="quantity_state" value="three_quarters"
-                    class="quantity-btn {% if item.quantity_state == 'three_quarters' %}quantity-btn--active{% endif %}">About 3/4</button>
-            <button type="submit" name="quantity_state" value="half"
-                    class="quantity-btn {% if item.quantity_state == 'half' %}quantity-btn--active{% endif %}">About half</button>
-            <button type="submit" name="quantity_state" value="nearly_gone"
-                    class="quantity-btn {% if item.quantity_state == 'nearly_gone' %}quantity-btn--active{% endif %}">Nearly gone</button>
-          </form>
+      {% if tags %}
+      <div class="pi-tags">
+        {% for tag in tags %}<span class="pi-tag">{{ tag }}</span>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% set has_more = rep.off_nova_group or rep.barcode or rep.location %}
+      {% if has_more %}
+      <button class="pi-more-toggle" type="button"
+              aria-expanded="false"
+              onclick="this.setAttribute('aria-expanded', this.getAttribute('aria-expanded')==='false' ? 'true' : 'false');
+                       this.nextElementSibling.hidden = !this.nextElementSibling.hidden;
+                       this.querySelector('span').textContent = this.getAttribute('aria-expanded')==='true' ? 'Hide product details' : 'Show product details';">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+        <span>Show product details</span>
+      </button>
+      <div class="pi-more" hidden>
+        {% if rep.off_nutriscore_grade and rep.off_nutriscore_grade != 'U' %}
+          {% set ns_desc = {'A':'Healthy choice','B':'Good','C':'Average','D':'Less healthy','E':'Avoid often'} %}
+          <span class="pi-more__label">Nutrition</span>
+          <span class="pi-more__value">{{ ns_desc.get(rep.off_nutriscore_grade | upper, '') }}</span>
+        {% endif %}
+        {% if rep.off_nova_group %}
+          {% set nova_desc = {1:'Unprocessed',2:'Culinary ingredient',3:'Processed food',4:'Ultra-processed'} %}
+          <span class="pi-more__label">Processing</span>
+          <span class="pi-more__value">
+            <span class="pi-nova-chip pi-nova-chip--{{ rep.off_nova_group }}"
+                  title="NOVA group {{ rep.off_nova_group }} — food processing level: 1 = unprocessed, 2 = culinary ingredient, 3 = processed, 4 = ultra-processed">{{ rep.off_nova_group }}</span>
+            {{ nova_desc.get(rep.off_nova_group, '') }}
+          </span>
+        {% endif %}
+        {% if rep.location %}
+          <span class="pi-more__label">Location</span>
+          <span class="pi-more__value">{{ rep.location | capitalize }}</span>
+        {% endif %}
+        {% if rep.barcode %}
+          <span class="pi-more__label">Barcode</span>
+          <span class="pi-more__value pi-more__value--mono">{{ rep.barcode }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  {# ── Summary strip ─────────────────────────────────────────────── #}
+  <div class="id-summary">
+    <div class="id-summary__cell">
+      <p class="id-summary__label">In stock</p>
+      <p class="id-summary__value">{{ total_count }} {{ "batch" if total_count == 1 else "batches" }}</p>
+    </div>
+    <div class="id-summary__cell">
+      <p class="id-summary__label">Open</p>
+      <p class="id-summary__value">{{ open_count if open_count > 0 else "—" }}</p>
+    </div>
+    <div class="id-summary__cell">
+      <p class="id-summary__label">Soonest</p>
+      <p class="id-summary__value{% if soon_urgency in ('expired','today') %} id-summary__value--urgent{% elif soon_urgency == 'soon' %} id-summary__value--soon{% endif %}">
+        {{ soonest_label }}
+      </p>
+    </div>
+  </div>
+
+  {# ── Use-next hero (soonest batch = items[0]) ──────────────────── #}
+  {% set hero = items[0] %}
+  {% set hero_days = (hero.expiry_date - today).days %}
+  {%- if hero_days < 0 -%}{%- set hero_urg = "urgent" -%}{%- set hero_headline = "Expired" -%}
+  {%- elif hero_days == 0 -%}{%- set hero_urg = "urgent" -%}{%- set hero_headline = "Use today" -%}
+  {%- elif hero_days <= 3 -%}{%- set hero_urg = "soon" -%}{%- set hero_headline = "Use in " ~ hero_days ~ "d" -%}
+  {%- else -%}{%- set hero_urg = "" -%}{%- set hero_headline = hero_days | string ~ "d left" -%}
+  {%- endif -%}
+  {% set hero_is_open = hero.quantity_state is not none %}
+
+  <div class="un-hero{% if hero_urg == 'urgent' %} un-hero--urgent{% elif hero_urg == 'soon' %} un-hero--soon{% endif %}">
+    <p class="un-hero__eyebrow">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg>
+      Use this one next
+    </p>
+    <h2 class="un-hero__expiry{% if hero_urg == 'urgent' %} un-hero__expiry--urgent{% elif hero_urg == 'soon' %} un-hero__expiry--soon{% endif %}">{{ hero_headline }}</h2>
+    <p class="un-hero__date">Expires {{ hero.expiry_date.strftime("%-d %b %Y") }} · added {{ hero.date_added.strftime("%-d %b") }}</p>
+    <span class="un-hero__state-chip">
+      {% if hero_is_open %}
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 3v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V3"/><rect x="5" y="9" width="14" height="12" rx="2"/>
+        </svg>
+        {{ fill_label(hero.quantity_state) }}
+      {% else %}
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16"/>
+        </svg>
+        Sealed
+      {% endif %}
+    </span>
+    <div class="un-hero__actions">
+      <form method="post" action="{{ url_for('perishables.mark_used', item_id=hero.id) }}" style="flex:1;display:contents">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="un-hero__cta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          Mark as used
+        </button>
+      </form>
+      <button type="button" class="un-hero__more" aria-label="More actions"
+              onclick="document.getElementById('sheet-{{ hero.id }}').showModal()">
+        ⋮
+      </button>
+    </div>
+  </div>
+
+  {# ── Reserves (items[1:]) ──────────────────────────────────────── #}
+  {% if items | length > 1 %}
+  <div class="id-section-head">
+    <h3 class="id-section-head__title">
+      In reserve <span class="id-section-head__count">{{ items | length - 1 }}</span>
+    </h3>
+    <a href="{{ url_for('perishables.add_item') }}" class="id-add-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add another
+    </a>
+  </div>
+  <div class="un-list">
+    {% for batch in items[1:] %}
+      {% set bd = (batch.expiry_date - today).days %}
+      {%- if bd < 0 -%}{%- set bu = "expired" -%}{%- set bdot = "#dc2626" -%}
+      {%- elif bd == 0 -%}{%- set bu = "today" -%}{%- set bdot = "#dc2626" -%}
+      {%- elif bd <= 3 -%}{%- set bu = "soon" -%}{%- set bdot = "#d97706" -%}
+      {%- elif bd <= 14 -%}{%- set bu = "watch" -%}{%- set bdot = "#a8a29e" -%}
+      {%- else -%}{%- set bu = "ok" -%}{%- set bdot = "rgba(112,1,67,0.22)" -%}
+      {%- endif -%}
+      {% set b_is_open = batch.quantity_state is not none %}
+    <div class="un-row">
+      <span class="un-row__dot{% if b_is_open %} un-row__dot--opened{% endif %}"
+            style="background:{{ bdot }};color:{{ bdot }}" aria-hidden="true"></span>
+      <div class="un-row__main">
+        <div class="un-row__top">
+          <span class="un-row__date">{{ batch.expiry_date.strftime("%-d %b %Y") }}</span>
+          <span class="un-row__rel">· {{ rel_phrase((batch.expiry_date - today).days) }}</span>
+        </div>
+        <div class="un-row__meta">
+          {% if b_is_open %}{{ fill_label(batch.quantity_state) }}{% else %}Sealed{% endif %}
+          <span style="opacity:0.45;margin:0 0.35em">·</span>
+          added {{ batch.date_added.strftime("%-d %b") }}
         </div>
       </div>
+      <button type="button" class="un-row__menu" aria-label="More options"
+              onclick="document.getElementById('sheet-{{ batch.id }}').showModal()">
+        ⋮
+      </button>
     </div>
     {% endfor %}
   </div>
+  {% else %}
+  <div style="text-align:right;margin-top:12px">
+    <a href="{{ url_for('perishables.add_item') }}" class="id-add-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add another batch
+    </a>
+  </div>
+  {% endif %}
 
-  <form method="post" action="{{ url_for('perishables.mark_used', item_id=items[0].id) }}" style="margin-top: 1.5rem;">
+</div>{# /content #}
+
+{# ── Per-batch action sheets ───────────────────────────────────────── #}
+{% for batch in items %}
+  {% set bd = (batch.expiry_date - today).days %}
+  {%- if bd < 0 -%}{%- set blabel = "EXPIRED" -%}
+  {%- elif bd == 0 -%}{%- set blabel = "TODAY" -%}
+  {%- elif bd <= 3 -%}{%- set blabel = bd ~ " day" ~ ("s" if bd != 1 else "") -%}
+  {%- else -%}{%- set blabel = batch.expiry_date.strftime("%-d %b %Y") -%}
+  {%- endif -%}
+  {% set b_is_open = batch.quantity_state is not none %}
+<dialog id="sheet-{{ batch.id }}" class="id-sheet"
+        onclick="if(event.target===this)this.close()">
+<div class="id-sheet__card">
+  <div class="v2-sheet-head">
+    <p class="v2-sheet-head__title">{% if b_is_open %}Opened batch{% else %}Sealed batch{% endif %}</p>
+    <p class="v2-sheet-head__meta">Expires {{ batch.expiry_date.strftime("%-d %b %Y") }} · {{ blabel }}</p>
+  </div>
+  <form method="post" action="{{ url_for('perishables.mark_used', item_id=batch.id) }}" style="display:contents">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-    <input type="hidden" name="next" value="{{ group_url }}" />
-    <button type="submit" class="btn btn-primary btn-full" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-      <span style="font-size: 1.2rem;">✓</span> Mark earliest as used
+    <button type="submit" class="v2-sheet-action">
+      <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+      Mark this one as used
     </button>
   </form>
-
+  <a href="{{ url_for('perishables.edit_item', item_id=batch.id) }}" class="v2-sheet-action">
+    <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg></span>
+    Edit expiry date
+  </a>
+  <form method="post" action="{{ url_for('perishables.remove_item', item_id=batch.id) }}" style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" name="reason" value="discarded" class="v2-sheet-action v2-sheet-action--destructive">
+      <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+      Threw it away
+    </button>
+  </form>
+  <form method="post" action="{{ url_for('perishables.remove_item', item_id=batch.id) }}" style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" name="reason" value="unwanted" class="v2-sheet-action v2-sheet-action--destructive">
+      <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+      Don't want it
+    </button>
+  </form>
+  <form method="post" action="{{ url_for('perishables.remove_item', item_id=batch.id) }}" style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" name="reason" value="mistake" class="v2-sheet-action v2-sheet-action--destructive">
+      <span class="v2-sheet-action__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
+      Keyed in by mistake
+    </button>
+  </form>
+  <button class="v2-sheet-cancel" type="button"
+          onclick="document.getElementById('sheet-{{ batch.id }}').close()">Cancel</button>
 </div>
+</dialog>
+{% endfor %}
 
 {% endblock %}
