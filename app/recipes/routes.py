@@ -7,7 +7,7 @@ from app.extensions import db
 from app.models import Item, RecipeEngagement
 from app.logging_config import get_logger
 from app.recipes.data import RECIPES
-from app.perishables.forms import PANTRY_ITEMS
+from app.pantry_data import PANTRY_ITEMS
 from app.recipes.search import (
     score_recipe,
     parse_cook_time,

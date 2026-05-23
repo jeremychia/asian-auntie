@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 
 from app.ingredient_normalization import normalize_ingredient
-from app.perishables.forms import PANTRY_ITEMS
+from app.pantry_data import PANTRY_ITEMS
 from app.recipes.data import RECIPES
 
 

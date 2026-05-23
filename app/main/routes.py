@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, jsonif
 from flask_login import current_user
 
 from app.recipes.data import RECIPES
-from app.perishables.forms import PANTRY_ITEMS
+from app.pantry_data import PANTRY_ITEMS
 from app.recipes.search import score_recipe
 
 main_bp = Blueprint("main", __name__)
