@@ -29,8 +29,8 @@ from app.perishables.forms import (
     AddItemForm,
     INGREDIENT_TYPE_MAP,
     ITEM_TYPES,
-    PANTRY_ITEMS,
 )
+from app.pantry_data import PANTRY_ITEMS
 from app.notifications.routes import get_user_locations
 from app.recognition.service import recognize_items_multi
 from app.logging_config import get_logger
