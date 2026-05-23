@@ -166,19 +166,30 @@ def _build_index() -> None:
         _RECIPE_ID_TO_IDX[recipe["id"]] = idx
 
         raw_ings = recipe["ingredients"]
-        # Use pre-normalized forms from data.py; fall back to normalize at load.
-        norm_ings = recipe.get("normalized_ingredients") or [
-            normalize_ingredient(i) or i for i in raw_ings
-        ]
+        pre_normalized = recipe.get("normalized_ingredients")
 
         ing_data: list[tuple[str, str, frozenset[str]]] = []
-        for raw, norm in zip(raw_ings, norm_ings):
-            norm_lower = norm.lower().strip()
-            words = _words(norm_lower)
-            ing_data.append((raw, norm_lower, words))
-            _INGREDIENT_INDEX[norm_lower].add(idx)
-            for word in words:
-                _INGREDIENT_INDEX[word].add(idx)
+        if pre_normalized:
+            # normalized_ingredients is a standalone canonical list, not 1-to-1
+            # with raw ingredients (trivial items like water/salt are dropped).
+            # Use normalized names for both matching and display.
+            for norm in pre_normalized:
+                norm_lower = norm.lower().strip()
+                words = _words(norm_lower)
+                ing_data.append((norm, norm_lower, words))
+                _INGREDIENT_INDEX[norm_lower].add(idx)
+                for word in words:
+                    _INGREDIENT_INDEX[word].add(idx)
+        else:
+            # No pre-normalized list: normalize each raw ingredient 1-to-1.
+            for raw in raw_ings:
+                norm = normalize_ingredient(raw) or raw
+                norm_lower = norm.lower().strip()
+                words = _words(norm_lower)
+                ing_data.append((raw, norm_lower, words))
+                _INGREDIENT_INDEX[norm_lower].add(idx)
+                for word in words:
+                    _INGREDIENT_INDEX[word].add(idx)
 
         _RECIPE_INGREDIENTS.append(ing_data)
 
@@ -271,7 +282,7 @@ def score_recipe(
         else:
             missing.append(raw_ing)
 
-    total = len(recipe["ingredients"])
+    total = len(matched) + len(missing)
     if not matched:
         return None
 
