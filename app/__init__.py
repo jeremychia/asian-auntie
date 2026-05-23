@@ -187,14 +187,33 @@ def create_app():
         resp.headers["Cache-Control"] = "private, max-age=604800"
         return resp
 
-    # Keep the /uploads/ route as a fallback for any direct links already in the
-    # wild, but enforce ownership.
+    # Serves photos during the confirm step (before the item is saved to DB).
+    # Supports both local-disk and GCS storage to match _save_photo_bytes.
     @app.route("/uploads/<path:filename>")
     @login_required
     def uploaded_file(filename):
+        from flask import Response
+
         expected_prefix = f"users/{current_user.id}/"
         if not filename.startswith(expected_prefix):
             abort(403)
+
+        bucket_name = app.config.get("GCS_BUCKET_NAME")
+        if bucket_name:
+            from app.storage import download_photo
+
+            try:
+                data = download_photo(
+                    filename,
+                    bucket_name,
+                    app.config.get("GCS_CREDENTIALS_JSON") or None,
+                )
+                resp = Response(data, content_type="image/jpeg")
+                resp.headers["Cache-Control"] = "private, max-age=604800"
+                return resp
+            except Exception:
+                abort(404)
+
         return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
     # Register blueprints
