@@ -79,7 +79,8 @@
   <div class="id-photo-hero">
     <img src="{{ item.display_photo.photo_url }}"
          alt="{{ item.name }}"
-         class="id-photo-hero__img"/>
+         class="id-photo-hero__img"
+         id="id-hero-img"/>
     <div class="id-photo-hero__overlay"></div>
     <div class="id-photo-hero__body">
       <div style="min-width:0">
@@ -98,6 +99,21 @@
       </a>
     </div>
   </div>
+
+  {% if item.photos | length > 1 %}
+  <div class="id-photo-strip">
+    {% for photo in item.photos %}
+    <button type="button"
+            class="id-photo-strip__thumb{% if loop.first %} id-photo-strip__thumb--active{% endif %}"
+            onclick="document.getElementById('id-hero-img').src='{{ photo.photo_url }}';
+                     document.querySelectorAll('.id-photo-strip__thumb').forEach(function(b){b.classList.remove('id-photo-strip__thumb--active')});
+                     this.classList.add('id-photo-strip__thumb--active');"
+            aria-label="{{ photo.photo_type | replace('_', ' ') | capitalize }}">
+      <img src="{{ photo.photo_url }}" alt="{{ photo.photo_type | replace('_', ' ') | capitalize }}" class="id-photo-strip__img"/>
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   {% else %}
 

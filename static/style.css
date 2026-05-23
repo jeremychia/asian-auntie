@@ -5533,6 +5533,38 @@ select.sort-select:focus {
   height: 16px;
   stroke-width: 2;
 }
+.id-photo-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 16px;
+  margin-top: -8px;
+}
+.id-photo-strip::-webkit-scrollbar {
+  display: none;
+}
+.id-photo-strip__thumb {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid transparent;
+  background: #f5f3f0;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.id-photo-strip__thumb--active {
+  border-color: #700143;
+}
+.id-photo-strip__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 /* Text header (no photo) */
 .id-header {
