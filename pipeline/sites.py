@@ -147,4 +147,13 @@ SITES: dict[str, dict] = {
         "delay": 2.0,
         "max_videos": 100,
     },
+    "spice_n_pans": {
+        "name": "Spice N Pans",
+        "discovery": "youtube",
+        "channel_url": "https://www.youtube.com/@spicenpans/videos",
+        "cuisine": "Singaporean",
+        "extraction": "description",
+        "delay": 0.5,
+        "max_videos": 100,
+    },
 }

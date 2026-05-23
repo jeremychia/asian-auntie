@@ -33,14 +33,25 @@ uv run python pipeline/run.py --list-sites
 import sys
 import pathlib
 import argparse
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+
+
+def _ts() -> str:
+    return datetime.now().strftime("%H:%M:%S")
+
 
 # Allow running as a script from project root without installing the package.
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
-from pipeline.sites import SITES
-from pipeline.fetch import fetch
-from pipeline.discover import discover_via_categories, discover_via_sitemap
-from pipeline.extract import (
+from pipeline.sites import SITES  # noqa: E402
+from pipeline.fetch import fetch  # noqa: E402
+from pipeline.discover import (  # noqa: E402
+    discover_via_categories,
+    discover_via_sitemap,
+)
+from pipeline.extract import (  # noqa: E402
     find_recipe_jsonld,
     map_to_recipe,
     find_recipe_nextdata,
@@ -48,8 +59,8 @@ from pipeline.extract import (
     find_recipe_html,
     map_html_to_recipe,
 )
-from pipeline import store
-from pipeline import youtube as yt_pipeline
+from pipeline import store  # noqa: E402
+from pipeline import youtube as yt_pipeline  # noqa: E402
 
 
 def _scrape_site(
@@ -112,23 +123,65 @@ def _scrape_site(
     # --- Scrape new URLs ---
     new_count = 0
     seen_ids = {r["id"] for r in cached.values()}
+    recipes_in_memory = list(cached.values())
+    write_lock = threading.Lock()
 
-    for url, cuisine in url_cuisine_pairs:
-        if url in cached:
-            continue
-        if limit is not None and new_count >= limit:
-            print(f"  Reached --limit {limit}", file=sys.stderr)
-            break
+    def _process_recipe(recipe, url):
+        nonlocal new_count
+        with write_lock:
+            if recipe["id"] in seen_ids:
+                print(f"  [{_ts()}][DUP id] {recipe['id']} — {url}", file=sys.stderr)
+                seen_ids.add(recipe["id"])
+                store.append_to_cache(site_key, recipe)
+                return
+            seen_ids.add(recipe["id"])
+            store.append_to_cache(site_key, recipe)
+            recipes_in_memory.append(recipe)
+            new_count += 1
+            print(f"  [{_ts()}][OK] {recipe['name']}", file=sys.stderr)
+            if write_staging:
+                store.write_staging(site_key, recipes_in_memory)
 
-        # YouTube videos go through the LLM extraction path
-        if site["discovery"] == "youtube":
-            recipe = yt_pipeline.scrape_video(
-                url, site["name"], cuisine, delay=site["delay"]
-            )
-            if not recipe:
-                print(f"  [NO RECIPE] {url}", file=sys.stderr)
+    if site["discovery"] == "youtube":
+        uncached = [(u, c) for u, c in url_cuisine_pairs if u not in cached]
+        if limit is not None:
+            uncached = uncached[:limit]
+        print(
+            f"  [{_ts()}] {len(uncached)} videos to fetch ({len(url_cuisine_pairs) - len(uncached)} already cached)",
+            file=sys.stderr,
+        )
+        workers = site.get("workers", 3)
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {
+                pool.submit(
+                    yt_pipeline.scrape_video,
+                    url,
+                    site["name"],
+                    cuisine,
+                    delay=site["delay"],
+                    extraction=site.get("extraction", "llm"),
+                ): url
+                for url, cuisine in uncached
+            }
+            for future in as_completed(futures):
+                url = futures[future]
+                try:
+                    recipe = future.result()
+                except Exception as exc:
+                    print(f"  [{_ts()}][ERROR] {url} — {exc}", file=sys.stderr)
+                    continue
+                if not recipe:
+                    print(f"  [{_ts()}][NO RECIPE] {url}", file=sys.stderr)
+                    continue
+                _process_recipe(recipe, url)
+    else:
+        for url, cuisine in url_cuisine_pairs:
+            if url in cached:
                 continue
-        else:
+            if limit is not None and new_count >= limit:
+                print(f"  [{_ts()}] Reached --limit {limit}", file=sys.stderr)
+                break
+
             html_text = fetch(url, delay=site["delay"])
             if not html_text:
                 continue
@@ -136,7 +189,7 @@ def _scrape_site(
             if site.get("extraction") == "nextdata":
                 data = find_recipe_nextdata(html_text)
                 if not data:
-                    print(f"  [NO NEXT_DATA] {url}", file=sys.stderr)
+                    print(f"  [{_ts()}][NO NEXT_DATA] {url}", file=sys.stderr)
                     continue
                 recipe = map_nextdata_to_recipe(data, site["name"], cuisine, url)
             elif site.get("extraction") == "html":
@@ -144,41 +197,34 @@ def _scrape_site(
                 name_hint = slug.replace("-", " ").title()
                 data = find_recipe_html(html_text, name_hint)
                 if not data:
-                    print(f"  [NO HTML RECIPE] {url}", file=sys.stderr)
+                    print(f"  [{_ts()}][NO HTML RECIPE] {url}", file=sys.stderr)
                     continue
                 recipe = map_html_to_recipe(data, site["name"], cuisine, url)
             else:
                 jsonld = find_recipe_jsonld(html_text)
                 if not jsonld:
-                    print(f"  [NO JSON-LD] {url}", file=sys.stderr)
+                    print(f"  [{_ts()}][NO JSON-LD] {url}", file=sys.stderr)
                     continue
                 recipe = map_to_recipe(jsonld, site["name"], cuisine, url)
 
-        if not recipe:
-            print(f"  [SKIP] {url} — missing name or ingredients", file=sys.stderr)
-            continue
+            if not recipe:
+                print(
+                    f"  [{_ts()}][SKIP] {url} — missing name or ingredients",
+                    file=sys.stderr,
+                )
+                continue
 
-        if recipe["id"] in seen_ids:
-            print(f"  [DUP id] {recipe['id']} — {url}", file=sys.stderr)
-            seen_ids.add(recipe["id"])
-            store.append_to_cache(site_key, recipe)
-            continue
-
-        seen_ids.add(recipe["id"])
-        store.append_to_cache(site_key, recipe)
-        new_count += 1
-        print(f"  [OK] {recipe['name']}", file=sys.stderr)
+            _process_recipe(recipe, url)
 
     print(
-        f"  Done — {new_count} new recipes cached for {site['name']}",
+        f"  [{_ts()}] Done — {new_count} new recipes cached for {site['name']}",
         file=sys.stderr,
     )
 
     if write_staging:
-        all_cached = list(store.load_cache(site_key).values())
-        staging_file = store.write_staging(site_key, all_cached)
+        staging_file = store.write_staging(site_key, recipes_in_memory)
         print(
-            f"  Staging written → {staging_file}  (review before adding to data.py)",
+            f"  [{_ts()}] Staging → {staging_file}",
             file=sys.stderr,
         )
 

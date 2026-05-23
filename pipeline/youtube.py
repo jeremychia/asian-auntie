@@ -14,11 +14,19 @@ Site config schema (discovery="youtube"):
 import os
 import re
 import json
+import sys
 import time
 import urllib.request
+from datetime import datetime
 from typing import Optional
 
-from pipeline.transform import (
+
+def _log(msg: str) -> None:
+    ts = datetime.now().strftime("%H:%M:%S")
+    print(f"  [{ts}] {msg}", file=sys.stderr, flush=True)
+
+
+from pipeline.transform import (  # noqa: E402
     clean_ingredient,
     format_cook_time,
     infer_difficulty,
@@ -119,6 +127,7 @@ def _fetch_vtt(url: str) -> str:
 def _get_video_data(video_url: str) -> dict:
     """Return metadata + description + transcript for a YouTube video."""
     yt = _yt_dlp()
+    _log(f"Fetching  {video_url}")
 
     with yt.YoutubeDL(
         {"skip_download": True, "quiet": True, "no_warnings": True}
@@ -264,6 +273,97 @@ def extract_recipe_llm(
     }
 
 
+# ── Description-based extraction (no LLM) ──────────────────────────────────────
+
+# Lines that mark the start of an ingredient block (use as start trigger).
+_INGR_HEADING_RE = re.compile(r"^for\s+(?:the\b|\w+ing\b)", re.IGNORECASE)
+# Lines that are section headers within a block — skip when collecting.
+_SECTION_HEADER_RE = re.compile(
+    r"^(?:for\s+(?:the\b|\w+ing\b)|(?:main\s+|other\s+)?ingredients|ingredient\s+list|to\s+(?:garnish|serve|taste)\b|serves?\s+\d)",
+    re.IGNORECASE,
+)
+# Block-level separators that terminate ingredient collection.
+_SEPARATOR_RE = re.compile(r"^(?:-{3,}|={3,})$")
+# Decorative lines made entirely of dashes, em-dashes, bullets etc. — skip.
+_DECORATIVE_LINE_RE = re.compile(r"^[\-—–━─●•*=\s]+$")
+_COOK_TIME_RE = re.compile(r"(\d+)\s*(?:to\s*\d+\s*)?(?:minutes?|mins?)", re.IGNORECASE)
+
+
+def extract_recipe_description(
+    video_data: dict,
+    source_name: str,
+    cuisine: str,
+    video_url: str,
+) -> Optional[dict]:
+    """Parse ingredients directly from the video description — no LLM needed.
+
+    Expects descriptions that contain an 'Ingredients' heading followed by
+    ingredient lines, as used by Spice N Pans.
+    """
+    description = video_data.get("description") or ""
+    title = video_data.get("title") or ""
+
+    lines = description.splitlines()
+
+    # "Serves X pax" is intentionally NOT used as a start trigger — it precedes
+    # ingredient sections and would swallow the real heading into the skip filter.
+    ingr_start = None
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.lower() in ("ingredients", "main ingredients", "ingredient list"):
+            ingr_start = i + 1
+            break
+        if _INGR_HEADING_RE.match(stripped):
+            ingr_start = i
+            break
+
+    if ingr_start is None:
+        return None
+
+    raw_ingredients = []
+    for line in lines[ingr_start:]:
+        stripped = line.strip()
+        if _SEPARATOR_RE.match(stripped):
+            break
+        if not stripped:
+            continue
+        if _SECTION_HEADER_RE.match(stripped):
+            continue
+        if _DECORATIVE_LINE_RE.match(stripped) and len(stripped) >= 3:
+            continue
+        if "http" in stripped or stripped.startswith("www."):
+            continue
+        raw_ingredients.append(stripped)
+
+    if not raw_ingredients:
+        return None
+
+    ingredients = [clean_ingredient(i) for i in raw_ingredients]
+    ingredients = [i for i in ingredients if i]
+    if not ingredients:
+        return None
+
+    preamble = "\n".join(lines[:ingr_start])
+    cook_time_minutes = None
+    m = _COOK_TIME_RE.search(preamble)
+    if m:
+        cook_time_minutes = int(m.group(1))
+
+    name = title.strip() or source_name
+    ascii_name = re.sub(r"[^\x00-\x7F]+", " ", name).strip()
+
+    return {
+        "id": slugify(ascii_name or name),
+        "name": name,
+        "source": source_name,
+        "source_url": video_url,
+        "cuisine": cuisine,
+        "cook_time": format_cook_time(cook_time_minutes),
+        "difficulty": infer_difficulty(cook_time_minutes),
+        "ingredients": ingredients,
+    }
+
+
 # ── Public entry point ─────────────────────────────────────────────────────────
 
 
@@ -272,8 +372,18 @@ def scrape_video(
     source_name: str,
     cuisine: str,
     delay: float = 1.0,
+    extraction: str = "llm",
 ) -> Optional[dict]:
     """Fetch a single YouTube video and return a recipe dict, or None."""
     video_data = _get_video_data(video_url)
     time.sleep(delay)
-    return extract_recipe_llm(video_data, source_name, cuisine, video_url)
+    _log(f"Extracting {video_url}")
+    if extraction == "description":
+        result = extract_recipe_description(video_data, source_name, cuisine, video_url)
+    else:
+        result = extract_recipe_llm(video_data, source_name, cuisine, video_url)
+    if result:
+        _log(f"Got recipe: {result['name'][:60]}")
+    else:
+        _log(f"No recipe:  {video_url}")
+    return result

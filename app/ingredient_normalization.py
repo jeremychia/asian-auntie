@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from app.perishables.forms import PANTRY_ITEMS
+from app.pantry_data import PANTRY_ITEMS
 
 
 @lru_cache(maxsize=512)

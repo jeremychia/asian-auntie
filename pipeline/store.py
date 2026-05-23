@@ -21,6 +21,7 @@ import json
 import datetime
 import pathlib
 from collections import defaultdict
+from functools import cache
 from typing import Optional
 
 _TRAILING_NOISE_RE = re.compile(
@@ -177,14 +178,59 @@ def _pre_normalize(text: str) -> str:
     return text.strip()
 
 
+@cache
+def _load_pantry_items() -> tuple[str, ...]:
+    """Load PANTRY_ITEMS directly from app/pantry_data.py via importlib.
+
+    Uses importlib to bypass app/__init__.py (which imports Flask, unavailable
+    in the pipeline env). Result is cached so the file is only read once.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_pipeline_pantry_data",
+        pathlib.Path(__file__).parent.parent / "app" / "pantry_data.py",
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return tuple(mod.PANTRY_ITEMS)
+
+
+def _normalize_ingredient(name: str, pantry_items: tuple[str, ...]) -> str | None:
+    """Subsequence-match name against pantry_items; return best match or None."""
+    if not name:
+        return None
+    q = name.lower().strip()
+
+    def score(candidate: str) -> float:
+        s = candidate.lower()
+        if q in s:
+            coverage = len(q) / len(s)
+            return (100 + coverage * 10) if coverage >= 0.55 else 0
+        if s in q:
+            return 100 + len(s) / len(q) * 10
+        shorter, longer = (q, s) if len(q) <= len(s) else (s, q)
+        if len(shorter) / len(longer) < 0.5:
+            return 0
+        j = 0
+        for ch in longer:
+            if j < len(shorter) and ch == shorter[j]:
+                j += 1
+        return (10 + len(shorter) / len(longer) * 10) if j == len(shorter) else 0
+
+    best_score, best_item = max(
+        ((score(item), item) for item in pantry_items), key=lambda x: x[0]
+    )
+    return best_item if best_score > 0 else None
+
+
 def _normalize_ingredients(raw_ingredients: list[str]) -> list[str]:
     """Return canonical normalized form of each ingredient using the pantry map."""
-    from app.ingredient_normalization import normalize_ingredient
-
+    pantry_items = _load_pantry_items()
     result = []
     for i in raw_ingredients:
         pre = _pre_normalize(i)
-        normalized = normalize_ingredient(pre)
+        normalized = _normalize_ingredient(pre, pantry_items)
         result.append(normalized or pre.lower())
     return result
 
