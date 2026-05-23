@@ -100,7 +100,7 @@ def create_app():
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = (
-            "geolocation=(), microphone=(), camera=()"
+            "geolocation=(), microphone=(), camera=(self)"
         )
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "

@@ -190,7 +190,6 @@
   </form>
 </div>
 
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 @keyframes scan-sweep {
   0%   { top: 15%; }
@@ -216,6 +215,39 @@ function showLanding() {
   document.getElementById('photo-panel').hidden = true;
 }
 
+function _initBarcodeScanner() {
+  console.log('[camera] _initBarcodeScanner called');
+  console.log('[camera] isSecureContext:', window.isSecureContext);
+  console.log('[camera] navigator.mediaDevices:', !!navigator.mediaDevices);
+  Html5Qrcode.getCameras().then(function(cameras) {
+    console.log('[camera] getCameras result:', cameras);
+    if (!cameras || cameras.length === 0) {
+      console.warn('[camera] no cameras found');
+      document.getElementById('barcode-searching').textContent = 'Camera unavailable — try photos instead.';
+      return;
+    }
+    const rear = cameras.find(function(c) { return /back|rear|environment/i.test(c.label); });
+    const cam = rear || cameras[0];
+    console.log('[camera] selected camera:', cam);
+    html5Qrcode = new Html5Qrcode("barcode-reader");
+    html5Qrcode.start(
+      cam.id,
+      { fps: 15, qrbox: { width: 300, height: 200 } },
+      onBarcodeDetected,
+      null
+    ).then(function() {
+      console.log('[camera] scanner started successfully');
+      document.getElementById('barcode-scan-line').style.display = 'block';
+    }).catch(function(err) {
+      console.error('[camera] start() failed:', err);
+      document.getElementById('barcode-searching').textContent = 'Camera unavailable — try photos instead.';
+    });
+  }).catch(function(err) {
+    console.error('[camera] getCameras() failed:', err);
+    document.getElementById('barcode-searching').textContent = 'Camera unavailable — try photos instead.';
+  });
+}
+
 function startBarcode() {
   document.getElementById('method-landing').hidden = true;
   document.getElementById('barcode-panel').hidden = false;
@@ -223,17 +255,19 @@ function startBarcode() {
   document.getElementById('barcode-searching').hidden = false;
   document.getElementById('barcode-looking-up').hidden = true;
 
-  html5Qrcode = new Html5Qrcode("barcode-reader");
-  html5Qrcode.start(
-    { facingMode: "environment" },
-    { fps: 15, qrbox: { width: 300, height: 200 } },
-    onBarcodeDetected,
-    null
-  ).then(function() {
-    document.getElementById('barcode-scan-line').style.display = 'block';
-  }).catch(function() {
-    document.getElementById('barcode-searching').textContent = 'Camera unavailable — try photos instead.';
-  });
+  if (typeof Html5Qrcode !== 'undefined') {
+    _initBarcodeScanner();
+    return;
+  }
+  console.log('[camera] loading html5-qrcode from CDN');
+  const s = document.createElement('script');
+  s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+  s.onload = function() { console.log('[camera] html5-qrcode loaded'); _initBarcodeScanner(); };
+  s.onerror = function(err) {
+    console.error('[camera] failed to load html5-qrcode:', err);
+    document.getElementById('barcode-searching').textContent = 'Failed to load scanner — try "Key in barcode" or photos.';
+  };
+  document.head.appendChild(s);
 }
 
 function stopBarcode() {
@@ -319,10 +353,11 @@ function onBarcodeDetected(decodedText) {
 // ── Camera capture ────────────────────────────────────────────────
 function openCamera() {
   currentPhotoIdx = photoCount;
+
   document.getElementById('photo-panel').hidden = true;
   document.getElementById('camera-panel').hidden = false;
 
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
     .then(function(stream) {
       cameraStream = stream;
       document.getElementById('camera-video').srcObject = stream;
@@ -1218,8 +1253,9 @@ function openManualCamera() {
   manualPhotoIdx = manualPhotoCount;
   _createManualEntry(manualPhotoIdx);
   manualPhotoCount++;
+
   document.getElementById('manual-camera-panel').hidden = false;
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
     .then(function(stream) {
       manualCameraStream = stream;
       document.getElementById('manual-camera-video').srcObject = stream;
@@ -1325,9 +1361,10 @@ function openConfirmCamera() {
   confirmPhotoIdx = confirmPhotoCount;
   _createConfirmEntry(confirmPhotoIdx);
   confirmPhotoCount++;
+
   document.getElementById('confirm-camera-panel').hidden = false;
 
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
     .then(function(stream) {
       confirmCameraStream = stream;
       document.getElementById('confirm-camera-video').srcObject = stream;

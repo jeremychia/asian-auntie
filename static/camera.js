@@ -11,7 +11,7 @@ function createCameraCapture({ overlayId, videoId, canvasId, fallbackInputId }) 
     overlay.classList.add('camera-overlay--active');
 
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
       .then(function (s) {
         stream = s;
         document.getElementById(videoId).srcObject = s;
