@@ -10,6 +10,25 @@ from app.logging_config import configure_logging, get_logger
 logger = get_logger(__name__)
 
 
+def _repair_schema_if_needed(app):
+    from sqlalchemy import inspect, text
+
+    with app.app_context():
+        try:
+            inspector = inspect(db.engine)
+            existing = set(inspector.get_table_names())
+            if "users" not in existing:
+                if "alembic_version" in existing:
+                    with db.engine.connect() as conn:
+                        conn.execute(text("DELETE FROM alembic_version"))
+                        conn.commit()
+                from flask_migrate import upgrade
+
+                upgrade()
+        except Exception:
+            pass
+
+
 def create_app():
     configure_logging()
 
@@ -244,6 +263,12 @@ def create_app():
     @app.context_processor
     def inject_css_version():
         return {"css_version": int(os.path.getmtime(_css_path))}
+
+    # Detect and repair the case where alembic_version is stamped but tables are missing.
+    # This can happen if a fresh DB file is created and the version is set without running
+    # the actual migrations. Resets the stamp and re-runs upgrade rather than deleting data.
+    if not app.config.get("TESTING"):
+        _repair_schema_if_needed(app)
 
     # Start notification scheduler (skip in testing / flask db commands)
     if not app.config.get("TESTING") and os.environ.get("FLASK_RUN_MAIN") != "false":
