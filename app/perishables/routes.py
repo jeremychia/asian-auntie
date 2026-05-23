@@ -1238,6 +1238,20 @@ def audit():
             stats=stats,
         )
 
+    if request.args.get("mode") == "batch":
+        raw_items = (
+            Item.query.filter_by(user_id=current_user.id)
+            .filter(Item.removed_at.is_(None))
+            .all()
+        )
+        sorted_zones = _build_audit_zones(raw_items)
+        return render_template(
+            "perishables/audit.html",
+            view="batch",
+            zones=sorted_zones,
+            total_count=len(raw_items),
+        )
+
     if zone:
         raw_items = (
             Item.query.filter_by(user_id=current_user.id)
@@ -1347,3 +1361,37 @@ def audit_commit():
     if idx >= len(queue):
         return redirect(url_for("perishables.audit", zone=zone, done=1))
     return redirect(url_for("perishables.audit", zone=zone))
+
+
+@perishables_bp.route("/audit/batch-commit", methods=["POST"])
+@login_required
+def audit_batch_commit():
+    now = datetime.now(timezone.utc)
+    stats = {"checkin": 0, "used": 0, "discard": 0}
+    for key, value in request.form.items():
+        if not key.startswith("action_"):
+            continue
+        item_id_str = key[len("action_") :]
+        if not item_id_str.isdigit():
+            continue
+        action = value.strip()
+        if action not in {"checkin", "used", "discard"}:
+            continue
+        item = Item.query.filter_by(
+            id=int(item_id_str), user_id=current_user.id
+        ).first()
+        if item is None or item.removed_at is not None:
+            continue
+        if action == "checkin":
+            item.last_checked_at = now
+            stats["checkin"] += 1
+        elif action == "used":
+            item.removed_at = now
+            item.removal_reason = "used"
+            stats["used"] += 1
+        elif action == "discard":
+            item.removed_at = now
+            item.removal_reason = "discarded"
+            stats["discard"] += 1
+    db.session.commit()
+    return render_template("perishables/audit.html", view="batch_summary", stats=stats)
