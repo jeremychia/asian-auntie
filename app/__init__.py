@@ -267,7 +267,7 @@ def create_app():
     # Detect and repair the case where alembic_version is stamped but tables are missing.
     # This can happen if a fresh DB file is created and the version is set without running
     # the actual migrations. Resets the stamp and re-runs upgrade rather than deleting data.
-    if not app.config.get("TESTING"):
+    if not app.config.get("TESTING") and not os.environ.get("TESTING"):
         _repair_schema_if_needed(app)
 
     # Start notification scheduler (skip in testing / flask db commands)

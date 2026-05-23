@@ -47,18 +47,11 @@
     </div>
     {% endif %}
 
-    {% if recipe.get('matched') %}
-    {# Split ingredients into have / need #}
-    {% set have_list = [] %}
-    {% set need_list = [] %}
-    {% for ing in recipe.ingredients %}
-      {% if ing in recipe.matched %}{% set _ = have_list.append(ing) %}{% else %}{% set _ = need_list.append(ing) %}{% endif %}
-    {% endfor %}
-
-    {% if have_list %}
-    <p class="rd-ing-heading">In your pantry · {{ have_list | length }}</p>
+    {% if recipe.get('matched') is not none %}
+    {% if recipe.matched %}
+    <p class="rd-ing-heading">In your pantry · {{ recipe.matched | length }}</p>
     <ul class="ing-list">
-      {% for ing in have_list %}
+      {% for ing in recipe.matched %}
       <li class="ing-row ing-row--have">
         <span class="ing-row__dot" aria-hidden="true">✓</span>
         <span class="ing-row__name">{{ ing }}</span>
@@ -67,10 +60,10 @@
     </ul>
     {% endif %}
 
-    {% if need_list %}
-    <p class="rd-ing-heading">Still need · {{ need_list | length }}</p>
+    {% if recipe.missing %}
+    <p class="rd-ing-heading">Still need · {{ recipe.missing | length }}</p>
     <ul class="ing-list">
-      {% for ing in need_list %}
+      {% for ing in recipe.missing %}
       <li class="ing-row ing-row--need">
         <span class="ing-row__dot" aria-hidden="true">○</span>
         <span class="ing-row__name">{{ ing }}</span>

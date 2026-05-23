@@ -17124,21 +17124,6 @@ RECIPES = [
         ],
     },
     {
-        "id": "crispy-enoki-mushrooms",
-        "name": "Crispy enoki mushrooms",
-        "source": "Spice N Pans",
-        "source_url": "https://www.youtube.com/watch?v=0EmeJFJCTV0",
-        "cuisine": "Singaporean",
-        "cook_time": "unknown",
-        "difficulty": "Medium",
-        "ingredients": [
-            "batter",
-        ],
-        "normalized_ingredients": [
-            "Enoki mushrooms",
-        ],
-    },
-    {
         "id": "sichuan-pickled-mustard-pork-soup",
         "name": "Sichuan pickled mustard pork soup",
         "source": "Spice N Pans",

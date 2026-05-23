@@ -1,10 +1,16 @@
 import os
 import pytest
 
+os.environ["TESTING"] = "1"
 os.environ.setdefault("FLASK_ENV", "development")
 os.environ.setdefault("FLASK_SECRET_KEY", "test-secret-key-for-testing-only!!")
 os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-key-32-bytes-min!!")
 os.environ.setdefault("WTF_CSRF_ENABLED", "False")
+# Must be set before create_app() so the SQLAlchemy engine is built with the
+# in-memory URI. Updating app.config after the engine is created has no effect.
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
+from sqlalchemy.pool import StaticPool
 
 from app import create_app
 from app.extensions import db as _db, limiter
@@ -15,8 +21,14 @@ def app():
     _app = create_app()
     _app.config.update(
         TESTING=True,
-        SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
         WTF_CSRF_ENABLED=False,
+        # StaticPool makes all connections (test session + Flask requests) share
+        # the single in-memory database so test-committed changes are visible
+        # inside request handlers without a separate connection.
+        SQLALCHEMY_ENGINE_OPTIONS={
+            "connect_args": {"check_same_thread": False},
+            "poolclass": StaticPool,
+        },
     )
     limiter.enabled = False
     with _app.app_context():
@@ -32,8 +44,15 @@ def client(app):
 
 @pytest.fixture
 def db(app):
+    # Push a fresh inner app context so each test gets its own Flask g.
+    # Without this, Flask's g (which stores g._login_user) is shared across
+    # all requests within the outer session-scope app context, causing
+    # stale login state to bleed between tests.
+    ctx = app.app_context()
+    ctx.push()
     yield _db
     _db.session.rollback()
+    ctx.pop()
 
 
 @pytest.fixture

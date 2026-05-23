@@ -184,3 +184,102 @@ def test_get_pantry_items_endpoint(auth_client):
     data = r.get_json()
     assert "items" in data
     assert isinstance(data["items"], list)
+
+
+# ── score_recipe with normalized_ingredients ──────────────────────────────────
+
+_HAKKA_RECIPE = {
+    "id": "hakka-yellow-wine-chicken-test",
+    "name": "Hakka yellow wine chicken",
+    "source": "Spice N Pans",
+    "source_url": "https://www.youtube.com/watch?v=test",
+    "cuisine": "Chinese",
+    "cook_time": "unknown",
+    "difficulty": "Medium",
+    "ingredients": [
+        "old ginger, grated",
+        "sesame oil",
+        "chicken, cut into bite-sized pieces",
+        "enough water to cover the chicken",
+        "hakka glutinous rice wine",
+        "salt",
+    ],
+    "normalized_ingredients": [
+        "Ginger",
+        "Sesame oil",
+        "Chicken",
+        "Rice wine",
+    ],
+}
+
+
+@pytest.fixture
+def patched_recipes(monkeypatch):
+    """Insert a controlled test recipe into the search index."""
+    import app.recipes.search as search_mod
+
+    idx = len(search_mod._RECIPE_INGREDIENTS)
+    search_mod._RECIPE_ID_TO_IDX[_HAKKA_RECIPE["id"]] = idx
+
+    from app.recipes.search import _words
+
+    ing_data = []
+    for norm in _HAKKA_RECIPE["normalized_ingredients"]:
+        norm_lower = norm.lower().strip()
+        words = _words(norm_lower)
+        ing_data.append((norm, norm_lower, words))
+        search_mod._INGREDIENT_INDEX[norm_lower].add(idx)
+        for word in words:
+            search_mod._INGREDIENT_INDEX[word].add(idx)
+    search_mod._RECIPE_INGREDIENTS.append(ing_data)
+
+    yield idx
+
+    search_mod._RECIPE_INGREDIENTS.pop()
+    del search_mod._RECIPE_ID_TO_IDX[_HAKKA_RECIPE["id"]]
+
+
+def test_score_recipe_normalized_partial_match(patched_recipes):
+    """When user has 3 of 4 normalized ingredients, match_pct is 75% and
+    matched/missing use normalized names, not raw ingredient strings."""
+    idx = patched_recipes
+    result = score_recipe(_HAKKA_RECIPE, idx, ["Ginger", "Sesame oil", "Chicken"])
+
+    assert result is not None
+    assert result["match_pct"] == 75
+    assert result["matched_count"] == 3
+    assert result["total_count"] == 4
+    assert set(result["matched"]) == {"Ginger", "Sesame oil", "Chicken"}
+    assert result["missing"] == ["Rice wine"]
+
+
+def test_score_recipe_normalized_full_match(patched_recipes):
+    """When user has all normalized ingredients, match_pct is 100%."""
+    idx = patched_recipes
+    result = score_recipe(
+        _HAKKA_RECIPE, idx, ["Ginger", "Sesame oil", "Chicken", "Rice wine"]
+    )
+
+    assert result is not None
+    assert result["match_pct"] == 100
+    assert result["missing"] == []
+
+
+def test_score_recipe_normalized_no_match(patched_recipes):
+    """When user has none of the ingredients, score_recipe returns None."""
+    idx = patched_recipes
+    result = score_recipe(_HAKKA_RECIPE, idx, ["Coconut milk", "Fish sauce"])
+
+    assert result is None
+
+
+def test_score_recipe_matched_are_normalized_names_not_raw(patched_recipes):
+    """matched list must contain normalized names, never raw ingredient strings."""
+    idx = patched_recipes
+    result = score_recipe(_HAKKA_RECIPE, idx, ["Sesame oil"])
+
+    assert result is not None
+    assert "Sesame oil" in result["matched"]
+    assert "sesame oil" not in result["matched"]
+    assert not any("old ginger" in m for m in result["matched"])
+    assert not any("cut into" in m for m in result["matched"])

@@ -242,8 +242,12 @@ def test_csp_allows_off_image_hosts(auth_client):
 
 def test_add_item_uses_user_custom_locations(auth_client, db, user):
     import json
+    from app.models import User as _User
 
-    user.custom_locations = json.dumps(["Spice Rack", "Basement Freezer"])
+    # auth_client's login request causes session.remove(), detaching the user
+    # fixture object. Re-query to get a session-attached instance before modifying.
+    live = db.session.get(_User, user.id)
+    live.custom_locations = json.dumps(["Spice Rack", "Basement Freezer"])
     db.session.commit()
 
     r = auth_client.get("/items/add?skip=1")
@@ -251,14 +255,16 @@ def test_add_item_uses_user_custom_locations(auth_client, db, user):
     assert b"Spice Rack" in r.data
     assert b"Basement Freezer" in r.data
 
-    user.custom_locations = None
+    live.custom_locations = None
     db.session.commit()
 
 
 def test_add_item_confirm_uses_user_custom_locations(auth_client, db, user):
     import json
+    from app.models import User as _User
 
-    user.custom_locations = json.dumps(["Wine Cellar", "Counter"])
+    live = db.session.get(_User, user.id)
+    live.custom_locations = json.dumps(["Wine Cellar", "Counter"])
     db.session.commit()
 
     r = auth_client.post(
@@ -274,7 +280,7 @@ def test_add_item_confirm_uses_user_custom_locations(auth_client, db, user):
     assert r.status_code == 200
     assert b"Wine Cellar" in r.data
 
-    user.custom_locations = None
+    live.custom_locations = None
     db.session.commit()
 
 
