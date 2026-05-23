@@ -104,11 +104,11 @@ def create_app():
         )
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
             "img-src 'self' https://storage.googleapis.com data:; "
             "connect-src 'self'; "
-            "font-src 'self'; "
+            "font-src 'self' https://fonts.gstatic.com; "
             "frame-ancestors 'none';"
         )
         if not app.debug:
@@ -140,12 +140,44 @@ def create_app():
             prefix = f"https://storage.googleapis.com/{bucket_name}/"
             if path.startswith(prefix):
                 path = path[len(prefix) :]
-            data = download_photo(
-                path,
-                bucket_name,
-                app.config.get("GCS_CREDENTIALS_JSON"),
-            )
-            return Response(data, content_type="image/jpeg")
+            if not path.startswith("https://"):
+                try:
+                    data = download_photo(
+                        path,
+                        bucket_name,
+                        app.config.get("GCS_CREDENTIALS_JSON"),
+                    )
+                    return Response(data, content_type="image/jpeg")
+                except Exception:
+                    pass  # fall through to local file serving
+
+        # External URLs stored as fallback when barcode-image download failed at
+        # add-time (e.g. images.openfoodfacts.org).  Proxy them so the browser
+        # never sees the origin URL, keeping auth intact.
+        _ALLOWED_PHOTO_HOSTS = (
+            "images.openfoodfacts.org",
+            "images.openfoodfacts.net",
+            "static.openfoodfacts.org",
+        )
+        if photo.photo_path.startswith("https://"):
+            from urllib.parse import urlparse as _urlparse
+            import urllib.request as _urlrequest
+            from flask import Response
+
+            parsed = _urlparse(photo.photo_path)
+            if parsed.scheme != "https" or parsed.netloc not in _ALLOWED_PHOTO_HOSTS:
+                abort(404)
+            try:
+                req = _urlrequest.Request(
+                    photo.photo_path,
+                    headers={"User-Agent": "AsianAuntie/1.0 (jeremyjchia@gmail.com)"},
+                )
+                with _urlrequest.urlopen(req, timeout=10) as resp:
+                    data = resp.read()
+                    ct = resp.headers.get("Content-Type", "image/jpeg")
+                return Response(data, content_type=ct)
+            except Exception:
+                abort(404)
 
         return send_from_directory(app.config["UPLOAD_FOLDER"], photo.photo_path)
 

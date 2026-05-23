@@ -2,388 +2,756 @@
 {% block title %}Audit — Asian Auntie{% endblock %}
 {% block content %}
 
-{# ── Silhouette symbols (referenced by zone cards + sweep card) ─────────── #}
+{# ── SVG icon symbols ────────────────────────────────────────────────────────── #}
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
   <defs>
-    <symbol id="sil-can"     viewBox="0 0 24 36"><rect x="7" y="5" width="10" height="26" rx="4"/></symbol>
-    <symbol id="sil-bottle"  viewBox="0 0 24 36"><rect x="9" y="6" width="6" height="24" rx="3"/><rect x="9.5" y="2" width="5" height="6" rx="2"/></symbol>
-    <symbol id="sil-jar"     viewBox="0 0 24 36"><rect x="6" y="14" width="12" height="18" rx="3"/><rect x="7" y="7" width="10" height="9" rx="2"/></symbol>
-    <symbol id="sil-produce" viewBox="0 0 24 36"><path d="M12,33 C9,28 5,21 7,13 Q10,5 12,9 Q14,5 17,13 C19,21 15,28 12,33Z"/></symbol>
-    <symbol id="sil-bag"     viewBox="0 0 24 36"><path d="M9,33 C7,31 5,23 6,16 L8,8 C8.5,5 15.5,5 16,8 L18,16 C19,23 17,31 15,33 Z"/></symbol>
-    <symbol id="sil-block"   viewBox="0 0 24 36"><rect x="5" y="13" width="14" height="18" rx="2"/></symbol>
-    <symbol id="sil-carton"  viewBox="0 0 24 36"><rect x="7" y="9" width="10" height="23" rx="1"/><polygon points="7,9 12,5 17,9"/></symbol>
-    <symbol id="sil-box"     viewBox="0 0 24 36"><rect x="5" y="7" width="14" height="24" rx="2"/></symbol>
+    <symbol id="dq-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </symbol>
+    <symbol id="dq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+    </symbol>
+    <symbol id="dq-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </symbol>
+    <symbol id="dq-still" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </symbol>
+    <symbol id="dq-used" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2h12l-1 6a5 5 0 0 1-5 5h0a5 5 0 0 1-5-5z"/>
+      <path d="M10 13v6"/><path d="M8 22h8"/>
+    </symbol>
+    <symbol id="dq-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+    </symbol>
+    <symbol id="dq-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/>
+      <polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/>
+      <line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>
+    </symbol>
+    <symbol id="dq-ghost" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 22V11a7 7 0 0 1 14 0v11l-2.5-2-2.5 2-2.5-2-2.5 2z"/>
+      <circle cx="9.5" cy="11" r="0.8" fill="currentColor"/>
+      <circle cx="14.5" cy="11" r="0.8" fill="currentColor"/>
+    </symbol>
+    <symbol id="dq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </symbol>
+    <symbol id="dq-sparkle" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+    </symbol>
   </defs>
 </svg>
 
-{% macro silhouette(item_type, w=16, h=24) %}
-{% if item_type in ('sauce', 'condiment', 'seafood') %}<svg width="{{ w }}" height="{{ h }}" class="sil"><use href="#sil-can"/></svg>
-{% elif item_type == 'oil' %}<svg width="{{ w }}" height="{{ h }}" class="sil"><use href="#sil-bottle"/></svg>
-{% elif item_type == 'spice' %}<svg width="{{ w }}" height="{{ h }}" class="sil"><use href="#sil-jar"/></svg>
-{% elif item_type == 'produce' %}<svg width="{{ w }}" height="{{ h }}" class="sil"><use href="#sil-produce"/></svg>
-{% elif item_type == 'dried' %}<svg width="{{ w }}" height="{{ h }}" class="sil"><use href="#sil-bag"/></svg>
-{% elif item_type in ('tofu', 'dairy') %}<svg width="{{ w }}" height="{{ h }}" class="sil"><use href="#sil-block"/></svg>
-{% else %}<svg width="{{ w }}" height="{{ h }}" class="sil"><use href="#sil-box"/></svg>{% endif %}
-{% endmacro %}
+<style>
+.dqa {
+  --brand: #700143; --brand-dark: #56022f; --brand-muted: #8d4467;
+  --brand-faint: rgba(112,1,67,0.18); --brand-tint: rgba(112,1,67,0.06);
+  --accent: #CFD78C;
+  --red: #dc2626; --red-bg: #fee2e2; --amber: #d97706; --amber-bg: #fef3c7;
+  --t-xs: 0.75rem; --t-sm: 0.875rem; --t-md: 1rem; --t-lg: 1.25rem;
+  --t-xl: 1.5rem; --t-2xl: 1.875rem; --t-3xl: 2.5rem;
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px;
+  background: #fff; min-height: calc(100vh - 56px);
+  color: var(--brand);
+}
+.dqa-wrap { max-width: 560px; margin: 0 auto; padding: var(--s-5) var(--s-4) var(--s-6); }
 
-<div class="content audit-surface">
+/* ─── Shared ─────────────────────────────────────────────── */
+.dqa-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--t-xs); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--brand-muted);
+  background: var(--brand-tint); padding: 5px 10px; border-radius: 9999px;
+  margin: 0 0 var(--s-4); line-height: 1;
+}
+.dqa-eyebrow svg { width: 11px; height: 11px; }
+.dqa-title {
+  font-size: var(--t-2xl); font-weight: 700; letter-spacing: -0.025em;
+  color: var(--brand); line-height: 1.15; margin: 0 0 var(--s-3);
+}
+.dqa-sub {
+  font-size: var(--t-md); color: var(--brand-muted); line-height: 1.5;
+  margin: 0 0 var(--s-5); max-width: 460px;
+}
+.dqa-cta {
+  width: 100%; height: 56px;
+  font-family: inherit; font-weight: 700; font-size: var(--t-md);
+  background: var(--brand); color: #fff; border: none;
+  border-radius: 14px; cursor: pointer; padding: 0 var(--s-4);
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  transition: background 0.15s, transform 0.1s; text-decoration: none;
+}
+.dqa-cta:hover { background: var(--brand-dark); color: #fff; }
+.dqa-cta:active { transform: translateY(1px); }
+.dqa-cta svg { width: 18px; height: 18px; stroke-width: 2.5; }
+.dqa-cta-ghost {
+  width: 100%; height: 48px;
+  font-family: inherit; font-weight: 600; font-size: var(--t-sm);
+  background: none; color: var(--brand-muted); border: none;
+  cursor: pointer; transition: color 0.15s; display: block; text-align: center;
+  text-decoration: none; line-height: 48px;
+}
+.dqa-cta-ghost:hover { color: var(--brand); }
 
-  {# ── Nudge card ────────────────────────────────────────────────────────── #}
-  {% set known_zones = ['fridge', 'freezer', 'pantry', 'cupboard', 'counter'] %}
-  {% if unsorted_count > 0 or ghost_count > 0 %}
-  <div class="audit-nudge">
-    <p class="audit-nudge__text">
-      {% if unsorted_count > 0 %}
-        {{ unsorted_count }} item{{ 's' if unsorted_count != 1 }} ha{{ 've' if unsorted_count != 1 else 's' }} no home.
-        Audit takes ~{{ [((unsorted_count / 12) | round(0, 'ceil') | int), 1] | max }} min.
-      {% else %}
-        {{ ghost_count }} item{{ 's' if ghost_count != 1 }} need{{ 's' if ghost_count == 1 else '' }} a check-in.
-      {% endif %}
+/* ─── Intro / zone picker ───────────────────────────────────── */
+.dqa-zonelist { display: flex; flex-direction: column; gap: var(--s-2); margin-bottom: var(--s-5); }
+.dqa-zone {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-4); border-radius: 14px;
+  background: #fff; border: 1px solid var(--brand-faint);
+  cursor: pointer; font-family: inherit; text-align: left; width: 100%;
+  text-decoration: none; color: inherit;
+  transition: border-color 0.15s, background 0.15s, transform 0.08s;
+}
+.dqa-zone:hover { border-color: var(--brand); background: var(--brand-tint); }
+.dqa-zone:active { transform: translateY(1px); }
+.dqa-zone__count {
+  flex-shrink: 0; width: 48px; height: 48px;
+  border-radius: 12px; background: var(--brand-tint);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--t-lg); font-weight: 700; color: var(--brand);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.dqa-zone--has-red .dqa-zone__count { background: var(--red-bg); color: var(--red); }
+.dqa-zone--has-amber .dqa-zone__count { background: var(--amber-bg); color: var(--amber); }
+.dqa-zone__body { flex: 1; min-width: 0; }
+.dqa-zone__name {
+  font-size: var(--t-md); font-weight: 700; color: var(--brand);
+  line-height: 1.2; margin: 0 0 2px; letter-spacing: -0.01em;
+}
+.dqa-zone__meta {
+  font-size: var(--t-xs); color: var(--brand-muted); line-height: 1.4; margin: 0;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.dqa-zone__dot { width: 7px; height: 7px; border-radius: 99px; display: inline-block; flex-shrink: 0; }
+.dqa-zone__dot--red { background: var(--red); }
+.dqa-zone__dot--amber { background: var(--amber); }
+.dqa-zone__arrow { flex-shrink: 0; color: var(--brand-muted); }
+.dqa-zone__arrow svg { width: 18px; height: 18px; stroke-width: 2; }
+.dqa-zone:hover .dqa-zone__arrow { color: var(--brand); }
+
+/* ─── Session header ────────────────────────────────────────── */
+.dqa-header {
+  display: flex; align-items: center; gap: var(--s-3);
+  margin-bottom: var(--s-5);
+}
+.dqa-close {
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: none; border: 1px solid var(--brand-faint);
+  border-radius: 9999px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--brand-muted); text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.dqa-close:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-tint); }
+.dqa-close svg { width: 16px; height: 16px; stroke-width: 2; }
+.dqa-progress-wrap { flex: 1; min-width: 0; }
+.dqa-progress-meta {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: var(--t-xs); font-weight: 600;
+  color: var(--brand-muted); margin-bottom: 6px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.dqa-progress-meta__zone { color: var(--brand); }
+.dqa-progress-meta__count { color: var(--brand); font-variant-numeric: tabular-nums; }
+.dqa-progress {
+  height: 6px; background: var(--brand-tint);
+  border-radius: 9999px; overflow: hidden;
+}
+.dqa-progress__fill {
+  height: 100%; background: var(--brand);
+  border-radius: 9999px;
+  transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ─── Item card ─────────────────────────────────────────────── */
+.dqa-card {
+  background: #fff; border: 1px solid var(--brand-faint);
+  border-radius: 18px; padding: var(--s-5); margin-bottom: var(--s-4);
+}
+.dqa-card--red   { background: linear-gradient(180deg, var(--red-bg)   0%, #fff 80%); border-color: rgba(220,38,38,0.25); }
+.dqa-card--amber { background: linear-gradient(180deg, var(--amber-bg) 0%, #fff 80%); border-color: rgba(217,119,6,0.25); }
+.dqa-card__pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--t-xs); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; line-height: 1;
+  padding: 5px 10px; border-radius: 9999px;
+  margin: 0 0 var(--s-3);
+}
+.dqa-card__pill--red   { background: var(--red);   color: #fff; }
+.dqa-card__pill--amber { background: var(--amber); color: #fff; }
+.dqa-card__pill--info  { background: var(--brand-tint); color: var(--brand-muted); }
+.dqa-card__pill svg { width: 11px; height: 11px; stroke-width: 2.5; }
+.dqa-card__name {
+  font-size: var(--t-2xl); font-weight: 700; color: var(--brand);
+  letter-spacing: -0.025em; line-height: 1.1; margin: 0 0 var(--s-2);
+}
+.dqa-card__meta {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: var(--t-sm); color: var(--brand-muted);
+  line-height: 1.4; margin: 0 0 var(--s-3);
+}
+.dqa-card__meta-sep { opacity: 0.4; }
+.dqa-stale {
+  font-size: var(--t-md); font-weight: 600; color: var(--brand);
+  line-height: 1.4; margin: 0 0 var(--s-4);
+}
+.dqa-stale b { font-variant-numeric: tabular-nums; font-weight: 700; }
+.dqa-card--red .dqa-stale b { color: var(--red); }
+.dqa-card--amber .dqa-stale b { color: var(--amber); }
+
+/* ─── Verb buttons ──────────────────────────────────────────── */
+.dqa-verbs {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-2);
+  margin-top: var(--s-4);
+}
+.dqa-verb {
+  height: 80px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: var(--s-2) var(--s-3); border-radius: 14px;
+  background: #fff; cursor: pointer; font-family: inherit;
+  font-size: var(--t-sm); font-weight: 700; color: var(--brand);
+  border: 1.5px solid var(--brand-faint); line-height: 1.1;
+  transition: border-color 0.15s, background 0.15s, transform 0.08s, color 0.15s;
+  text-align: center;
+}
+.dqa-verb:hover { border-color: var(--brand); background: var(--brand-tint); }
+.dqa-verb:active { transform: translateY(1px); }
+.dqa-verb svg { width: 22px; height: 22px; stroke-width: 2; }
+.dqa-verb__hint { font-size: 0.62rem; font-weight: 500; color: var(--brand-muted); margin-top: 2px; letter-spacing: 0.02em; }
+.dqa-verb--still:hover { border-color: #166534; background: #dcfce7; color: #166534; }
+.dqa-verb--used:hover { border-color: var(--brand); background: var(--brand); color: #fff; }
+.dqa-verb--used:hover .dqa-verb__hint { color: rgba(255,255,255,0.85); }
+.dqa-verb--tossed { color: var(--red); border-color: rgba(220,38,38,0.3); }
+.dqa-verb--tossed:hover { background: var(--red-bg); border-color: var(--red); }
+.dqa-verb--tossed .dqa-verb__hint { color: rgba(220,38,38,0.7); }
+
+/* ─── Frequency disclosure ──────────────────────────────────── */
+.dqa-freq-toggle {
+  background: none; border: none; cursor: pointer; padding: var(--s-3) 0;
+  font-family: inherit; font-size: var(--t-xs); font-weight: 600;
+  color: var(--brand-muted); display: inline-flex; align-items: center; gap: 4px;
+  margin-top: var(--s-2); transition: color 0.15s;
+}
+.dqa-freq-toggle:hover { color: var(--brand); }
+.dqa-freq-toggle svg { width: 12px; height: 12px; stroke-width: 2.5; transition: transform 0.2s; }
+.dqa-freq-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.dqa-freq {
+  margin-top: var(--s-2); padding-top: var(--s-3);
+  border-top: 1px solid var(--brand-faint);
+}
+.dqa-freq__label {
+  display: block; font-size: var(--t-xs); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--brand-muted); margin-bottom: var(--s-2);
+}
+.dqa-freq__opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-2); }
+.dqa-freq__opt {
+  padding: var(--s-3) var(--s-2); border-radius: 10px;
+  background: #fff; cursor: pointer; font-family: inherit;
+  border: 1px solid var(--brand-faint);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.dqa-freq__opt:hover { border-color: var(--brand); }
+.dqa-freq__opt--active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.dqa-freq__opt-label { font-size: var(--t-sm); font-weight: 700; line-height: 1; color: inherit; }
+.dqa-freq__opt-sub   { font-size: 0.65rem; font-weight: 500; opacity: 0.7; }
+.dqa-freq__opt--active .dqa-freq__opt-sub { opacity: 0.9; }
+
+/* ─── Skip ──────────────────────────────────────────────────── */
+.dqa-skip-row { margin-top: var(--s-4); display: flex; justify-content: center; }
+.dqa-skip {
+  font-family: inherit; font-weight: 600; font-size: var(--t-sm);
+  background: none; color: var(--brand-muted); border: none;
+  cursor: pointer; padding: var(--s-3) var(--s-4); transition: color 0.15s;
+}
+.dqa-skip:hover { color: var(--brand); }
+
+/* ─── Card animation ────────────────────────────────────────── */
+.dqa-card-anim { animation: dqa-card-in 0.28s cubic-bezier(0.2,0.7,0.3,1); }
+@keyframes dqa-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dqa-card-anim { animation: none; }
+}
+
+/* ─── Move dialog ───────────────────────────────────────────── */
+.dqa-move-dialog {
+  border: none; border-radius: 20px 20px 0 0; padding: 0;
+  max-width: 560px; width: 100%; margin: auto auto 0;
+  box-shadow: 0 -4px 32px rgba(112,1,67,0.12);
+}
+.dqa-move-dialog::backdrop { background: rgba(0,0,0,0.4); }
+.dqa-move-inner { padding: var(--s-5) var(--s-4) var(--s-6); font-family: inherit; }
+.dqa-move-title {
+  font-size: var(--t-md); font-weight: 700; color: var(--brand);
+  margin: 0 0 var(--s-4); letter-spacing: -0.01em;
+}
+.dqa-move-chips { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-4); }
+.dqa-move-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 44px; padding: 0 16px; border-radius: 9999px;
+  background: #fff; color: var(--brand);
+  border: 1.5px solid var(--brand-faint);
+  cursor: pointer; font-family: inherit;
+  font-size: var(--t-sm); font-weight: 600; white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.dqa-move-chip:hover { border-color: var(--brand); background: var(--brand-tint); }
+.dqa-move-cancel {
+  width: 100%; height: 48px; font-family: inherit; font-weight: 600;
+  font-size: var(--t-sm); background: none; color: var(--brand-muted);
+  border: 1px solid var(--brand-faint); border-radius: 12px; cursor: pointer;
+}
+
+/* ─── Summary ───────────────────────────────────────────────── */
+.dqa-summary { text-align: center; padding-top: var(--s-6); }
+.dqa-summary__eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--t-xs); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #4d5a1f;
+  background: var(--accent); padding: 6px 12px; border-radius: 9999px;
+  margin-bottom: var(--s-5);
+}
+.dqa-summary__big {
+  font-size: clamp(3rem, 12vw, 4.5rem); font-weight: 700;
+  letter-spacing: -0.035em; color: var(--brand);
+  line-height: 1; margin: 0 0 var(--s-2);
+  font-variant-numeric: tabular-nums;
+}
+.dqa-summary__big-unit {
+  font-size: 0.32em; font-weight: 600; color: var(--brand-muted);
+  letter-spacing: -0.01em; margin-left: 6px;
+}
+.dqa-summary__sub {
+  font-size: var(--t-md); color: var(--brand-muted); line-height: 1.5;
+  margin: 0 auto var(--s-6); max-width: 360px;
+}
+.dqa-wins {
+  background: #fff; border: 1px solid var(--brand-faint);
+  border-radius: 16px; padding: var(--s-3);
+  margin-bottom: var(--s-6); text-align: left;
+}
+.dqa-win {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3); border-radius: 10px;
+}
+.dqa-win + .dqa-win { border-top: 1px solid var(--brand-faint); border-radius: 0; }
+.dqa-win__icon {
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px;
+  background: var(--brand-tint); color: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+}
+.dqa-win__icon svg { width: 18px; height: 18px; stroke-width: 2; }
+.dqa-win__num { font-size: var(--t-md); font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.dqa-win__label { font-size: var(--t-xs); color: var(--brand-muted); line-height: 1.3; }
+.dqa-cta-block { display: flex; flex-direction: column; gap: var(--s-3); }
+
+/* ─── Empty state ───────────────────────────────────────────── */
+.dqa-empty { text-align: center; padding: var(--s-7) var(--s-4); }
+.dqa-empty__title { font-size: var(--t-xl); font-weight: 700; color: var(--brand); margin: 0 0 var(--s-2); }
+.dqa-empty__body  { font-size: var(--t-md); color: var(--brand-muted); margin: 0 0 var(--s-5); }
+</style>
+
+<div class="dqa">
+
+  {# ════════════════════════════════════════════════════════════════
+     INTRO — zone picker
+  ═══════════════════════════════════════════════════════════════ #}
+  {% if view == 'intro' %}
+  <div class="dqa-wrap">
+
+    <span class="dqa-eyebrow">
+      <svg viewBox="0 0 24 24" fill="currentColor"><use href="#dq-ghost"/></svg>
+      Pantry audit
+    </span>
+
+    {% if ghost_count > 0 %}
+    <h1 class="dqa-title">Some things are getting dusty.</h1>
+    <p class="dqa-sub">
+      We spotted <b>{{ ghost_count }}</b> item{{ 's' if ghost_count != 1 }} that
+      {{ 'haven\'t' if ghost_count != 1 else 'hasn\'t' }} moved in a while.
+      Pick a zone and we'll sweep through them one at a time.
     </p>
-    <span role="button"
-          class="btn btn-primary audit-nudge__cta"
-          id="nudge-start"
-          data-zone="{{ '__unsorted__' if unsorted_count > 0 else '__all__' }}">Start audit</span>
-  </div>
-  {% endif %}
-
-  {# ── Zone grid ──────────────────────────────────────────────────────────── #}
-  {% if zones %}
-  <div class="audit-zone-grid">
-    {% for zone_key, zone_items in zones.items() %}
-    {% set zone_label = 'Unsorted' if zone_key == '__unsorted__' else zone_key | capitalize %}
-    {% set zone_class = 'zone-' + zone_key if zone_key in known_zones else ('zone-unsorted' if zone_key == '__unsorted__' else 'zone-custom') %}
-    {% set zone_ghost = zone_items | selectattr('ghost_level') | list | length %}
-    <div class="audit-zone-card {{ zone_class }}"
-         role="button" tabindex="0"
-         data-zone="{{ zone_key }}"
-         aria-label="Audit {{ zone_label }}, {{ zone_items | length }} item{{ 's' if zone_items | length != 1 }}">
-      <div class="audit-zone-card__top">
-        <span class="audit-zone-card__name">{{ zone_label }}</span>
-        {% if zone_ghost > 0 %}
-        <span class="audit-zone-card__ghost-pill">{{ zone_ghost }}</span>
-        {% endif %}
-      </div>
-      <div class="audit-zone-card__silhouettes">
-        {% for item in zone_items[:4] %}
-        {% set raw_opacity = 1.0 - (item.staleness_days / 200.0) %}
-        {% set opacity = [raw_opacity, 0.18] | max %}
-        <span class="sil-wrap" style="opacity:{{ '%.2f' | format(opacity) }}">{{ silhouette(item.item_type) }}</span>
-        {% endfor %}
-        {% if zone_items | length > 4 %}
-        <span class="sil-more">+{{ zone_items | length - 4 }}</span>
-        {% endif %}
-      </div>
-      <div class="audit-zone-card__footer">
-        <span class="audit-zone-card__count">{{ zone_items | length }} item{{ 's' if zone_items | length != 1 }}</span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
+    {% elif total_count > 0 %}
+    <h1 class="dqa-title">Everything looks good.</h1>
+    <p class="dqa-sub">No items are flagged right now. You can still browse by zone.</p>
+    {% else %}
+    <div class="dqa-empty">
+      <p class="dqa-empty__title">Nothing to audit</p>
+      <p class="dqa-empty__body">Add some items to your pantry first.</p>
+      <a href="{{ url_for('perishables.dashboard') }}" class="dqa-cta" style="display:inline-flex;width:auto;padding:0 var(--s-5);">
+        <svg><use href="#dq-arrow"/></svg>
+        Go to pantry
+      </a>
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="empty-state">
-    <p class="empty-state__title">Nothing to audit</p>
-    <p class="empty-state__body">Add some items to your pantry first.</p>
-  </div>
-  {% endif %}
+    {% endif %}
 
-</div>
-
-{# ── Sweep dialog ──────────────────────────────────────────────────────────── #}
-<dialog id="sweep-dialog" class="sweep-dialog">
-  <div class="sweep-inner">
-    <div class="sweep-header">
-      <span class="sweep-close" id="sweep-close" tabindex="0" aria-label="Exit audit">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </span>
-      <div class="sweep-progress-wrap">
-        <div class="sweep-progress" id="sweep-progress">
-          <div class="sweep-progress-fill" id="sweep-progress-fill"></div>
+    {% if zones %}
+    <div class="dqa-zonelist">
+      {% for zone_key, zone_items in zones.items() %}
+        {% set red_items   = zone_items | selectattr('ghost_level', 'equalto', 'red')   | list %}
+        {% set amber_items = zone_items | selectattr('ghost_level', 'equalto', 'amber') | list %}
+        {% set ghost_items = red_items | length + amber_items | length %}
+        {% set zone_label  = 'Unsorted' if zone_key == '__unsorted__' else zone_key | title %}
+        {% set zone_cls    = 'dqa-zone--has-red' if red_items | length > 0 else ('dqa-zone--has-amber' if amber_items | length > 0 else '') %}
+      <a href="{{ url_for('perishables.audit', zone=zone_key) }}"
+         class="dqa-zone {{ zone_cls }}"
+         aria-label="Sweep {{ zone_label }}, {{ ghost_items }} flagged of {{ zone_items | length }}">
+        <div class="dqa-zone__count">
+          {{ ghost_items if ghost_items > 0 else zone_items | length }}
         </div>
-      </div>
-      <span id="sweep-counter" class="sweep-counter">1 of 1</span>
-    </div>
-    <p id="sweep-zone-label" class="sweep-zone-label"></p>
-
-    <div class="sweep-card-wrap" id="sweep-card-wrap">
-      <div class="sweep-card" id="sweep-card">
-        <div id="sweep-item-shape" class="sweep-item-shape"></div>
-        <h2 id="sweep-item-name" class="sweep-item-name"></h2>
-        <p id="sweep-item-meta" class="sweep-item-meta"></p>
-      </div>
-    </div>
-
-    <div class="sweep-actions">
-      <span role="button" class="sweep-btn sweep-btn--keep" id="sweep-keep">Keep</span>
-      <span role="button" class="sweep-btn sweep-btn--move" id="sweep-move">Move</span>
-      <span role="button" class="sweep-btn sweep-btn--toss" id="sweep-toss">Toss</span>
-    </div>
-    <span class="sweep-skip" id="sweep-skip" tabindex="0">Skip for now</span>
-  </div>
-</dialog>
-
-{# ── Move bottom sheet ─────────────────────────────────────────────────────── #}
-<dialog id="move-sheet" class="move-sheet">
-  <div class="move-sheet__inner">
-    <p class="move-sheet__title">Move to</p>
-    <div class="move-sheet__zones">
-      <span role="button" class="move-zone-chip" data-location="">No location</span>
-      {% for loc in user_locations %}
-      <span role="button" class="move-zone-chip" data-location="{{ loc | lower }}">{{ loc }}</span>
+        <div class="dqa-zone__body">
+          <p class="dqa-zone__name">{{ zone_label }}</p>
+          <p class="dqa-zone__meta">
+            {% if red_items | length > 0 %}
+              <span class="dqa-zone__dot dqa-zone__dot--red"></span>
+              {{ red_items | length }} stale
+            {% endif %}
+            {% if red_items | length > 0 and amber_items | length > 0 %}
+              <span class="dqa-card__meta-sep">·</span>
+            {% endif %}
+            {% if amber_items | length > 0 %}
+              <span class="dqa-zone__dot dqa-zone__dot--amber"></span>
+              {{ amber_items | length }} watch
+            {% endif %}
+            {% if ghost_items > 0 %}
+              <span class="dqa-card__meta-sep">·</span>
+              {{ zone_items | length }} total
+            {% elif ghost_items == 0 %}
+              {{ zone_items | length }} item{{ 's' if zone_items | length != 1 }}
+            {% endif %}
+          </p>
+        </div>
+        <span class="dqa-zone__arrow">
+          <svg><use href="#dq-arrow"/></svg>
+        </span>
+      </a>
       {% endfor %}
     </div>
-    <span role="button" class="move-cancel-btn" id="move-cancel">Cancel</span>
-  </div>
-</dialog>
+    {% endif %}
 
-{# ── End screen ────────────────────────────────────────────────────────────── #}
-<dialog id="sweep-end" class="sweep-end">
-  <div class="sweep-end__inner">
-    <div class="sweep-end__icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <a href="{{ url_for('perishables.dashboard') }}" class="dqa-cta-ghost">Not now</a>
+
+  </div>
+
+
+  {# ════════════════════════════════════════════════════════════════
+     SESSION — one item at a time
+  ═══════════════════════════════════════════════════════════════ #}
+  {% elif view == 'session' %}
+  {% set zone_label = 'Unsorted' if zone == '__unsorted__' else zone | title %}
+  {% set pct = ((progress.idx / progress.total) * 100) | round(1) if progress.total > 0 else 0 %}
+  {% set ghost = item.ghost_level %}
+  {% set card_cls  = 'dqa-card--red' if ghost == 'red' else ('dqa-card--amber' if ghost == 'amber' else '') %}
+  {% set pill_cls  = 'dqa-card__pill--red' if ghost == 'red' else ('dqa-card__pill--amber' if ghost == 'amber' else 'dqa-card__pill--info') %}
+  {% set pill_lbl  = 'Likely forgotten' if ghost == 'red' else ('On the radar' if ghost == 'amber' else ('Needs a home' if not item.location else 'Unsorted item')) %}
+  {% set freq      = item.usage_frequency or 'medium' %}
+  {% set freq_word = {'high': 'often', 'medium': 'sometimes', 'low': 'rarely'}[freq] %}
+  {% set staleness = item.staleness_days %}
+  {% if staleness < 21 %}
+    {% set stale_str = 'Last seen ' ~ staleness ~ ' day' ~ ('' if staleness == 1 else 's') ~ ' ago' %}
+  {% elif staleness < 63 %}
+    {% set stale_str = 'Last seen about ' ~ ((staleness / 7) | round | int) ~ ' weeks ago' %}
+  {% elif staleness < 730 %}
+    {% set stale_str = 'Last seen about ' ~ ((staleness / 30) | round | int) ~ ' months ago' %}
+  {% else %}
+    {% set stale_str = 'Last seen over a year ago' %}
+  {% endif %}
+
+  {# Hidden form shared by all verb buttons #}
+  <form id="audit-form" method="POST" action="{{ url_for('perishables.audit_commit') }}" style="display:none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" id="audit-action" value="">
+    <input type="hidden" name="item_id" value="{{ item.id }}">
+    <input type="hidden" name="zone" value="{{ zone }}">
+    <input type="hidden" name="new_location" id="audit-new-location" value="">
+  </form>
+
+  <div class="dqa-wrap">
+
+    <div class="dqa-header">
+      <a href="{{ url_for('perishables.audit') }}" class="dqa-close" aria-label="Exit audit">
+        <svg><use href="#dq-x"/></svg>
+      </a>
+      <div class="dqa-progress-wrap">
+        <div class="dqa-progress-meta">
+          <span class="dqa-progress-meta__zone">{{ zone_label }}</span>
+          <span class="dqa-progress-meta__count">{{ progress.idx + 1 }} / {{ progress.total }}</span>
+        </div>
+        <div class="dqa-progress" role="progressbar" aria-valuenow="{{ progress.idx }}" aria-valuemax="{{ progress.total }}">
+          <div class="dqa-progress__fill" style="width:{{ pct }}%"></div>
+        </div>
+      </div>
     </div>
-    <h2 class="sweep-end__title" id="end-title"></h2>
-    <p class="sweep-end__subtitle" id="end-subtitle"></p>
-    <div class="sweep-end__stats" id="end-stats"></div>
-    <a href="{{ url_for('recipes.index') }}" class="btn btn-primary sweep-end__cta">See meal suggestions</a>
-    <span role="button" class="btn btn-ghost" id="end-done">Done</span>
-  </div>
-</dialog>
 
-<script>
-(function () {
-  const AUDIT_DATA = {{ audit_json | tojson }};
-  const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+    <div class="dqa-card {{ card_cls }} dqa-card-anim" id="audit-card">
 
-  // ── Silhouette path fragments for the sweep card (40×60 SVG) ──────────────
-  const SHAPES = {
-    sauce:     '<rect x="11" y="8"  width="18" height="52" rx="8"  fill="currentColor"/>',
-    condiment: '<rect x="11" y="8"  width="18" height="52" rx="8"  fill="currentColor"/>',
-    seafood:   '<rect x="11" y="8"  width="18" height="52" rx="8"  fill="currentColor"/>',
-    oil:       '<rect x="15" y="10" width="10" height="48" rx="5"  fill="currentColor"/><rect x="16" y="4" width="8" height="9" rx="3" fill="currentColor"/>',
-    spice:     '<rect x="10" y="26" width="20" height="32" rx="6"  fill="currentColor"/><rect x="11" y="12" width="18" height="16" rx="4" fill="currentColor"/>',
-    produce:   '<path d="M20,58 C13,48 7,36 10,22 Q16,6 20,14 Q24,6 30,22 C33,36 27,48 20,58Z" fill="currentColor"/>',
-    dried:     '<path d="M14,58 C10,54 8,42 9,30 L12,14 C13,9 27,9 28,14 L31,30 C32,42 30,54 26,58 Z" fill="currentColor"/>',
-    tofu:      '<rect x="7"  y="22" width="26" height="32" rx="3"  fill="currentColor"/>',
-    dairy:     '<rect x="11" y="16" width="18" height="42" rx="2"  fill="currentColor"/><polygon points="11,16 20,8 29,16" fill="currentColor"/>',
-  };
-  const DEFAULT_SHAPE = '<rect x="9" y="10" width="22" height="48" rx="4" fill="currentColor"/>';
+      <span class="dqa-card__pill {{ pill_cls }}">
+        <svg viewBox="0 0 24 24" fill="currentColor"><use href="#dq-ghost"/></svg>
+        {{ pill_lbl }}
+      </span>
 
-  function staleTint(days) {
-    if (days > 180) return '#f5f5f4';
-    if (days > 90)  return '#fef3c7';
-    if (days > 30)  return '#fef9e7';
-    return '#fffbf0';
-  }
+      <h2 class="dqa-card__name">{{ item.name }}</h2>
 
-  // ── Sweep state ────────────────────────────────────────────────────────────
-  let sweepItems = [];
-  let sweepIndex = 0;
-  const session = { kept: 0, moved: 0, tossed: 0, skipped: 0 };
-  let pendingMove = null;
+      <p class="dqa-card__meta">
+        {% if item.item_type %}
+          <span style="text-transform:capitalize">{{ item.item_type }}</span>
+        {% else %}
+          <span>Type not set</span>
+        {% endif %}
+        {% if item.expiry_date %}
+          <span class="dqa-card__meta-sep">·</span>
+          <span>Expires {{ item.expiry_date.strftime('%-d %b %Y') }}</span>
+        {% endif %}
+      </p>
 
-  function buildItems(zoneKey) {
-    if (zoneKey === '__all__') {
-      return Object.values(AUDIT_DATA).flat().filter(i => i.ghost);
-    }
-    return AUDIT_DATA[zoneKey] || [];
-  }
+      <p class="dqa-stale">
+        <b>{{ stale_str }}</b> — and you said you use this <b>{{ freq_word }}</b>.
+      </p>
 
-  function zoneLabel(zoneKey) {
-    if (zoneKey === '__all__')       return 'Full pantry';
-    if (zoneKey === '__unsorted__')  return 'Unsorted';
-    return zoneKey.charAt(0).toUpperCase() + zoneKey.slice(1);
-  }
+      <div class="dqa-verbs">
+        <button type="button" class="dqa-verb dqa-verb--still"
+                onclick="submitAudit('checkin')"
+                aria-label="Still here — {{ item.name }}">
+          <svg><use href="#dq-still"/></svg>
+          Still here
+          <span class="dqa-verb__hint">Reset the timer</span>
+        </button>
+        <button type="button" class="dqa-verb dqa-verb--used"
+                onclick="submitAudit('used')"
+                aria-label="Used it up — {{ item.name }}">
+          <svg><use href="#dq-used"/></svg>
+          Used it up
+          <span class="dqa-verb__hint">Remove from pantry</span>
+        </button>
+        <button type="button" class="dqa-verb dqa-verb--moved"
+                onclick="openMoveDialog()"
+                aria-label="Moved — {{ item.name }}">
+          <svg><use href="#dq-move"/></svg>
+          Moved
+          <span class="dqa-verb__hint">Pick a new zone</span>
+        </button>
+        <button type="button" class="dqa-verb dqa-verb--tossed"
+                onclick="submitAudit('discard')"
+                aria-label="Tossed it — {{ item.name }}">
+          <svg><use href="#dq-trash"/></svg>
+          Tossed it
+          <span class="dqa-verb__hint">Spoiled or gone</span>
+        </button>
+      </div>
 
-  function openSweep(zoneKey) {
-    sweepItems = buildItems(zoneKey);
-    if (!sweepItems.length) return;
-    sweepIndex = 0;
-    session.kept = 0; session.moved = 0; session.tossed = 0; session.skipped = 0;
-    document.getElementById('sweep-zone-label').textContent = zoneLabel(zoneKey);
-    renderItem(0);
-    document.getElementById('sweep-dialog').showModal();
-  }
+      <button type="button" class="dqa-freq-toggle" id="freq-toggle"
+              aria-expanded="false" aria-controls="freq-panel">
+        <svg><use href="#dq-chevron"/></svg>
+        <span id="freq-toggle-label">How often do you use this?</span>
+      </button>
 
-  function renderItem(index) {
-    const item  = sweepItems[index];
-    const total = sweepItems.length;
-    const card  = document.getElementById('sweep-card');
+      <div class="dqa-freq" id="freq-panel" hidden>
+        <span class="dqa-freq__label">Adjusts when we flag it next time</span>
+        <div class="dqa-freq__opts" role="radiogroup" aria-label="Usage frequency">
+          {% for f_id, f_label, f_sub in [('high','Often','Weekly'), ('medium','Sometimes','Monthly'), ('low','Rarely','Few times a year')] %}
+          <button type="button"
+                  class="dqa-freq__opt{% if freq == f_id %} dqa-freq__opt--active{% endif %}"
+                  role="radio" aria-checked="{{ 'true' if freq == f_id else 'false' }}"
+                  data-freq="{{ f_id }}"
+                  onclick="setFreq(this, '{{ f_id }}', {{ item.id }})">
+            <span class="dqa-freq__opt-label">{{ f_label }}</span>
+            <span class="dqa-freq__opt-sub">{{ f_sub }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
 
-    document.getElementById('sweep-progress-fill').style.width = `${(index / total) * 100}%`;
-    document.getElementById('sweep-counter').textContent = `${index + 1} of ${total}`;
+    </div>{# /dqa-card #}
 
-    card.style.backgroundColor = staleTint(item.staleness);
+    <div class="dqa-skip-row">
+      <button type="button" class="dqa-skip" onclick="submitAudit('skip')">Skip for now →</button>
+    </div>
 
-    const shapeEl = document.getElementById('sweep-item-shape');
-    if (item.photo) {
-      shapeEl.innerHTML = '';
-      const img = document.createElement('img');
-      img.setAttribute('src', item.photo);
-      img.alt = '';
-      img.className = 'sweep-item-photo';
-      shapeEl.appendChild(img);
-    } else {
-      shapeEl.innerHTML = `<svg width="64" height="96" viewBox="0 0 40 68" aria-hidden="true">${SHAPES[item.type] || DEFAULT_SHAPE}</svg>`;
-    }
+  </div>{# /dqa-wrap #}
 
-    document.getElementById('sweep-item-name').textContent = item.name;
+  {# Move dialog #}
+  <dialog id="move-dialog" class="dqa-move-dialog">
+    <div class="dqa-move-inner">
+      <p class="dqa-move-title">Move to</p>
+      <div class="dqa-move-chips" role="radiogroup" aria-label="New location">
+        {% set all_locations = (['Pantry', 'Fridge', 'Freezer', 'Spice rack', 'Cupboard', 'Counter'] + user_locations) | unique | list %}
+        {% for loc in all_locations %}
+        <button type="button" class="dqa-move-chip"
+                onclick="selectLocation('{{ loc | lower }}')"
+                aria-label="Move to {{ loc }}">
+          {{ loc }}
+        </button>
+        {% endfor %}
+      </div>
+      <button type="button" class="dqa-move-cancel" onclick="closeMoveDialog()">Cancel</button>
+    </div>
+  </dialog>
 
-    const line1 = `Last seen ${item.staleness}d ago`;
-    let line2 = '';
-    if (item.expiry) {
-      const d = new Date(item.expiry);
-      const dLeft = Math.round((d - Date.now()) / 86400000);
-      if (dLeft < 0)        line2 = 'Expired';
-      else if (dLeft === 0) line2 = 'Expires today';
-      else if (dLeft <= 7)  line2 = `Expires in ${dLeft}d`;
-      else line2 = `Exp ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}`;
-    }
-    document.getElementById('sweep-item-meta').innerHTML = line2 ? `${line1}<br>${line2}` : line1;
-  }
+  <script>
+  (function () {
+    const CSRF = '{{ csrf_token() }}';
 
-  // Card exit + enter animation
-  function animateCard(exitDir, callback) {
-    const card = document.getElementById('sweep-card');
-    const exits = {
-      left:  'translateX(-130%) rotate(-8deg)',
-      right: 'translateX(130%) rotate(8deg)',
-      up:    'translateY(-110%) scale(0.9)',
-    };
-    card.style.transition = 'transform 200ms ease-out, opacity 200ms ease-out';
-    card.style.transform  = exits[exitDir];
-    card.style.opacity    = '0';
-    setTimeout(() => {
-      card.style.transition = 'none';
-      card.style.transform  = 'translateX(50px)';
+    function submitAudit(action, opts) {
+      const card = document.getElementById('audit-card');
+      const form = document.getElementById('audit-form');
+      const exits = {
+        checkin: 'translateX(130%) rotate(8deg)',
+        used:    'translateX(130%) rotate(8deg)',
+        skip:    'translateX(40px)',
+        discard: 'translateX(-130%) rotate(-8deg)',
+        relocate:'translateY(-80px)',
+      };
+      document.getElementById('audit-action').value = action;
+      document.getElementById('audit-new-location').value = (opts && opts.loc) ? opts.loc : '';
+
+      card.style.transition = 'transform 200ms ease-out, opacity 200ms ease-out';
+      card.style.transform  = exits[action] || 'translateX(130%)';
       card.style.opacity    = '0';
-      callback();
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        card.style.transition = 'transform 220ms ease-out, opacity 220ms ease-out';
-        card.style.transform  = '';
-        card.style.opacity    = '1';
-      }));
-    }, 200);
-  }
-
-  async function postAction(action, itemId, extra = {}) {
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF);
-    fd.append('action', action);
-    fd.append('item_ids', itemId);
-    Object.entries(extra).forEach(([k, v]) => fd.append(k, v));
-    await fetch('/items/bulk-action', { method: 'POST', body: fd });
-  }
-
-  function advance(exitDir, action, extra = {}) {
-    const item = sweepItems[sweepIndex];
-    if (action) postAction(action, item.id, extra);
-    animateCard(exitDir, () => {
-      sweepIndex++;
-      if (sweepIndex >= sweepItems.length) {
-        document.getElementById('sweep-dialog').close();
-        showEnd();
-      } else {
-        renderItem(sweepIndex);
-      }
-    });
-  }
-
-  function doKeep()  { session.kept++;    advance('right', 'checkin'); }
-  function doToss()  {
-    session.tossed++;
-    advance('left', 'discard');
-    const wrap = document.getElementById('sweep-card-wrap');
-    wrap.classList.add('sweep-card-wrap--void');
-    setTimeout(() => wrap.classList.remove('sweep-card-wrap--void'), 700);
-  }
-  function doMove()  { pendingMove = sweepItems[sweepIndex].id; document.getElementById('move-sheet').showModal(); }
-  function doSkip()  { session.skipped++; advance('right', null); }
-
-  // ── Swipe detection ────────────────────────────────────────────────────────
-  const sweepCard = document.getElementById('sweep-card');
-  let tx, ty;
-  sweepCard.addEventListener('touchstart', e => {
-    tx = e.touches[0].clientX; ty = e.touches[0].clientY;
-    sweepCard.style.transition = 'none';
-  }, { passive: true });
-  sweepCard.addEventListener('touchmove', e => {
-    const dx = e.touches[0].clientX - tx;
-    const dy = e.touches[0].clientY - ty;
-    sweepCard.style.transform = `translateX(${dx * 0.7}px) rotate(${dx * 0.035}deg)`;
-    sweepCard.style.opacity   = String(Math.max(0.3, 1 - Math.abs(dx) / 260));
-  }, { passive: true });
-  sweepCard.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - tx;
-    const dy = e.changedTouches[0].clientY - ty;
-    sweepCard.style.transition = '';
-    sweepCard.style.transform  = '';
-    sweepCard.style.opacity    = '';
-    const adx = Math.abs(dx), ady = Math.abs(dy);
-    if (adx > ady * 1.5 && adx > 60) {
-      if (dx > 0) doKeep(); else doToss();
-    } else if (dy < -60 && ady > adx) {
-      doMove();
+      setTimeout(function () { form.submit(); }, 210);
     }
-  });
 
-  // ── End screen ─────────────────────────────────────────────────────────────
-  function showEnd() {
-    const total = session.kept + session.moved + session.tossed + session.skipped;
-    document.getElementById('end-title').textContent = `${total} item${total !== 1 ? 's' : ''} sorted`;
-    const cleared = session.tossed + session.moved;
-    document.getElementById('end-subtitle').textContent = cleared > 0 ? 'A little lighter.' : 'All good in there.';
-    const stats = [
-      session.kept   > 0 ? `<span>${session.kept} kept</span>`     : '',
-      session.moved  > 0 ? `<span>${session.moved} re-homed</span>` : '',
-      session.tossed > 0 ? `<span>${session.tossed} tossed</span>`  : '',
-    ].filter(Boolean).join('<span class="end-sep">·</span>');
-    document.getElementById('end-stats').innerHTML = stats;
-    document.getElementById('sweep-end').showModal();
-  }
+    function openMoveDialog() {
+      document.getElementById('move-dialog').showModal();
+    }
+    function closeMoveDialog() {
+      document.getElementById('move-dialog').close();
+    }
+    function selectLocation(loc) {
+      closeMoveDialog();
+      submitAudit('relocate', { loc: loc });
+    }
 
-  // ── Wire up ────────────────────────────────────────────────────────────────
-  document.getElementById('sweep-keep').addEventListener('click', doKeep);
-  document.getElementById('sweep-toss').addEventListener('click', doToss);
-  document.getElementById('sweep-move').addEventListener('click', doMove);
-  const skipEl = document.getElementById('sweep-skip');
-  skipEl.addEventListener('click', doSkip);
-  skipEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doSkip(); } });
-  const closeEl = document.getElementById('sweep-close');
-  closeEl.addEventListener('click', () => document.getElementById('sweep-dialog').close());
-  closeEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('sweep-dialog').close(); } });
-  document.getElementById('end-done').addEventListener('click', () =>
-    document.getElementById('sweep-end').close());
-
-  document.querySelectorAll('.audit-zone-card').forEach(card => {
-    card.addEventListener('click',   () => openSweep(card.dataset.zone));
-    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openSweep(card.dataset.zone); });
-  });
-
-  const nudgeStart = document.getElementById('nudge-start');
-  if (nudgeStart) nudgeStart.addEventListener('click', () => openSweep(nudgeStart.dataset.zone));
-
-  // Move sheet
-  const moveSheet = document.getElementById('move-sheet');
-  document.querySelectorAll('.move-zone-chip').forEach(chip => {
-    chip.addEventListener('click', async () => {
-      moveSheet.close();
-      if (pendingMove !== null) {
-        const fd = new FormData();
-        fd.append('csrf_token', CSRF);
-        fd.append('location', chip.dataset.location);
-        fetch(`/items/${pendingMove}/location`, {
-          method: 'POST', headers: { 'Accept': 'application/json' }, body: fd,
-        });
-        pendingMove = null;
-      }
-      session.moved++;
-      advance('up', null);
+    const freqToggle = document.getElementById('freq-toggle');
+    const freqPanel  = document.getElementById('freq-panel');
+    const freqLabel  = document.getElementById('freq-toggle-label');
+    freqToggle.addEventListener('click', function () {
+      const open = freqPanel.hidden;
+      freqPanel.hidden = !open;
+      freqToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      freqLabel.textContent = open ? 'Hide frequency setting' : 'How often do you use this?';
     });
-  });
-  document.getElementById('move-cancel').addEventListener('click', () => moveSheet.close());
-  moveSheet.addEventListener('click', e => { if (e.target === moveSheet) moveSheet.close(); });
-})();
-</script>
+
+    function setFreq(btn, freq, itemId) {
+      document.querySelectorAll('.dqa-freq__opt').forEach(function (b) {
+        b.classList.remove('dqa-freq__opt--active');
+        b.setAttribute('aria-checked', 'false');
+      });
+      btn.classList.add('dqa-freq__opt--active');
+      btn.setAttribute('aria-checked', 'true');
+      const fd = new FormData();
+      fd.append('csrf_token', CSRF);
+      fd.append('usage_frequency', freq);
+      fetch('/items/' + itemId + '/frequency', { method: 'POST', body: fd });
+    }
+
+    document.getElementById('move-dialog').addEventListener('click', function (e) {
+      if (e.target === this) closeMoveDialog();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === '1') submitAudit('checkin');
+      else if (e.key === '2') submitAudit('used');
+      else if (e.key === '3') openMoveDialog();
+      else if (e.key === '4') submitAudit('discard');
+      else if (e.key === 's' || e.key === 'S') submitAudit('skip');
+    });
+
+    window.submitAudit = submitAudit;
+    window.openMoveDialog = openMoveDialog;
+    window.closeMoveDialog = closeMoveDialog;
+    window.selectLocation = selectLocation;
+    window.setFreq = setFreq;
+  })();
+  </script>
+
+
+  {# ════════════════════════════════════════════════════════════════
+     SUMMARY — peak-end
+  ═══════════════════════════════════════════════════════════════ #}
+  {% elif view == 'summary' %}
+  {% set zone_label = 'Unsorted' if zone == '__unsorted__' else zone | title %}
+  {% set total_resolved = (stats.checkin or 0) + (stats.used or 0) + (stats.relocate or 0) + (stats.discard or 0) %}
+  <div class="dqa-wrap dqa-summary">
+
+    <span class="dqa-summary__eyebrow">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><use href="#dq-sparkle"/></svg>
+      {{ zone_label }} swept
+    </span>
+
+    <p class="dqa-summary__big">
+      {{ total_resolved }}<span class="dqa-summary__big-unit">resolved</span>
+    </p>
+
+    <p class="dqa-summary__sub">
+      Your pantry is feeling lighter. We'll remember what you set and stop pestering you about these.
+    </p>
+
+    <div class="dqa-wins">
+      {% if stats.checkin > 0 %}
+      <div class="dqa-win">
+        <div class="dqa-win__icon"><svg><use href="#dq-still"/></svg></div>
+        <div>
+          <div class="dqa-win__num">{{ stats.checkin }} still here</div>
+          <div class="dqa-win__label">timer reset — back on the radar</div>
+        </div>
+      </div>
+      {% endif %}
+      {% if stats.used > 0 %}
+      <div class="dqa-win">
+        <div class="dqa-win__icon"><svg><use href="#dq-used"/></svg></div>
+        <div>
+          <div class="dqa-win__num">{{ stats.used }} finished</div>
+          <div class="dqa-win__label">marked as used up</div>
+        </div>
+      </div>
+      {% endif %}
+      {% if stats.relocate > 0 %}
+      <div class="dqa-win">
+        <div class="dqa-win__icon"><svg><use href="#dq-move"/></svg></div>
+        <div>
+          <div class="dqa-win__num">{{ stats.relocate }} re-homed</div>
+          <div class="dqa-win__label">moved to a new zone</div>
+        </div>
+      </div>
+      {% endif %}
+      {% if stats.discard > 0 %}
+      <div class="dqa-win">
+        <div class="dqa-win__icon"><svg><use href="#dq-trash"/></svg></div>
+        <div>
+          <div class="dqa-win__num">{{ stats.discard }} retired</div>
+          <div class="dqa-win__label">no longer in your pantry</div>
+        </div>
+      </div>
+      {% endif %}
+      {% if total_resolved == 0 %}
+      <div class="dqa-win">
+        <div class="dqa-win__icon"><svg><use href="#dq-check"/></svg></div>
+        <div>
+          <div class="dqa-win__num">All skipped</div>
+          <div class="dqa-win__label">come back when you're ready</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="dqa-cta-block">
+      <a href="{{ url_for('perishables.audit') }}" class="dqa-cta">
+        <svg><use href="#dq-arrow"/></svg>
+        Sweep another zone
+      </a>
+      <a href="{{ url_for('perishables.dashboard') }}" class="dqa-cta-ghost">Back to pantry</a>
+    </div>
+
+  </div>
+  {% endif %}
+
+</div>{# /dqa #}
 {% endblock %}
