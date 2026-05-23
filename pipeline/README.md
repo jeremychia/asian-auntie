@@ -17,7 +17,8 @@ scrape → staging review → append to data.py
    uv run python pipeline/run.py --site rasa_malaysia
    ```
 
-2. **Review** — open `pipeline/staging/rasa_malaysia.py`, delete bad entries
+2. **Review** — open `pipeline/staging/rasa_malaysia.py`, clean and correct entries
+   (see [Staging Review Guide](#staging-review-guide) below)
 
 3. **Append** — copy approved dict blocks into `app/recipes/data.py`
    (the format is identical — no reformatting needed)
@@ -381,3 +382,121 @@ Applied before PANTRY_ITEMS lookup; produces a simplified form for matching:
 5. Fall back to the pre-normalized string if no PANTRY_ITEMS entry matches
 
 Result: `"garlic"`, `"Sesame seeds"`, `"whole wheat noodles"`.
+
+---
+
+## Staging Review Guide
+
+The scraper produces a good first pass, but staging files always need a human review before being merged into `app/recipes/data.py`. Work through each recipe dict and apply the rules below.
+
+### 1. `id` and `name`
+
+YouTube channel titles in particular are written for SEO and clicks. Strip everything that isn't the dish name:
+
+- Remove Chinese characters
+- Remove sensational prefixes/suffixes: "Secret Tip for…", "…Chinese Dim Sum Seafood Meat Roll Recipe", "How to Make…", "The BEST…"
+- Keep only the core dish name, sentence-case, lowercase
+- Derive `id` as the kebab-case version of the cleaned `name`
+
+```python
+# Before
+"id": "secret-tip-for-bouncy-beancurd-rolls-in-oyster-sauce-...",
+"name": "Secret Tip for Bouncy Beancurd Rolls in Oyster Sauce 蚝油腐皮卷 Chinese Dim Sum",
+
+# After
+"id": "beancurd-rolls-in-oyster-sauce",
+"name": "Beancurd rolls in oyster sauce",
+```
+
+### 2. `cuisine`
+
+The scraper assigns cuisine from the category URL, which is often wrong for channels that cover multiple cuisines. Look at the dish name and correct accordingly:
+
+| Dish clue                                                                                                         | Cuisine     |
+| ----------------------------------------------------------------------------------------------------------------- | ----------- |
+| Korean dish names (bibimbap, doenjang jjigae, kimchi jjigae, tteokbokki, japchae, galbi, samgyeopsal, yukgaejang) | Korean      |
+| Japanese dish names (ramen, tonkotsu, miso, teriyaki, gyoza, karaage, okonomiyaki, takoyaki)                      | Japanese    |
+| Malaysian dishes (rendang, laksa, nasi lemak, char kway teow)                                                     | Malaysian   |
+| Taiwanese dishes (three-cup chicken, lu rou fan)                                                                  | Taiwanese   |
+| Vietnamese dishes (pho, bun bo hue, banh mi)                                                                      | Vietnamese  |
+| Sichuan, Cantonese, Hakka, Shanghainese, Teochew dishes                                                           | Chinese     |
+| Fusion or expat adaptations with Western base                                                                     | Western     |
+| Default for Singaporean hawker dishes                                                                             | Singaporean |
+
+### 3. `normalized_ingredients`
+
+This is the field the app uses for recipe matching — it must contain only clean, canonical ingredient names. The scraper's normalization pipeline has several known failure modes:
+
+#### Remove pipeline artifacts
+
+These appear when the scraper picks up non-ingredient content from the page:
+
+- Section headers: `"Main ingredients:"`, `"For the sauce:"`, `"Marinate:"`, `"Batter:"`, `"Soup base:"`, `"For stir-frying:"`, `"To clean the ribs:"`, `"Pre-prepared ingredients:"`
+- Separator lines: `"——"`, `"==="`, `"---"`, `"* * *"`
+- Empty strings `""`
+- Amazon affiliate or any other URLs: `"cooking oil https://amzn.to/..."`
+- Timing tables or any multi-column text that ended up as a list item
+
+#### Fix wrong PANTRY_ITEMS mappings
+
+The normalizer uses substring/subsequence matching, which misfires on compound phrases. Always check:
+
+| Wrong                            | Correct                                      | Trigger phrase                             |
+| -------------------------------- | -------------------------------------------- | ------------------------------------------ |
+| `"Shallots"` (when not shallots) | remove or `"Salt"`                           | `"salt"` matched via subsequence           |
+| `"Butter"`                       | remove                                       | `"butterflied"`                            |
+| `"Water chestnuts"`              | `"Chestnuts"`                                | `"chestnuts, peeled"`                      |
+| `"Mustard"`                      | `"Pickled mustard greens"`                   | `"sour pickled mustard greens"`            |
+| `"Tamari"`                       | `"Tamarind"`                                 | `"asam or tamarind water"`                 |
+| `"Beef"`                         | `"Beef stock"`                               | `"beef stock"`                             |
+| `"Glutinous rice"`               | `"Rice wine"`                                | `"hakka glutinous rice wine"`              |
+| `"Sugar"`                        | `"Sugar snap peas"`                          | `"sugar snap peas"`                        |
+| `"Potato"`                       | `"Sweet potato starch"` or `"Potato starch"` | `"sweet potato flour"` / `"potato starch"` |
+| `"Onion"`                        | `"Spring onions"`                            | `"spring onion stem"`                      |
+
+If you spot a new pattern, add it to this table.
+
+#### Normalize descriptive forms
+
+Ingredients should be the ingredient, not a preparation note:
+
+| Before                          | After             |
+| ------------------------------- | ----------------- |
+| `"a little cornflour slurry"`   | `"Cornflour"`     |
+| `"cornflour solution"`          | `"Cornflour"`     |
+| `"cornstarch solution"`         | `"Cornflour"`     |
+| `"a handful of leafy greens"`   | `"Leafy greens"`  |
+| `"scallion"` / `"scallions"`    | `"Spring onions"` |
+| `"green, yellow or red pepper"` | `"Bell pepper"`   |
+| `"* 350g fish"`                 | `"Fish"`          |
+
+#### Remove non-pantry items
+
+- **Water** — not a pantry tracking item; remove it
+- Plain quantities like `"2.5l"` or bare numbers that slipped through
+
+#### Check for duplicates
+
+Duplicates within a single recipe's `normalized_ingredients` add no value and slightly inflate the match %. Remove them.
+
+### 4. Validation
+
+After cleaning, run a quick sanity check:
+
+```python
+python3 -c "
+with open('pipeline/staging/<date>_<site>.py') as f:
+    exec(f.read())
+issues = []
+for r in RECIPES:
+    for ing in r.get('normalized_ingredients', []):
+        ing_lower = ing.lower()
+        if any(x in ing_lower for x in ['slurry', 'solution', 'http', 'method', 'ingredient', 'batter', 'marinate']):
+            issues.append((r['id'], ing))
+        if not ing.strip() or ing[0].isdigit():
+            issues.append((r['id'], repr(ing)))
+for rid, ing in issues:
+    print(f'{rid}: {ing}')
+print(f'Total: {len(RECIPES)} recipes, {len(issues)} issues')
+"
+```
