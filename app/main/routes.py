@@ -2,8 +2,8 @@ from flask import Blueprint, render_template, redirect, url_for, request, jsonif
 from flask_login import current_user
 
 from app.recipes.data import RECIPES
+from app.perishables.forms import PANTRY_ITEMS
 from app.recipes.search import score_recipe
-from app.perishables.forms import PANTRY_ITEMS as _PANTRY_ITEMS_VOCAB
 
 main_bp = Blueprint("main", __name__)
 
@@ -12,7 +12,7 @@ main_bp = Blueprint("main", __name__)
 def landing():
     if current_user.is_authenticated:
         return redirect(url_for("perishables.dashboard"))
-    return render_template("landing.html", pantry_vocab=_PANTRY_ITEMS_VOCAB)
+    return render_template("landing.html", pantry_vocab=PANTRY_ITEMS)
 
 
 @main_bp.route("/search")

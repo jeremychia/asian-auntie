@@ -228,7 +228,7 @@
   input.addEventListener('input', () => {
     const q = input.value.trim().toLowerCase();
     if (!q) { closeAC(); return; }
-    const matches = INGREDIENTS.filter(i => i.includes(q)).slice(0, 8);
+    const matches = INGREDIENTS.filter(i => i.toLowerCase().includes(q)).slice(0, 8);
     if (!matches.length) { closeAC(); return; }
     acList.innerHTML = '';
     matches.forEach(m => {

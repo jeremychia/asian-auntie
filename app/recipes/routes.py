@@ -3,12 +3,11 @@ from datetime import date, datetime, timezone
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
-from app.perishables.forms import PANTRY_ITEMS as _PANTRY_ITEMS_VOCAB
-
 from app.extensions import db
 from app.models import Item, RecipeEngagement
 from app.logging_config import get_logger
 from app.recipes.data import RECIPES
+from app.perishables.forms import PANTRY_ITEMS
 from app.recipes.search import (
     score_recipe,
     parse_cook_time,
@@ -67,7 +66,7 @@ def index():
     return render_template(
         "recipes/index.html",
         pantry_items=pantry_items,
-        pantry_vocab=_PANTRY_ITEMS_VOCAB,
+        pantry_vocab=PANTRY_ITEMS,
         skipped_ids=skipped_ids,
         made_ids=made_ids,
         user_expired_items_days=current_user.expired_items_days,
