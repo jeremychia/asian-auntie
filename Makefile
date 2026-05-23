@@ -1,4 +1,4 @@
-.PHONY: dev setup migrate
+.PHONY: dev setup migrate test
 
 dev:
 	uv run flask --app wsgi run --host=0.0.0.0 --port=8080 --debug
@@ -12,3 +12,6 @@ setup:
 migrate:
 	uv run flask --app wsgi db migrate -m "$(msg)"
 	uv run flask --app wsgi db upgrade
+
+test:
+	uv run pytest

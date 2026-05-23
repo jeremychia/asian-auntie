@@ -1,0 +1,227 @@
+"""Tests for perishables (pantry) routes: dashboard, add, edit, remove items."""
+
+from datetime import date, timedelta
+
+import pytest
+
+from app.models import Item
+from app.extensions import db as _db
+
+
+def future_date(days=30):
+    return (date.today() + timedelta(days=days)).isoformat()
+
+
+@pytest.fixture
+def item(db, user):
+    i = Item(
+        user_id=user.id,
+        name="Soy Sauce",
+        standard_name="Light soy sauce",
+        item_type="condiment",
+        expiry_date=date.today() + timedelta(days=30),
+        location="pantry",
+    )
+    db.session.add(i)
+    db.session.commit()
+    yield i
+    refreshed = _db.session.get(Item, i.id)
+    if refreshed:
+        db.session.delete(refreshed)
+        db.session.commit()
+
+
+def test_dashboard_loads(auth_client):
+    r = auth_client.get("/dashboard")
+    assert r.status_code == 200
+
+
+def test_dashboard_shows_item(auth_client, item):
+    r = auth_client.get("/dashboard")
+    assert r.status_code == 200
+    assert b"Soy Sauce" in r.data
+
+
+def test_add_item_page_loads(auth_client):
+    r = auth_client.get("/items/add")
+    assert r.status_code == 200
+
+
+def test_add_item_manual(auth_client, db, user):
+    r = auth_client.post(
+        "/items/add",
+        data={
+            "step": "confirm",
+            "name": "Fish Sauce",
+            "standard_name": "Fish sauce",
+            "item_type": "condiment",
+            "expiry_date": future_date(60),
+            "location": "pantry",
+        },
+        follow_redirects=True,
+    )
+    assert r.status_code == 200
+    created = Item.query.filter_by(user_id=user.id, name="Fish Sauce").first()
+    assert created is not None
+    db.session.delete(created)
+    db.session.commit()
+
+
+def test_item_detail_loads(auth_client, item):
+    r = auth_client.get(f"/items/{item.id}")
+    assert r.status_code == 200
+    assert b"Soy Sauce" in r.data
+
+
+def test_item_detail_requires_login(auth_client, item):
+    # Log out, then verify the item detail requires a session
+    auth_client.post("/logout", follow_redirects=False)
+    r = auth_client.get(f"/items/{item.id}", follow_redirects=False)
+    assert r.status_code == 302
+
+
+def test_item_ownership_enforced_via_api(client, db, item):
+    # Create a second user and verify they cannot access the item via the API
+    from app.models import User, RefreshToken
+    from app.extensions import bcrypt
+
+    other = User(
+        username="otherapiuser",
+        password_hash=bcrypt.generate_password_hash("apipass123").decode(),
+        onboarding_done=True,
+    )
+    db.session.add(other)
+    db.session.commit()
+
+    r_login = client.post(
+        "/api/v1/auth/login",
+        json={"username": "otherapiuser", "password": "apipass123"},
+    )
+    assert r_login.status_code == 200
+    token = r_login.get_json()["access_token"]
+
+    r = client.get(
+        f"/api/v1/items/{item.id}", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert r.status_code in (403, 404)
+
+    RefreshToken.query.filter_by(user_id=other.id).delete()
+    db.session.delete(other)
+    db.session.commit()
+
+
+def test_mark_item_used(auth_client, db, user, item):
+    r = auth_client.post(f"/items/{item.id}/use", follow_redirects=True)
+    assert r.status_code == 200
+    db.session.refresh(item)
+    assert item.removed_at is not None
+    assert item.removal_reason == "used"
+
+
+def test_remove_item(auth_client, db, item):
+    r = auth_client.post(
+        f"/items/{item.id}/remove",
+        data={"reason": "discarded"},
+        follow_redirects=True,
+    )
+    assert r.status_code == 200
+    db.session.refresh(item)
+    assert item.removed_at is not None
+
+
+def test_update_item_location(auth_client, db, item):
+    r = auth_client.post(
+        f"/items/{item.id}/location",
+        data={"location": "fridge"},
+        follow_redirects=True,
+    )
+    assert r.status_code == 200
+    db.session.refresh(item)
+    assert item.location == "fridge"
+
+
+def test_update_item_type(auth_client, db, item):
+    r = auth_client.post(
+        f"/items/{item.id}/type",
+        data={"item_type": "sauce"},
+        follow_redirects=True,
+    )
+    assert r.status_code == 200
+    db.session.refresh(item)
+    assert item.item_type == "sauce"
+
+
+def test_edit_item_page_loads(auth_client, item):
+    r = auth_client.get(f"/items/{item.id}/edit")
+    assert r.status_code == 200
+
+
+def test_update_item_name_and_expiry(auth_client, db, item):
+    new_expiry = future_date(90)
+    r = auth_client.post(
+        f"/items/{item.id}/edit",
+        data={
+            "name": "Dark Soy Sauce",
+            "expiry_date": new_expiry,
+            "item_type": "condiment",
+        },
+        follow_redirects=True,
+    )
+    assert r.status_code == 200
+    db.session.refresh(item)
+    assert item.name == "Dark Soy Sauce"
+
+
+def test_remove_expired_items(auth_client, db, user):
+    expired = Item(
+        user_id=user.id,
+        name="Old Sauce",
+        item_type="sauce",
+        expiry_date=date.today() - timedelta(days=5),
+        location="pantry",
+    )
+    db.session.add(expired)
+    db.session.commit()
+    expired_id = expired.id
+
+    r = auth_client.post("/items/remove-expired", follow_redirects=True)
+    assert r.status_code == 200
+
+    refreshed = _db.session.get(Item, expired_id)
+    assert refreshed is not None
+    assert refreshed.removed_at is not None
+    db.session.delete(refreshed)
+    db.session.commit()
+
+
+def test_audit_page_loads(auth_client):
+    r = auth_client.get("/audit")
+    assert r.status_code == 200
+
+
+def test_bulk_action_mark_used(auth_client, db, user):
+    items = [
+        Item(
+            user_id=user.id,
+            name=f"Bulk Item {i}",
+            item_type="other",
+            expiry_date=date.today() + timedelta(days=10),
+        )
+        for i in range(2)
+    ]
+    db.session.add_all(items)
+    db.session.commit()
+    item_ids = [i.id for i in items]
+
+    r = auth_client.post(
+        "/items/bulk-action",
+        data={"action": "used", "item_ids": [str(i) for i in item_ids]},
+        follow_redirects=True,
+    )
+    assert r.status_code == 200
+    for item_id in item_ids:
+        refreshed = _db.session.get(Item, item_id)
+        if refreshed:
+            assert refreshed.removed_at is not None
+            db.session.delete(refreshed)
+    db.session.commit()

@@ -25,7 +25,14 @@ dependencies = [
     "apscheduler>=3.10,<4",
     "google-cloud-storage>=2.0",
     "playwright>=1.60.0",
+    "yt-dlp>=2026.3.17",
+    "pyopenssl>=26.2.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+pythonpath = ["."]
 
 [dependency-groups]
 dev = [
@@ -33,4 +40,6 @@ dev = [
     "black>=24.10.0,<25",
     "ruff>=0.0.360,<1",
     "pyyaml>=6.0.3",
+    "pytest>=9.0.3",
+    "pytest-flask>=1.3.0",
 ]
