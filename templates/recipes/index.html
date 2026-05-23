@@ -81,7 +81,7 @@
             </select>
             <span style="font-size:var(--t-xs);align-self:center;width:100%;margin-top:var(--s-2)">Cuisine</span>
             <div class="rf-cuisine-chips" id="cuisine-chips">
-              {% set all_cuisines_list = ["Burmese","Chinese","Filipino","Indian","Indonesian","Malaysian","Singaporean","Thai","Vietnamese"] %}
+              {% set all_cuisines_list = ["Burmese","Chinese","Filipino","Indian","Indo-Chinese","Indonesian","Japanese","Korean","Malaysian","Singaporean","Taiwanese","Thai","Vietnamese","Western"] %}
               {% for c in all_cuisines_list %}
               <label class="rf-cuisine-chip{% if c in cuisine_prefs %} rf-cuisine-chip--on{% endif %}"
                      data-cuisine="{{ c }}">
@@ -110,6 +110,7 @@
               <option value="The Burmalicious">The Burmalicious</option>
               <option value="The Woks of Life">The Woks of Life</option>
               <option value="Vicky Pham">Vicky Pham</option>
+              <option value="Spice N Pans">Spice N Pans</option>
               <option value="What To Cook Today">What To Cook Today</option>
             </select>
           </div>
