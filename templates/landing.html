@@ -188,6 +188,13 @@
 
     </main>
 
+    <dialog id="lp-recipe-modal" class="lp-recipe-modal">
+      <div class="lp-recipe-modal__inner">
+        <button class="lp-recipe-modal__close" aria-label="Close">&times;</button>
+        <div id="lp-recipe-modal-body"></div>
+      </div>
+    </dialog>
+
     <script>
 (function () {
   const INGREDIENTS = {{ pantry_vocab | tojson }}.sort();
@@ -354,7 +361,60 @@
       </div>
     `;
 
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => openModal(r));
     return card;
+  }
+
+  const modal = document.getElementById('lp-recipe-modal');
+  const modalBody = document.getElementById('lp-recipe-modal-body');
+
+  modal.querySelector('.lp-recipe-modal__close').addEventListener('click', () => modal.close());
+  modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
+
+  function openModal(r) {
+    const matchClass = r.match_pct >= 80 ? '' : (r.match_pct >= 50 ? 'rd-pct--mid' : 'rd-pct--low');
+    const barClass   = r.match_pct >= 80 ? '' : (r.match_pct >= 50 ? 'rd-bar-fill--mid' : 'rd-bar-fill--low');
+
+    const statusHtml = r.missing.length === 0
+      ? 'Have <strong>everything</strong> you need'
+      : r.missing.length === 1
+        ? 'Just missing <strong>' + esc(r.missing[0]) + '</strong>'
+        : 'You have <strong>' + r.matched_count + ' of ' + r.total_count + '</strong> ingredients';
+
+    const haveRows = (r.matched || []).map(i =>
+      `<li class="ing-row ing-row--have"><span class="ing-row__dot" aria-hidden="true">✓</span><span class="ing-row__name">${esc(i)}</span></li>`
+    ).join('');
+
+    const needRows = (r.missing || []).map(i =>
+      `<li class="ing-row ing-row--need"><span class="ing-row__dot" aria-hidden="true">○</span><span class="ing-row__name">${esc(i)}</span></li>`
+    ).join('');
+
+    const ctaHtml = r.source_url
+      ? `<a href="${esc(r.source_url)}" target="_blank" rel="noopener" class="btn btn-primary btn-full recipe-detail__cta">View full recipe on ${esc(r.source)} ↗</a>`
+      : `<p class="source-unavailable">Source currently unavailable.</p>`;
+
+    modalBody.innerHTML = `
+      <div class="rd-header">
+        <div class="rd-title-row">
+          <h2 class="rd-title">${esc(r.name)}</h2>
+          <span class="rd-pct ${matchClass}">${r.match_pct}%</span>
+        </div>
+        <div class="rd-meta">
+          <span>${esc(r.source)}</span>
+          <span class="rd-meta-dot">·</span>
+          <span>${esc(r.cuisine)}</span>
+          ${r.cook_time ? '<span class="rd-meta-dot">·</span><span>' + esc(r.cook_time) + '</span>' : ''}
+          ${r.difficulty ? '<span class="rd-meta-dot">·</span><span>' + esc(r.difficulty) + '</span>' : ''}
+        </div>
+        <div class="rd-bar"><div class="rd-bar-fill ${barClass}" style="width:${r.match_pct}%"></div></div>
+        <p class="rd-status">${statusHtml}</p>
+      </div>
+      ${haveRows ? `<p class="rd-ing-heading">In your pantry · ${r.matched.length}</p><ul class="ing-list">${haveRows}</ul>` : ''}
+      ${needRows ? `<p class="rd-ing-heading">Still need · ${r.missing.length}</p><ul class="ing-list">${needRows}</ul>` : ''}
+      ${ctaHtml}
+    `;
+    modal.showModal();
   }
 
   function esc(s) {

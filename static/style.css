@@ -7071,3 +7071,44 @@ dialog.id-sheet::backdrop {
   gap: var(--s-3);
   flex-wrap: wrap;
 }
+
+/* ── Landing page recipe preview modal ── */
+.lp-recipe-modal {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  width: min(480px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
+  color: var(--text);
+}
+.lp-recipe-modal::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+.lp-recipe-modal__inner {
+  padding: var(--s-7) var(--s-5) var(--s-5);
+  position: relative;
+}
+.lp-recipe-modal__close {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: var(--s-1) var(--s-2);
+}
+.lp-recipe-modal__close:hover {
+  color: var(--text);
+}
+.lp-recipe-modal .ing-list {
+  margin-bottom: var(--s-4);
+}
+.lp-recipe-modal .recipe-detail__cta {
+  margin-top: var(--s-4);
+}
