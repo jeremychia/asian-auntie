@@ -320,6 +320,21 @@
     <p class="v2-sheet-head__title">{% if b_is_open %}Opened batch{% else %}Sealed batch{% endif %}</p>
     <p class="v2-sheet-head__meta">Expires {{ batch.expiry_date.strftime("%-d %b %Y") }} · {{ blabel }}</p>
   </div>
+  {# How much is left? #}
+  <div style="padding:8px 16px 4px">
+    <p style="font-size:var(--font-xs);color:var(--color-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px">How much is left?</p>
+    <form method="post" action="{{ url_for('perishables.update_quantity_state', item_id=batch.id) }}"
+          style="display:flex;flex-direction:column;gap:6px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="next" value="{{ request.path }}"/>
+      {% for val, label in [('full','Full'),('three_quarters','¾'),('half','½'),('nearly_gone','Nearly gone')] %}
+      <button type="submit" name="quantity_state" value="{{ val }}"
+              class="quantity-btn {% if batch.quantity_state == val %}quantity-btn--active{% endif %}"
+              onclick="this.closest('dialog').close()">{{ label }}</button>
+      {% endfor %}
+    </form>
+  </div>
+
   <form method="post" action="{{ url_for('perishables.mark_used', item_id=batch.id) }}" style="display:contents">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <button type="submit" class="v2-sheet-action">
