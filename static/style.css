@@ -3267,6 +3267,7 @@ select.sort-select:focus {
 
 .lp-search__input-area {
   max-width: 540px;
+  margin-inline: auto;
 }
 
 .lp-search__results {
