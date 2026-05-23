@@ -147,7 +147,9 @@ def create_app():
                         bucket_name,
                         app.config.get("GCS_CREDENTIALS_JSON"),
                     )
-                    return Response(data, content_type="image/jpeg")
+                    resp = Response(data, content_type="image/jpeg")
+                    resp.headers["Cache-Control"] = "private, max-age=604800"
+                    return resp
                 except Exception:
                     pass  # fall through to local file serving
 
@@ -172,14 +174,18 @@ def create_app():
                     photo.photo_path,
                     headers={"User-Agent": "AsianAuntie/1.0 (jeremyjchia@gmail.com)"},
                 )
-                with _urlrequest.urlopen(req, timeout=10) as resp:
-                    data = resp.read()
-                    ct = resp.headers.get("Content-Type", "image/jpeg")
-                return Response(data, content_type=ct)
+                with _urlrequest.urlopen(req, timeout=10) as r:
+                    data = r.read()
+                    ct = r.headers.get("Content-Type", "image/jpeg")
+                flask_resp = Response(data, content_type=ct)
+                flask_resp.headers["Cache-Control"] = "private, max-age=604800"
+                return flask_resp
             except Exception:
                 abort(404)
 
-        return send_from_directory(app.config["UPLOAD_FOLDER"], photo.photo_path)
+        resp = send_from_directory(app.config["UPLOAD_FOLDER"], photo.photo_path)
+        resp.headers["Cache-Control"] = "private, max-age=604800"
+        return resp
 
     # Keep the /uploads/ route as a fallback for any direct links already in the
     # wild, but enforce ownership.
