@@ -125,7 +125,7 @@ def create_app():
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' https://unpkg.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
-            "img-src 'self' https://storage.googleapis.com data:; "
+            "img-src 'self' https://storage.googleapis.com https://images.openfoodfacts.org https://images.openfoodfacts.net https://static.openfoodfacts.org data:; "
             "connect-src 'self'; "
             "font-src 'self' https://fonts.gstatic.com; "
             "frame-ancestors 'none';"

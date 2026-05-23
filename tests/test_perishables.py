@@ -199,6 +199,85 @@ def test_audit_page_loads(auth_client):
     assert r.status_code == 200
 
 
+def test_barcode_confirm_renders_off_image_url(auth_client):
+    # OFF image URL should appear in the confirm step img tag
+    off_url = "https://images.openfoodfacts.org/images/products/123/test.jpg"
+    r = auth_client.post(
+        "/items/add",
+        data={
+            "step": "barcode_confirm",
+            "name": "Test Product",
+            "item_type": "other",
+            "shelf_life_days": "90",
+            "off_image_path": off_url,
+            "barcode": "12345678",
+        },
+    )
+    assert r.status_code == 200
+    assert off_url.encode() in r.data
+
+
+def test_barcode_confirm_no_image_when_off_image_path_empty(auth_client):
+    # No photo section when off_image_path is absent
+    r = auth_client.post(
+        "/items/add",
+        data={
+            "step": "barcode_confirm",
+            "name": "No Image Product",
+            "item_type": "other",
+            "shelf_life_days": "90",
+            "off_image_path": "",
+            "barcode": "12345678",
+        },
+    )
+    assert r.status_code == 200
+    assert b"add-review-photo" not in r.data
+
+
+def test_csp_allows_off_image_hosts(auth_client):
+    r = auth_client.get("/dashboard")
+    csp = r.headers.get("Content-Security-Policy", "")
+    assert "images.openfoodfacts.org" in csp
+
+
+def test_add_item_uses_user_custom_locations(auth_client, db, user):
+    import json
+
+    user.custom_locations = json.dumps(["Spice Rack", "Basement Freezer"])
+    db.session.commit()
+
+    r = auth_client.get("/items/add?skip=1")
+    assert r.status_code == 200
+    assert b"Spice Rack" in r.data
+    assert b"Basement Freezer" in r.data
+
+    user.custom_locations = None
+    db.session.commit()
+
+
+def test_add_item_confirm_uses_user_custom_locations(auth_client, db, user):
+    import json
+
+    user.custom_locations = json.dumps(["Wine Cellar", "Counter"])
+    db.session.commit()
+
+    r = auth_client.post(
+        "/items/add",
+        data={
+            "step": "barcode_confirm",
+            "name": "Test Wine",
+            "item_type": "other",
+            "shelf_life_days": "365",
+            "barcode": "12345678",
+        },
+    )
+    assert r.status_code == 200
+    assert b"Wine Cellar" in r.data
+
+    user.custom_locations = None
+    db.session.commit()
+
+
 def test_bulk_action_mark_used(auth_client, db, user):
     items = [
         Item(
