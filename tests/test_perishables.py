@@ -284,6 +284,63 @@ def test_add_item_confirm_uses_user_custom_locations(auth_client, db, user):
     db.session.commit()
 
 
+@pytest.fixture
+def item_group(db, user):
+    """Two items with the same standard_name, sorted by expiry (soonest first)."""
+    items = [
+        Item(
+            user_id=user.id,
+            name="Coconut Milk A",
+            standard_name="Coconut milk",
+            item_type="other",
+            expiry_date=date.today() + timedelta(days=10),
+        ),
+        Item(
+            user_id=user.id,
+            name="Coconut Milk B",
+            standard_name="Coconut milk",
+            item_type="other",
+            expiry_date=date.today() + timedelta(days=30),
+        ),
+    ]
+    db.session.add_all(items)
+    db.session.commit()
+    yield items
+    for i in items:
+        refreshed = _db.session.get(Item, i.id)
+        if refreshed:
+            db.session.delete(refreshed)
+    db.session.commit()
+
+
+def test_group_detail_loads(auth_client, item_group):
+    r = auth_client.get("/items/group/Coconut milk")
+    assert r.status_code == 200
+    assert b"Coconut milk" in r.data
+
+
+def test_group_detail_reserve_has_quantity_selector(auth_client, item_group):
+    r = auth_client.get("/items/group/Coconut milk")
+    assert r.status_code == 200
+    # The "How much is left?" section must appear in the action sheets
+    assert b"How much is left?" in r.data
+    # All four quantity options must be present
+    for val in [b"full", b"three_quarters", b"half", b"nearly_gone"]:
+        assert val in r.data
+
+
+def test_group_detail_quantity_state_update(auth_client, db, item_group):
+    reserve = item_group[1]
+    r = auth_client.post(
+        f"/items/{reserve.id}/quantity",
+        data={"quantity_state": "half", "next": "/items/group/Coconut milk"},
+        follow_redirects=True,
+    )
+    assert r.status_code == 200
+    db.session.refresh(reserve)
+    assert reserve.quantity_state == "half"
+
+
 def test_bulk_action_mark_used(auth_client, db, user):
     items = [
         Item(
