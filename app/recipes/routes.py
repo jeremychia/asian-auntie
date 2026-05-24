@@ -89,19 +89,27 @@ def search():
     website: str = str(data.get("website", "")).strip()
     cook_time_min: int = int(data.get("cook_time_min", 0))
     cook_time_max: int = int(data.get("cook_time_max", 120))
+    title: str = str(data.get("title", "")).strip().lower()
 
     # Parse sort parameter (e.g., "quick_rev" -> sort="quick", reverse=True)
     sort_reverse = sort_param.endswith("_rev")
     sort = sort_param.replace("_rev", "")
 
-    if not ingredients:
+    if not ingredients and not title:
         return jsonify({"results": [], "total": 0, "has_more": False})
 
-    candidates = candidate_recipe_indices(ingredients)
+    # Title search scans the full catalog; ingredient-only search uses the index.
+    if title:
+        candidates: range | set = range(len(RECIPES))
+    else:
+        candidates = candidate_recipe_indices(ingredients)
 
     results = []
     for idx in candidates:
         recipe = RECIPES[idx]
+        # Apply title filter
+        if title and title not in recipe.get("name", "").lower():
+            continue
         # Apply cuisine filter
         if cuisines and recipe.get("cuisine", "") not in cuisines:
             continue
@@ -114,9 +122,40 @@ def search():
             if recipe_time_mins < cook_time_min or recipe_time_mins > cook_time_max:
                 continue
 
-        scored = score_recipe(recipe, idx, ingredients)
-        if scored:
-            results.append(scored)
+        if ingredients:
+            scored = score_recipe(recipe, idx, ingredients)
+            if scored:
+                results.append(scored)
+            elif title:
+                # Title matched but ingredients don't overlap — include at 0% so
+                # the user can see the recipe exists, just needs different pantry items.
+                norm_ings = recipe.get("normalized_ingredients") or recipe.get(
+                    "ingredients", []
+                )
+                results.append(
+                    {
+                        **recipe,
+                        "match_pct": 0,
+                        "matched_count": 0,
+                        "total_count": len(norm_ings),
+                        "matched": [],
+                        "missing": norm_ings,
+                    }
+                )
+        else:
+            norm_ings = recipe.get("normalized_ingredients") or recipe.get(
+                "ingredients", []
+            )
+            results.append(
+                {
+                    **recipe,
+                    "match_pct": 0,
+                    "matched_count": 0,
+                    "total_count": len(norm_ings),
+                    "matched": [],
+                    "missing": [],
+                }
+            )
 
     # Apply sort strategy
     if sort == "quick":

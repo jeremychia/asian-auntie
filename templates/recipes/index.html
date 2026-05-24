@@ -137,6 +137,11 @@
       <h2 class="rf-results__heading" id="results-heading">Best matches</h2>
       <span class="rf-results__count" id="results-count"></span>
     </div>
+    <div style="margin-bottom:var(--s-3)">
+      <input type="text" id="title-filter" class="rf-ing__input"
+             placeholder="Search by recipe name…"
+             autocomplete="off" style="width:100%" />
+    </div>
     <div id="recipe-list"></div>
     <div id="no-recipes-msg" class="rf-empty" hidden>
       <p class="rf-empty__title">No matches found</p>
@@ -182,6 +187,7 @@
   let currentSort = 'match';
   let currentCuisines = [];
   let currentWebsite = '';
+  let currentTitle = '';
   let totalResults = 0;
   let searchDebounce = null;
   let pendingScrollY = 0;
@@ -208,12 +214,13 @@
   const showAllBtn    = document.getElementById('show-all-btn');
   const sortFilter    = document.getElementById('sort-filter');
   const websiteFilter = document.getElementById('website-filter');
+  const titleFilter   = document.getElementById('title-filter');
 
   // ── Save / restore state across recipe detail navigation ────
   function saveState() {
     try {
       sessionStorage.setItem(STATE_KEY, JSON.stringify({
-        ingredients, pantryLoaded, currentSort, currentCuisines, currentWebsite,
+        ingredients, pantryLoaded, currentSort, currentCuisines, currentWebsite, currentTitle,
         scrollY: window.scrollY,
       }));
     } catch (_) {}
@@ -231,9 +238,11 @@
       currentSort    = state.currentSort    || 'match';
       currentCuisines = Array.isArray(state.currentCuisines) ? state.currentCuisines : [];
       currentWebsite = state.currentWebsite || '';
+      currentTitle   = state.currentTitle   || '';
       pendingScrollY = state.scrollY || 0;
       if (sortFilter)    sortFilter.value = currentSort;
       if (websiteFilter) websiteFilter.value = currentWebsite;
+      if (titleFilter)   titleFilter.value = currentTitle;
       // Restore cuisine chip states
       document.querySelectorAll('#cuisine-chips .rf-cuisine-chip').forEach(chip => {
         const val = chip.dataset.cuisine;
@@ -440,6 +449,7 @@
   // ── Filters ──────────────────────────────────────────────────
   if (sortFilter) sortFilter.addEventListener('change', () => { currentSort = sortFilter.value; markDirty(); });
   if (websiteFilter) websiteFilter.addEventListener('change', () => { currentWebsite = websiteFilter.value; markDirty(); });
+  if (titleFilter) titleFilter.addEventListener('input', () => { currentTitle = titleFilter.value.trim(); markDirty(); });
 
   // Cuisine chips — read initial state from server-rendered checkboxes
   currentCuisines = [...document.querySelectorAll('#cuisine-chips .rf-cuisine-chip input:checked')].map(el => el.value);
@@ -508,7 +518,7 @@
     const resp = await fetch('/recipes/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-      body: JSON.stringify({ ingredients: active, page, show_all: showAll, sort: currentSort, cuisines: currentCuisines, website: currentWebsite, cook_time_min: 0, cook_time_max: 120 }),
+      body: JSON.stringify({ ingredients: active, page, show_all: showAll, sort: currentSort, cuisines: currentCuisines, website: currentWebsite, title: currentTitle, cook_time_min: 0, cook_time_max: 120 }),
     });
     if (!resp.ok) throw new Error('search failed');
     return resp.json();

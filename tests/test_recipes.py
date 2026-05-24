@@ -273,6 +273,85 @@ def test_score_recipe_normalized_no_match(patched_recipes):
     assert result is None
 
 
+def test_recipes_search_title_filter_match(auth_client, pantry_items):
+    first_name = RECIPES[0]["name"]
+    r = auth_client.post(
+        "/recipes/search",
+        json={
+            "ingredients": ["Coconut milk", "Fish sauce"],
+            "page": 1,
+            "title": first_name[:5],
+        },
+        content_type="application/json",
+    )
+    assert r.status_code == 200
+    data = r.get_json()
+    for recipe in data["results"]:
+        assert first_name[:5].lower() in recipe["name"].lower()
+
+
+def test_recipes_search_title_filter_no_match(auth_client, pantry_items):
+    r = auth_client.post(
+        "/recipes/search",
+        json={
+            "ingredients": ["Coconut milk", "Fish sauce"],
+            "page": 1,
+            "title": "zzz_nonexistent_recipe_zzz",
+        },
+        content_type="application/json",
+    )
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["results"] == []
+    assert data["total"] == 0
+
+
+def test_recipes_search_title_filter_includes_zero_match_recipes(
+    auth_client, pantry_items
+):
+    # "Egg Drop Soup" uses chicken stock/bouillon, not chicken meat — score_recipe
+    # returns None for ["Chicken"], but the title filter should still surface it at 0%.
+    r = auth_client.post(
+        "/recipes/search",
+        json={"ingredients": ["Chicken"], "page": 1, "title": "egg drop soup"},
+        content_type="application/json",
+    )
+    assert r.status_code == 200
+    data = r.get_json()
+    assert (
+        data["total"] > 0
+    ), "Expected egg drop soup results even with 0% ingredient match"
+    zero_match = [rec for rec in data["results"] if rec["match_pct"] == 0]
+    assert zero_match, "Expected at least one 0% match result"
+    assert all("egg drop soup" in rec["name"].lower() for rec in data["results"])
+
+
+def test_recipes_search_title_filter_case_insensitive(auth_client, pantry_items):
+    first_name = RECIPES[0]["name"]
+    fragment = first_name[:5]
+    r_lower = auth_client.post(
+        "/recipes/search",
+        json={
+            "ingredients": ["Coconut milk", "Fish sauce"],
+            "page": 1,
+            "title": fragment.lower(),
+        },
+        content_type="application/json",
+    )
+    r_upper = auth_client.post(
+        "/recipes/search",
+        json={
+            "ingredients": ["Coconut milk", "Fish sauce"],
+            "page": 1,
+            "title": fragment.upper(),
+        },
+        content_type="application/json",
+    )
+    assert r_lower.status_code == 200
+    assert r_upper.status_code == 200
+    assert r_lower.get_json()["total"] == r_upper.get_json()["total"]
+
+
 def test_score_recipe_matched_are_normalized_names_not_raw(patched_recipes):
     """matched list must contain normalized names, never raw ingredient strings."""
     idx = patched_recipes
