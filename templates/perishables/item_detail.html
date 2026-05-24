@@ -66,13 +66,15 @@
     {% if item.has_photo %}Edit photos ({{ item.photos | length }}){% else %}Add photos{% endif %}
   </a>
 
-  <div class="id-header" style="margin-bottom:1rem">
-    <div style="flex:1;min-width:0">
-      <p style="font-size:var(--font-xs);color:var(--color-muted);margin:0 0 4px">Item name</p>
-      <input type="text" form="edit-form" name="name" value="{{ item.name }}"
-             maxlength="256" required class="manual-input edit-name-input" style="margin:0"/>
-    </div>
-  </div>
+  <ul class="ing-list id-detail-list" style="margin-bottom:1rem">
+    <li class="ing-row">
+      <span class="id-row__label">Item name</span>
+      <span class="id-row__value">
+        <input type="text" form="edit-form" name="name" value="{{ item.name }}"
+               maxlength="256" required class="inline-edit__select"/>
+      </span>
+    </li>
+  </ul>
 
   {% elif item.has_photo %}
 
@@ -139,10 +141,10 @@
   {# ── Product info card / edit fields ──────────────────────────── #}
   {% if is_editing %}
 
-  <div class="pi-card" style="display:flex;flex-direction:column;gap:12px">
-    <div class="meta-row">
-      <span class="meta-label">Ingredient</span>
-      <div class="meta-value">
+  <ul class="ing-list id-detail-list">
+    <li class="ing-row">
+      <span class="id-row__label">Ingredient</span>
+      <span class="id-row__value">
         <input type="text" form="edit-form" name="standard_name"
                list="standard-name-options"
                value="{{ item.standard_name or '' }}"
@@ -154,11 +156,11 @@
           <option value="{{ pantry_item }}"/>
           {% endfor %}
         </datalist>
-      </div>
-    </div>
-    <div class="meta-row">
-      <span class="meta-label">Type</span>
-      <div class="meta-value">
+      </span>
+    </li>
+    <li class="ing-row">
+      <span class="id-row__label">Type</span>
+      <span class="id-row__value">
         <select form="edit-form" name="item_type" class="inline-edit__select">
           <option value="unknown" {% if item.item_type == "unknown" %}selected{% endif %}>Unknown</option>
           <option value="sauce"   {% if item.item_type == "sauce"   %}selected{% endif %}>Sauce</option>
@@ -172,11 +174,11 @@
           <option value="dairy"   {% if item.item_type == "dairy"   %}selected{% endif %}>Dairy</option>
           <option value="other"   {% if item.item_type == "other"   %}selected{% endif %}>Other</option>
         </select>
-      </div>
-    </div>
-    <div class="meta-row">
-      <span class="meta-label">Location</span>
-      <div class="meta-value">
+      </span>
+    </li>
+    <li class="ing-row">
+      <span class="id-row__label">Location</span>
+      <span class="id-row__value">
         <input type="text" form="edit-form" name="location"
                list="location-options"
                value="{{ item.location | capitalize if item.location else '' }}"
@@ -190,29 +192,74 @@
           <option value="Cupboard">
           <option value="Counter">
         </datalist>
-      </div>
-    </div>
-    <div class="meta-row">
-      <span class="meta-label">Expires</span>
-      <div class="meta-value">
+      </span>
+    </li>
+    <li class="ing-row">
+      <span class="id-row__label">Expires</span>
+      <span class="id-row__value">
         <input type="date" form="edit-form" name="expiry_date"
                value="{{ item.expiry_date.strftime('%Y-%m-%d') }}"
                required
                class="inline-edit__select"/>
-      </div>
-    </div>
-    <div class="meta-row">
-      <span class="meta-label">Barcode</span>
-      <div class="meta-value">
+      </span>
+    </li>
+    <li class="ing-row">
+      <span class="id-row__label">Brand</span>
+      <span class="id-row__value">
+        <input type="text" form="edit-form" name="brands"
+               value="{{ item.brands or '' }}"
+               placeholder="Optional"
+               maxlength="128"
+               class="inline-edit__select"/>
+      </span>
+    </li>
+    <li class="ing-row">
+      <span class="id-row__label">Size</span>
+      <span class="id-row__value">
+        <input type="text" form="edit-form" name="quantity"
+               value="{{ item.quantity or '' }}"
+               placeholder="e.g. 500 ml"
+               maxlength="64"
+               class="inline-edit__select"/>
+      </span>
+    </li>
+    <li class="ing-row">
+      <span class="id-row__label">Barcode</span>
+      <span class="id-row__value">
         <input type="text" form="edit-form" name="barcode"
                value="{{ item.barcode or '' }}"
                placeholder="Optional"
                maxlength="64"
                inputmode="numeric"
                class="inline-edit__select"/>
-      </div>
-    </div>
-  </div>
+      </span>
+    </li>
+    <li class="ing-row">
+      <span class="id-row__label">Nutri-Score</span>
+      <span class="id-row__value">
+        <select form="edit-form" name="off_nutriscore_grade" class="inline-edit__select">
+          <option value="" {% if not item.off_nutriscore_grade or item.off_nutriscore_grade == 'U' %}selected{% endif %}>Unknown</option>
+          <option value="A" {% if item.off_nutriscore_grade == 'A' %}selected{% endif %}>A — Healthy choice</option>
+          <option value="B" {% if item.off_nutriscore_grade == 'B' %}selected{% endif %}>B — Good</option>
+          <option value="C" {% if item.off_nutriscore_grade == 'C' %}selected{% endif %}>C — Average</option>
+          <option value="D" {% if item.off_nutriscore_grade == 'D' %}selected{% endif %}>D — Less healthy</option>
+          <option value="E" {% if item.off_nutriscore_grade == 'E' %}selected{% endif %}>E — Avoid often</option>
+        </select>
+      </span>
+    </li>
+    <li class="ing-row">
+      <span class="id-row__label">Processing</span>
+      <span class="id-row__value">
+        <select form="edit-form" name="off_nova_group" class="inline-edit__select">
+          <option value="" {% if not item.off_nova_group %}selected{% endif %}>Unknown</option>
+          <option value="1" {% if item.off_nova_group == 1 %}selected{% endif %}>1 — Unprocessed</option>
+          <option value="2" {% if item.off_nova_group == 2 %}selected{% endif %}>2 — Culinary ingredient</option>
+          <option value="3" {% if item.off_nova_group == 3 %}selected{% endif %}>3 — Processed food</option>
+          <option value="4" {% if item.off_nova_group == 4 %}selected{% endif %}>4 — Ultra-processed</option>
+        </select>
+      </span>
+    </li>
+  </ul>
 
   {% else %}
 

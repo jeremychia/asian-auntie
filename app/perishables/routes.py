@@ -903,6 +903,10 @@ def update_item(item_id):
     new_location = request.form.get("location", "").strip().lower()
     new_standard_name = request.form.get("standard_name", "").strip()
     new_barcode = request.form.get("barcode", "").strip()
+    new_brands = request.form.get("brands", "").strip()
+    new_quantity = request.form.get("quantity", "").strip()
+    new_nutriscore = request.form.get("off_nutriscore_grade", "").strip().upper()
+    new_nova = request.form.get("off_nova_group", "").strip()
     if not new_name or len(new_name) > 256:
         flash("Item name is required and must be under 256 characters.", "error")
         return redirect(url_for("perishables.item_detail", item_id=item_id))
@@ -911,6 +915,18 @@ def update_item(item_id):
         return redirect(url_for("perishables.item_detail", item_id=item_id))
     if new_barcode and len(new_barcode) > 64:
         flash("Barcode is too long.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    if new_brands and len(new_brands) > 128:
+        flash("Brand name is too long.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    if new_quantity and len(new_quantity) > 64:
+        flash("Size is too long.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    if new_nutriscore and new_nutriscore not in ("A", "B", "C", "D", "E"):
+        flash("Invalid Nutri-Score grade.", "error")
+        return redirect(url_for("perishables.item_detail", item_id=item_id))
+    if new_nova and new_nova not in ("1", "2", "3", "4"):
+        flash("Invalid NOVA group.", "error")
         return redirect(url_for("perishables.item_detail", item_id=item_id))
     try:
         parsed_expiry = date.fromisoformat(new_expiry)
@@ -933,6 +949,10 @@ def update_item(item_id):
     item.item_type = new_item_type
     item.location = new_location or None
     item.barcode = new_barcode or None
+    item.brands = new_brands or None
+    item.quantity = new_quantity or None
+    item.off_nutriscore_grade = new_nutriscore or None
+    item.off_nova_group = int(new_nova) if new_nova else None
     db.session.commit()
     return redirect(
         _safe_next(request.form.get("next"))
