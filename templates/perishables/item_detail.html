@@ -216,141 +216,110 @@
 
   {% else %}
 
-  <div class="pi-card">
-    {% if not has_enrichment and not has_standard %}
-      <p class="pi-sparse">
-        <strong style="color:#700143">{{ item.standard_name or item.name }}</strong>
-        · Manual entry · <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}" style="color:#700143;font-weight:600">Add product details</a>
-      </p>
-      {% if tags %}
-      <div class="pi-tags">
-        {% for tag in tags %}<span class="pi-tag">{{ tag }}</span>{% endfor %}
-      </div>
-      {% endif %}
-    {% else %}
-      <div class="pi-main">
-        {% if item.off_nutriscore_grade and item.off_nutriscore_grade != 'U' %}
-          <span class="pi-ns pi-ns--{{ item.off_nutriscore_grade | upper }}"
-                aria-label="Nutri-Score {{ item.off_nutriscore_grade | upper }}"
-                title="Nutri-Score {{ item.off_nutriscore_grade | upper }} — nutritional quality from A (best) to E (worst)">{{ item.off_nutriscore_grade | upper }}</span>
-        {% else %}
-          <span class="pi-ns pi-ns--empty" aria-label="Nutri-Score unavailable" title="Nutri-Score not available">–</span>
-        {% endif %}
-        <div class="pi-body">
-          <span class="pi-std">{{ item.standard_name or item.name }}</span>
-          {% if item.brands or item.quantity %}
-          <p class="pi-sub">
-            {% if item.brands %}{{ item.brands }}{% endif %}
-            {% if item.brands and item.quantity %}<span class="pi-sub__sep">·</span>{% endif %}
-            {% if item.quantity %}{{ item.quantity }}{% endif %}
-          </p>
-          {% endif %}
-        </div>
-      </div>
+  {# ── Meta subtitle (brand · quantity · location) ───────────────── #}
+  <div class="rd-meta" style="margin-bottom:var(--s-3)">
+    {% if item.brands %}{{ item.brands }}{% endif %}
+    {% if item.brands and item.quantity %}<span class="rd-meta-dot">·</span>{% endif %}
+    {% if item.quantity %}{{ item.quantity }}{% endif %}
+    {% if (item.brands or item.quantity) and item.location %}<span class="rd-meta-dot">·</span>{% endif %}
+    {% if item.location %}{{ item.location | capitalize }}{% endif %}
+  </div>
 
-      {% if tags %}
-      <div class="pi-tags">
-        {% for tag in tags %}<span class="pi-tag">{{ tag }}</span>{% endfor %}
-      </div>
-      {% endif %}
+  {# ── Tags ──────────────────────────────────────────────────────── #}
+  {% if tags %}
+  <div class="pi-tags" style="margin-bottom:var(--s-4)">
+    {% for tag in tags %}<span class="pi-tag">{{ tag }}</span>{% endfor %}
+  </div>
+  {% endif %}
 
-      {% set has_more = item.off_nova_group or item.barcode or item.location %}
-      {% if has_more %}
-      <button class="pi-more-toggle" type="button"
-              aria-expanded="false"
-              onclick="this.setAttribute('aria-expanded', this.getAttribute('aria-expanded')==='false' ? 'true' : 'false');
-                       this.nextElementSibling.hidden = !this.nextElementSibling.hidden;
-                       this.querySelector('span').textContent = this.getAttribute('aria-expanded')==='true' ? 'Hide product details' : 'Show product details';">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-        <span>Show product details</span>
+  {# ── Expiry status ─────────────────────────────────────────────── #}
+  <p class="id-exp-status{% if urgency in ('expired','today') %} id-exp-status--urgent{% elif urgency == 'soon' %} id-exp-status--warn{% endif %}">{{ hero_headline }}</p>
+  <p class="id-exp-date">Expires {{ item.expiry_date.strftime("%-d %b %Y") }} · added {{ item.date_added.strftime("%-d %b") }}</p>
+
+  {# ── Quantity selector ─────────────────────────────────────────── #}
+  <form method="post" action="{{ url_for('perishables.update_quantity_state', item_id=item.id) }}" style="margin-bottom:var(--s-3)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="next" value="{{ url_for('perishables.item_detail', item_id=item.id) }}"/>
+    <div class="id-qty-chips">
+      {% for val, label in [('full','Full'),('three_quarters','¾ left'),('half','Half'),('nearly_gone','Nearly gone')] %}
+      <button type="submit" name="quantity_state" value="{{ val }}"
+              class="id-qty-chip{% if item.quantity_state == val %} id-qty-chip--on{% endif %}">{{ label }}</button>
+      {% endfor %}
+    </div>
+  </form>
+
+  {# ── CTA ───────────────────────────────────────────────────────── #}
+  <div class="id-cta-row">
+    <form method="post" action="{{ url_for('perishables.mark_used', item_id=item.id) }}" style="flex:1">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-primary btn-full" style="display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        Mark as used
       </button>
-      <div class="pi-more" hidden>
-        {% if item.off_nutriscore_grade and item.off_nutriscore_grade != 'U' %}
-          {% set ns_desc = {'A':'Healthy choice','B':'Good','C':'Average','D':'Less healthy','E':'Avoid often'} %}
-          <span class="pi-more__label">Nutrition</span>
-          <span class="pi-more__value">{{ ns_desc.get(item.off_nutriscore_grade | upper, '') }}</span>
-        {% endif %}
-        {% if item.off_nova_group %}
-          {% set nova_desc = {1:'Unprocessed',2:'Culinary ingredient',3:'Processed food',4:'Ultra-processed'} %}
-          <span class="pi-more__label">Processing</span>
-          <span class="pi-more__value">
-            <span class="pi-nova-chip pi-nova-chip--{{ item.off_nova_group }}"
-                  title="NOVA group {{ item.off_nova_group }} — food processing level: 1 = unprocessed, 2 = culinary ingredient, 3 = processed, 4 = ultra-processed">{{ item.off_nova_group }}</span>
-            {{ nova_desc.get(item.off_nova_group, '') }}
-          </span>
-        {% endif %}
-        {% if item.location %}
-          <span class="pi-more__label">Location</span>
-          <span class="pi-more__value">{{ item.location | capitalize }}</span>
-        {% endif %}
-        {% if item.barcode %}
-          <span class="pi-more__label">Barcode</span>
-          <span class="pi-more__value pi-more__value--mono">{{ item.barcode }}</span>
-        {% endif %}
-      </div>
-      {% endif %}
+    </form>
+    <button type="button" class="un-hero__more" aria-label="More actions"
+            onclick="document.getElementById('sheet-{{ item.id }}').showModal()">⋮</button>
+  </div>
+
+  {# ── Details section ───────────────────────────────────────────── #}
+  <p class="rd-ing-heading">Details</p>
+  <ul class="ing-list id-detail-list">
+    <li class="ing-row">
+      <span class="id-row__label">Type</span>
+      <span class="id-row__value" style="text-transform:capitalize">{{ item.item_type }}</span>
+    </li>
+    {% if item.location %}
+    <li class="ing-row">
+      <span class="id-row__label">Location</span>
+      <span class="id-row__value">{{ item.location | capitalize }}</span>
+    </li>
     {% endif %}
-  </div>
+    {% if item.brands %}
+    <li class="ing-row">
+      <span class="id-row__label">Brand</span>
+      <span class="id-row__value">{{ item.brands }}</span>
+    </li>
+    {% endif %}
+    {% if item.quantity %}
+    <li class="ing-row">
+      <span class="id-row__label">Size</span>
+      <span class="id-row__value">{{ item.quantity }}</span>
+    </li>
+    {% endif %}
+    {% if item.barcode %}
+    <li class="ing-row">
+      <span class="id-row__label">Barcode</span>
+      <span class="id-row__value id-row__value--mono">{{ item.barcode }}</span>
+    </li>
+    {% endif %}
+    {% if not has_enrichment %}
+    <li class="ing-row">
+      <span class="id-row__label">Source</span>
+      <span class="id-row__value">Manual · <a href="{{ url_for('perishables.edit_item', item_id=item.id) }}" class="id-meta-link">Add product details</a></span>
+    </li>
+    {% endif %}
+  </ul>
 
-  {# ── Summary strip ─────────────────────────────────────────────── #}
-  <div class="id-summary">
-    <div class="id-summary__cell">
-      <p class="id-summary__label">In stock</p>
-      <p class="id-summary__value">1 batch</p>
-    </div>
-    <div class="id-summary__cell">
-      <p class="id-summary__label">Open</p>
-      <p class="id-summary__value">{% if is_open %}Yes{% else %}—{% endif %}</p>
-    </div>
-    <div class="id-summary__cell">
-      <p class="id-summary__label">Soonest</p>
-      <p class="id-summary__value{% if urgency in ('expired','today') %} id-summary__value--urgent{% elif urgency == 'soon' %} id-summary__value--soon{% endif %}">
-        {%- if days_left < 0 -%}EXPIRED
-        {%- elif days_left == 0 -%}TODAY
-        {%- elif days_left <= 3 -%}{{ days_left }} day{{ "s" if days_left != 1 }}
-        {%- else -%}{{ item.expiry_date.strftime("%-d %b %Y") }}
-        {%- endif -%}
-      </p>
-    </div>
-  </div>
-
-  {# ── Use-next hero ─────────────────────────────────────────────── #}
-  <div class="un-hero{% if hero_urg == 'urgent' %} un-hero--urgent{% elif hero_urg == 'soon' %} un-hero--soon{% endif %}">
-    <p class="un-hero__eyebrow">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/></svg>
-      Use this one next
-    </p>
-    <h2 class="un-hero__expiry{% if hero_urg == 'urgent' %} un-hero__expiry--urgent{% elif hero_urg == 'soon' %} un-hero__expiry--soon{% endif %}">{{ hero_headline }}</h2>
-    <p class="un-hero__date">Expires {{ item.expiry_date.strftime("%-d %b %Y") }} · added {{ item.date_added.strftime("%-d %b") }}</p>
-    <span class="un-hero__state-chip">
-      {% if is_open %}
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M8 3v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V3"/><rect x="5" y="9" width="14" height="12" rx="2"/>
-        </svg>
-        {{ fill_label(item.quantity_state) }}
-      {% else %}
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16"/>
-        </svg>
-        Sealed
-      {% endif %}
-    </span>
-    <div class="un-hero__actions">
-      <form method="post" action="{{ url_for('perishables.mark_used', item_id=item.id) }}" style="flex:1;display:contents">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <button type="submit" class="un-hero__cta">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-          Mark as used
-        </button>
-      </form>
-      <button type="button" class="un-hero__more" aria-label="More actions"
-              onclick="document.getElementById('sheet-{{ item.id }}').showModal()">
-        ⋮
-      </button>
-    </div>
-  </div>
+  {# ── Nutrition section ─────────────────────────────────────────── #}
+  {% if (item.off_nutriscore_grade and item.off_nutriscore_grade != 'U') or item.off_nova_group %}
+  {% set ns_desc = {'A':'Healthy choice','B':'Good','C':'Average','D':'Less healthy','E':'Avoid often'} %}
+  {% set nova_desc = {1:'Unprocessed',2:'Culinary ingredient',3:'Processed food',4:'Ultra-processed'} %}
+  <p class="rd-ing-heading">Nutrition</p>
+  <ul class="ing-list id-detail-list">
+    {% if item.off_nutriscore_grade and item.off_nutriscore_grade != 'U' %}
+    <li class="ing-row">
+      <span class="id-row__label">Nutri-Score</span>
+      <span class="id-row__value"><span class="pi-ns pi-ns--{{ item.off_nutriscore_grade | upper }}" title="Nutri-Score {{ item.off_nutriscore_grade | upper }} — A (best) to E (worst)">{{ item.off_nutriscore_grade | upper }}</span>{{ ns_desc.get(item.off_nutriscore_grade | upper, '') }}</span>
+    </li>
+    {% endif %}
+    {% if item.off_nova_group %}
+    <li class="ing-row">
+      <span class="id-row__label">Processing</span>
+      <span class="id-row__value"><span class="pi-nova-chip pi-nova-chip--{{ item.off_nova_group }}" title="NOVA {{ item.off_nova_group }} — 1 = unprocessed, 4 = ultra-processed">{{ item.off_nova_group }}</span>{{ nova_desc.get(item.off_nova_group, '') }}</span>
+    </li>
+    {% endif %}
+  </ul>
+  {% endif %}
 
   {% endif %}{# end is_editing / view split #}
 
@@ -384,21 +353,6 @@
   <div class="v2-sheet-head">
     <p class="v2-sheet-head__title">{% if is_open %}Opened batch{% else %}Sealed batch{% endif %}</p>
     <p class="v2-sheet-head__meta">Expires {{ item.expiry_date.strftime("%-d %b %Y") }} · {{ blabel }}</p>
-  </div>
-
-  {# How much is left? #}
-  <div style="padding:8px 16px 4px">
-    <p style="font-size:var(--font-xs);color:var(--color-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px">How much is left?</p>
-    <form method="post" action="{{ url_for('perishables.update_quantity_state', item_id=item.id) }}"
-          style="display:flex;flex-direction:column;gap:6px">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <input type="hidden" name="next" value="{{ url_for('perishables.item_detail', item_id=item.id) }}"/>
-      {% for val, label in [('full','Full'),('three_quarters','¾'),('half','½'),('nearly_gone','Nearly gone')] %}
-      <button type="submit" name="quantity_state" value="{{ val }}"
-              class="quantity-btn {% if item.quantity_state == val %}quantity-btn--active{% endif %}"
-              onclick="this.closest('dialog').close()">{{ label }}</button>
-      {% endfor %}
-    </form>
   </div>
 
   <form method="post" action="{{ url_for('perishables.mark_used', item_id=item.id) }}" style="display:contents">

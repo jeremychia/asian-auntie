@@ -5811,7 +5811,44 @@ select.sort-select:focus {
   line-height: 1.5;
   margin: 0;
 }
-
+.id-meta-line {
+  font-size: 0.8125rem;
+  color: #8d4467;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+.id-meta-sep {
+  opacity: 0.4;
+  margin: 0 0.35em;
+}
+.id-meta-link {
+  color: #700143;
+  font-weight: 600;
+  text-decoration: none;
+}
+.id-meta-link:hover {
+  text-decoration: underline;
+}
+.id-exp-status {
+  font-size: var(--t-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--brand);
+  margin: 0 0 var(--s-1);
+  line-height: 1.1;
+}
+.id-exp-status--urgent {
+  color: var(--urgent);
+}
+.id-exp-status--warn {
+  color: var(--warn);
+}
+.id-exp-date {
+  font-size: var(--t-xs);
+  color: var(--brand-muted);
+  margin: 0 0 var(--s-4);
+  line-height: 1.4;
+}
 /* Summary strip */
 .id-summary {
   display: flex;
@@ -5972,6 +6009,117 @@ select.sort-select:focus {
   stroke-width: 2;
   vertical-align: middle;
 }
+/* Quantity chips — standalone segmented bar */
+.id-qty-chips {
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.id-qty-chip {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex !important;
+  width: auto !important;
+  height: 100% !important;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--brand);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.id-qty-chip:last-child {
+  border-right: none;
+}
+.id-qty-chip:hover {
+  background: var(--brand-tint);
+}
+.id-qty-chip--on {
+  background: var(--brand) !important;
+  color: #fff;
+}
+
+/* Detail / nutrition lists — consistent 2-column grid */
+.id-detail-list {
+  display: grid !important;
+  grid-template-columns: 148px 1fr;
+}
+.id-detail-list .ing-row {
+  display: contents;
+}
+.id-row__label {
+  padding: 0.625rem 0.75rem 0.625rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--brand-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.id-row__value {
+  padding: 0.625rem 1rem 0.625rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--t-sm);
+  color: var(--brand);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+.id-detail-list .ing-row:last-child .id-row__label,
+.id-detail-list .ing-row:last-child .id-row__value {
+  border-bottom: none;
+}
+.id-row__value--mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+  font-size: var(--t-xs);
+}
+
+/* Normalise nutri-score and nova chip to same size in detail rows */
+.id-detail-list .pi-ns {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  margin-right: 0;
+}
+.id-detail-list .pi-nova-chip {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  margin-right: 0;
+}
+
+.id-cta-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: var(--s-5);
+}
 .un-hero__actions {
   display: flex;
   gap: 8px;
@@ -6003,8 +6151,8 @@ select.sort-select:focus {
   stroke-width: 2.5;
 }
 .un-hero__more {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   background: #fff;
   color: #700143;
