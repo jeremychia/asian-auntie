@@ -367,3 +367,119 @@ def test_bulk_action_mark_used(auth_client, db, user):
             assert refreshed.removed_at is not None
             db.session.delete(refreshed)
     db.session.commit()
+
+
+def test_dashboard_by_location_groups_items(auth_client, db, user):
+    fridge_item = Item(
+        user_id=user.id,
+        name="Oat Milk",
+        item_type="dairy",
+        expiry_date=date.today() + timedelta(days=5),
+        location="fridge",
+    )
+    pantry_item = Item(
+        user_id=user.id,
+        name="Fish Sauce",
+        item_type="sauce",
+        expiry_date=date.today() + timedelta(days=60),
+        location="pantry",
+    )
+    db.session.add_all([fridge_item, pantry_item])
+    db.session.commit()
+
+    r = auth_client.get("/dashboard")
+    assert r.status_code == 200
+    assert b"Fridge" in r.data
+    assert b"Pantry" in r.data
+    assert b"Oat Milk" in r.data
+    assert b"Fish Sauce" in r.data
+
+    db.session.delete(fridge_item)
+    db.session.delete(pantry_item)
+    db.session.commit()
+
+
+def test_dashboard_expired_banner_shown(auth_client, db, user):
+    expired_item = Item(
+        user_id=user.id,
+        name="Old Kewpie",
+        item_type="condiment",
+        expiry_date=date.today() - timedelta(days=3),
+        location="fridge",
+    )
+    db.session.add(expired_item)
+    db.session.commit()
+
+    r = auth_client.get("/dashboard")
+    assert r.status_code == 200
+    assert b"expired" in r.data
+    assert b"Old Kewpie" in r.data
+
+    db.session.delete(expired_item)
+    db.session.commit()
+
+
+def test_dashboard_no_location_goes_to_other(auth_client, db, user):
+    unlabelled_item = Item(
+        user_id=user.id,
+        name="Mystery Paste",
+        item_type="other",
+        expiry_date=date.today() + timedelta(days=20),
+        location=None,
+    )
+    db.session.add(unlabelled_item)
+    db.session.commit()
+
+    r = auth_client.get("/dashboard")
+    assert r.status_code == 200
+    assert b"Mystery Paste" in r.data
+    assert b"Other" in r.data
+
+    db.session.delete(unlabelled_item)
+    db.session.commit()
+
+
+def test_dashboard_kanban_columns_equal_class(auth_client, db, user):
+    """Every rendered kanban column uses the same CSS class so CSS can enforce equal widths."""
+    import re
+
+    items = [
+        Item(
+            user_id=user.id,
+            name="Oat Milk",
+            item_type="dairy",
+            expiry_date=date.today() + timedelta(days=5),
+            location="fridge",
+        ),
+        Item(
+            user_id=user.id,
+            name="Fish Sauce",
+            item_type="sauce",
+            expiry_date=date.today() + timedelta(days=30),
+            location="pantry",
+        ),
+        Item(
+            user_id=user.id,
+            name="Frozen Peas",
+            item_type="other",
+            expiry_date=date.today() + timedelta(days=90),
+            location="freezer",
+        ),
+    ]
+    db.session.add_all(items)
+    db.session.commit()
+
+    r = auth_client.get("/dashboard")
+    assert r.status_code == 200
+
+    html = r.data.decode()
+    # Each column is an opening div with class="kanban__col"; count them
+    cols = re.findall(r'<div\s+class="kanban__col"', html)
+    assert len(cols) == 3, f"Expected 3 equal-width columns, found {len(cols)}"
+    # All must use exactly "kanban__col" — no per-column variant class that would break equal widths
+    variant_cols = re.findall(r'<div\s+class="kanban__col\s+[^"]+"', html)
+    assert len(variant_cols) == 0, "Columns must not have per-column variant classes"
+
+    for item in items:
+        db.session.delete(item)
+    db.session.commit()

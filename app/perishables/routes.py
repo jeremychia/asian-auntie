@@ -3,7 +3,7 @@ import os
 import hashlib
 import urllib.request
 import urllib.error
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from datetime import datetime, timezone, date, timedelta
 from urllib.parse import urlparse
 from io import BytesIO
@@ -395,26 +395,55 @@ def dashboard():
         key = item.barcode or item.standard_name or item.name
         groups[key].append(item)
 
-    grouped = [
-        {
-            "key": key,
-            "items": items,
-            "representative": items[0],
-            "count": len(items),
-        }
-        for key, items in groups.items()
-    ]
+    user_locs = get_user_locations(current_user)
+    location_lookup = {loc.lower(): loc for loc in user_locs}
 
-    all_expired = bool(grouped) and all(
-        g["representative"].expiry_date < today for g in grouped
+    by_location: dict = OrderedDict()
+    for loc_label in user_locs:
+        by_location[loc_label] = []
+    by_location["Other"] = []
+
+    expired_groups = []
+
+    for key, items in groups.items():
+        loc_buckets: dict = {}
+        for item in items:
+            loc_key = (item.location or "").lower()
+            label = location_lookup.get(loc_key, "Other")
+            loc_buckets.setdefault(label, []).append(item)
+
+        for loc_label, loc_items in loc_buckets.items():
+            entry = {
+                "key": key,
+                "items": loc_items,
+                "representative": loc_items[0],
+                "count": len(loc_items),
+            }
+            by_location[loc_label].append(entry)
+            if loc_items[0].expiry_date < today:
+                expired_groups.append(entry)
+
+    if not by_location["Other"]:
+        del by_location["Other"]
+
+    # Remove empty location buckets so we don't render empty columns
+    by_location = OrderedDict((loc, gs) for loc, gs in by_location.items() if gs)
+
+    total_count = sum(len(gs) for gs in by_location.values())
+    all_expired = bool(total_count) and all(
+        g["representative"].expiry_date < today
+        for gs in by_location.values()
+        for g in gs
     )
     ghost_count = sum(1 for item in raw_items if item.ghost_level)
     return render_template(
         "perishables/dashboard.html",
-        grouped=grouped,
+        by_location=by_location,
         today=today,
         all_expired=all_expired,
         ghost_count=ghost_count,
+        expired_groups=expired_groups,
+        total_count=total_count,
     )
 
 

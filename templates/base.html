@@ -33,7 +33,7 @@
     <script src="{{ url_for('static', filename='camera.js') }}"></script>
     <title>{% block title %}Asian Auntie{% endblock %}</title>
   </head>
-  <body>
+  <body class="{% block body_class %}{% endblock %}">
     {% if current_user.is_authenticated %}
     {# SVG sprite for nav icons #}
     <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -110,6 +110,13 @@
         <svg><use href="#nav-i-gear"/></svg>
         <span class="tab-label">Settings</span>
       </a>
+      <form method="post" action="{{ url_for('auth.logout') }}" style="display:contents">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="tab tab--logout" aria-label="Log out">
+          <svg><use href="#nav-i-logout"/></svg>
+          <span class="tab-label">Log out</span>
+        </button>
+      </form>
     </nav>
     {% endif %}
 

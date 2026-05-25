@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Pantry — Asian Auntie{% endblock %}
+{% block body_class %}{% if by_location %}body--kanban{% endif %}{% endblock %}
 {% block content %}
 
 {% set undo_id = request.args.get('undo') %}
@@ -104,8 +105,8 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 </script>
 {% endif %}
 
-{% if grouped %}
-<div class="toolbar">
+{% if by_location %}
+<div class="toolbar toolbar--kanban">
   <input
     id="search-input"
     type="search"
@@ -122,15 +123,15 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 </div>
 {% endif %}
 
-<div class="content">
+<div class="content{% if by_location %} content--kanban{% endif %}">
   <div class="page-header">
     <h1 class="page-title">
       Your pantry
-      {% if grouped %}<small>{{ grouped | length }} item{{ 's' if grouped | length != 1 }}</small>{% endif %}
+      {% if total_count %}<small>{{ total_count }} item{{ 's' if total_count != 1 }}</small>{% endif %}
     </h1>
   </div>
 
-  {% if grouped %}
+  {% if by_location %}
   <a href="{{ url_for('perishables.audit') }}" class="audit-banner{% if ghost_count > 0 %} audit-banner--alert{% endif %}">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <rect x="3" y="4" width="18" height="17" rx="2"/>
@@ -150,6 +151,16 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
   </a>
   {% endif %}
 
+  {% if expired_groups %}
+  <div class="expiry-banner" id="expiry-banner" role="alert">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span class="expiry-banner__label">{{ expired_groups | length }} expired</span>
+    <span role="button" tabindex="0" class="expiry-banner__filter" id="expiry-filter-btn" aria-pressed="false">Show expired only</span>
+    <a href="{{ url_for('perishables.audit') }}" class="expiry-banner__cta">Audit</a>
+    <span role="button" tabindex="0" class="expiry-banner__close" id="expiry-banner-close" aria-label="Dismiss">×</span>
+  </div>
+  {% endif %}
+
   {% if all_expired %}
   <div class="warning-banner">
     <p class="warning-banner__text">Everything here has expired.</p>
@@ -160,97 +171,115 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
   </div>
   {% endif %}
 
-  {% if grouped %}
-  <div class="item-grid" id="item-grid">
-    {% for group in grouped %}
-      {% set item = group.representative %}
-      {% set days_left = (item.expiry_date - today).days %}
-      {%- if days_left < 0 -%}
-        {%- set urgency = "expired" -%}
-        {%- set urgency_label = "EXPIRED" -%}
-        {%- set strip_color = "#dc2626" -%}
-      {%- elif days_left == 0 -%}
-        {%- set urgency = "today" -%}
-        {%- set urgency_label = "TODAY" -%}
-        {%- set strip_color = "#dc2626" -%}
-      {%- elif days_left <= 3 -%}
-        {%- set urgency = "soon" -%}
-        {%- set urgency_label = days_left ~ " DAY" ~ ("S" if days_left != 1 else "") -%}
-        {%- set strip_color = "#d97706" -%}
-      {%- elif days_left <= 14 -%}
-        {%- set urgency = "watch" -%}
-        {%- set urgency_label = item.expiry_date.strftime("%-d %b") -%}
-        {%- set strip_color = "#a8a29e" -%}
-      {%- else -%}
-        {%- set urgency = "ok" -%}
-        {%- set urgency_label = item.expiry_date.strftime("%-d %b %Y") -%}
-        {%- set strip_color = "rgba(112,1,67,0.22)" -%}
-      {%- endif -%}
-      {% set photo = item.display_photo %}
-      {% set multi = group['count'] > 1 %}
-      {% set open_count = group['items'] | selectattr('quantity_state') | list | length %}
-      {% set aria_label = item.name ~ ", " ~ group['count'] ~ (" batch" if group['count'] == 1 else " batches") ~ (", " ~ open_count ~ " opened" if open_count > 0 else "") ~ ", soonest expires " ~ urgency_label %}
+  {% if by_location %}
 
-      <div class="card-wrap"
-           data-name="{{ item.name | lower }}"
-           data-expiry="{{ item.expiry_date.isoformat() }}"
-           data-added="{{ item.date_added.isoformat() }}"
-           data-alpha="{{ item.name | lower }}"
-           data-urgency="{{ urgency }}"
-           data-item-id="{{ item.id }}"
-           data-item-name="{{ item.name }}">
-        <a
-          href="{% if multi %}{{ url_for('perishables.group_detail', group_key=group['key']) }}{% else %}{{ url_for('perishables.item_detail', item_id=item.id) }}{% endif %}"
-          class="item-card item-card--{{ urgency }}{% if photo %} item-card--photo item-card--has-photo{% else %} item-card--tint item-card--type-{{ item.item_type }}{% endif %}"
-          aria-label="{{ aria_label }}"
-        >
-          {# Full-bleed photo #}
-          {% if photo %}
-          <img src="{{ photo.photo_url }}" alt="" class="item-card__photo" aria-hidden="true"/>
-          <div class="item-card__photo-overlay" aria-hidden="true"></div>
-          {% endif %}
-
-          {# Left urgency strip #}
-          <span class="item-card__urgency-strip" style="background:{{ strip_color }}" aria-hidden="true"></span>
-
-          {# Badge: top-right #}
-          <span class="item-card__badge badge-{{ urgency }}">{{ urgency_label }}</span>
-
-          {# Body: bottom-anchored #}
-          <div class="item-card__body">
-            {# Stock bar for multi-batch items #}
-            {% if multi %}
-            <div class="stockbar" role="img" aria-label="{{ group['count'] }} batches">
-              {% for batch_item in group['items'] %}
-                {%- set bd = (batch_item.expiry_date - today).days -%}
-                {%- if bd < 0 -%}{%- set bc = "#dc2626" -%}
-                {%- elif bd == 0 -%}{%- set bc = "#dc2626" -%}
-                {%- elif bd <= 3 -%}{%- set bc = "#d97706" -%}
-                {%- elif bd <= 14 -%}{%- set bc = "#a8a29e" -%}
-                {%- else -%}{%- set bc = "rgba(112,1,67,0.22)" -%}
-                {%- endif -%}
-                {%- set batch_open = batch_item.quantity_state is not none -%}
-                <span class="stockbar__seg{% if batch_open %} stockbar__seg--opened{% endif %}"
-                      style="{% if batch_open %}color:{{ bc }}{% else %}background:{{ bc }}{% endif %}"></span>
-              {% endfor %}
-            </div>
-            <div class="stockbar__legend">
-              <b>{{ group['count'] }}</b> batches
-              {% if open_count > 0 %}
-                <span aria-hidden="true" style="opacity:0.4">·</span>
-                <span class="stockbar__open-dot" aria-hidden="true"></span>
-                {{ open_count }} open
-              {% endif %}
-            </div>
-            {% endif %}
-
-            <span class="item-card__name">{{ item.name }}</span>
-            <span class="item-card__type">{{ item.item_type }}</span>
-          </div>
-        </a>
-      </div>
+  {# Mobile location filter pills (hidden on desktop via CSS) #}
+  <div class="location-pills" id="location-pills" role="group" aria-label="Filter by location">
+    <button class="location-pill location-pill--active" data-location="all">
+      All <span class="location-pill__count">{{ total_count }}</span>
+    </button>
+    {% for loc_label, groups in by_location.items() %}
+    <button class="location-pill" data-location="{{ loc_label | lower }}">
+      {{ loc_label }} <span class="location-pill__count">{{ groups | length }}</span>
+    </button>
     {% endfor %}
   </div>
+
+  {# Kanban: desktop = side-by-side columns; mobile = stacked sections #}
+  <div class="kanban-wrap" id="kanban-wrap">
+  <div class="kanban" id="kanban">
+    {% for loc_label, groups in by_location.items() %}
+    <div class="kanban__col" data-location="{{ loc_label | lower }}">
+      <div class="kanban__col-header">
+        <span class="kanban__col-title">{{ loc_label }}</span>
+        <span class="kanban__col-count">{{ groups | length }}</span>
+      </div>
+      <div class="kanban__col-body">
+        {% for group in groups %}
+          {% set item = group.representative %}
+          {% set days_left = (item.expiry_date - today).days %}
+          {%- if days_left < 0 -%}
+            {%- set urgency = "expired" -%}
+            {%- set urgency_label = "EXPIRED" -%}
+          {%- elif days_left == 0 -%}
+            {%- set urgency = "today" -%}
+            {%- set urgency_label = "TODAY" -%}
+          {%- elif days_left <= 3 -%}
+            {%- set urgency = "soon" -%}
+            {%- set urgency_label = days_left ~ " DAY" ~ ("S" if days_left != 1 else "") -%}
+          {%- elif days_left <= 14 -%}
+            {%- set urgency = "watch" -%}
+            {%- set urgency_label = item.expiry_date.strftime("%-d %b") -%}
+          {%- else -%}
+            {%- set urgency = "ok" -%}
+            {%- set urgency_label = item.expiry_date.strftime("%-d %b %Y") -%}
+          {%- endif -%}
+          {% set photo = item.display_photo %}
+          {% set multi = group['count'] > 1 %}
+          {% set open_count = group['items'] | selectattr('quantity_state') | list | length %}
+          {% set aria_label = item.name ~ ", " ~ group['count'] ~ (" batch" if group['count'] == 1 else " batches") ~ (", " ~ open_count ~ " opened" if open_count > 0 else "") ~ ", soonest expires " ~ urgency_label %}
+
+          <div class="card-wrap"
+               data-name="{{ item.name | lower }}"
+               data-expiry="{{ item.expiry_date.isoformat() }}"
+               data-added="{{ item.date_added.isoformat() }}"
+               data-alpha="{{ item.name | lower }}"
+               data-urgency="{{ urgency }}"
+               data-item-id="{{ item.id }}"
+               data-item-name="{{ item.name }}"
+               data-location="{{ loc_label | lower }}">
+            <a
+              href="{% if multi %}{{ url_for('perishables.group_detail', group_key=group['key']) }}{% else %}{{ url_for('perishables.item_detail', item_id=item.id) }}{% endif %}"
+              class="item-row item-row--{{ urgency }}"
+              aria-label="{{ aria_label }}"
+            >
+              <div class="item-row__thumb">
+                {% if photo %}
+                <img src="{{ photo.photo_url }}" alt="" class="item-row__thumb-img" aria-hidden="true"/>
+                {% else %}
+                <span class="item-row__thumb-placeholder item-row__thumb-placeholder--{{ item.item_type }}" aria-hidden="true"></span>
+                {% endif %}
+              </div>
+
+              <div class="item-row__body">
+                <span class="item-row__name">{{ item.name }}</span>
+                <span class="item-row__badge badge-{{ urgency }}">{{ urgency_label }}</span>
+                {% if multi %}
+                <div class="item-row__stockbar">
+                  <div class="stockbar stockbar--compact" role="img" aria-label="{{ group['count'] }} batches">
+                    {% for batch_item in group['items'] %}
+                      {%- set bd = (batch_item.expiry_date - today).days -%}
+                      {%- if bd < 0 -%}{%- set bc = "#dc2626" -%}
+                      {%- elif bd == 0 -%}{%- set bc = "#dc2626" -%}
+                      {%- elif bd <= 3 -%}{%- set bc = "#d97706" -%}
+                      {%- elif bd <= 14 -%}{%- set bc = "#a8a29e" -%}
+                      {%- else -%}{%- set bc = "rgba(112,1,67,0.22)" -%}
+                      {%- endif -%}
+                      {%- set batch_open = batch_item.quantity_state is not none -%}
+                      <span class="stockbar__seg{% if batch_open %} stockbar__seg--opened{% endif %}"
+                            style="{% if batch_open %}color:{{ bc }}{% else %}background:{{ bc }}{% endif %}"></span>
+                    {% endfor %}
+                  </div>
+                  <span class="stockbar__legend stockbar__legend--compact">
+                    <b>{{ group['count'] }}</b> batches
+                    {% if open_count > 0 %}
+                      <span aria-hidden="true" style="opacity:0.4">·</span>
+                      <span class="stockbar__open-dot" aria-hidden="true"></span>
+                      {{ open_count }} open
+                    {% endif %}
+                  </span>
+                </div>
+                {% endif %}
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  </div>{# /kanban-wrap #}
+
   <p id="no-results" class="no-results" hidden>No items match your search.</p>
 
   {% else %}
@@ -301,9 +330,9 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 (function () {
   // ── Search ──────────────────────────────────────────────────────────────
   const searchInput = document.getElementById('search-input');
-  const grid = document.getElementById('item-grid');
+  const kanban = document.getElementById('kanban');
   const noResults = document.getElementById('no-results');
-  const wraps = grid ? Array.from(grid.querySelectorAll('.card-wrap')) : [];
+  const wraps = kanban ? Array.from(kanban.querySelectorAll('.card-wrap')) : [];
 
   function applySearch() {
     const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
@@ -324,19 +353,21 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
   const SORT_KEY = 'pantry-sort';
 
   function sortGrid(mode) {
-    if (!grid) return;
-    const sorted = [...wraps].sort((a, b) => {
-      // TODAY/EXPIRED items always float to top, regardless of sort mode
-      const aUrgent = (a.dataset.urgency === 'today' || a.dataset.urgency === 'expired') ? 0 : 1;
-      const bUrgent = (b.dataset.urgency === 'today' || b.dataset.urgency === 'expired') ? 0 : 1;
-      if (aUrgent !== bUrgent) return aUrgent - bUrgent;
-      // Within the same urgency tier, apply the chosen sort
-      if (mode === 'expiry') return a.dataset.expiry.localeCompare(b.dataset.expiry);
-      if (mode === 'recent') return b.dataset.added.localeCompare(a.dataset.added);
-      if (mode === 'alpha')  return a.dataset.alpha.localeCompare(b.dataset.alpha);
-      return 0;
+    if (!kanban) return;
+    document.querySelectorAll('.kanban__col-body').forEach(col => {
+      const colWraps = Array.from(col.querySelectorAll('.card-wrap'));
+      colWraps.sort((a, b) => {
+        // TODAY/EXPIRED items always float to top, regardless of sort mode
+        const aUrgent = (a.dataset.urgency === 'today' || a.dataset.urgency === 'expired') ? 0 : 1;
+        const bUrgent = (b.dataset.urgency === 'today' || b.dataset.urgency === 'expired') ? 0 : 1;
+        if (aUrgent !== bUrgent) return aUrgent - bUrgent;
+        if (mode === 'expiry') return a.dataset.expiry.localeCompare(b.dataset.expiry);
+        if (mode === 'recent') return b.dataset.added.localeCompare(a.dataset.added);
+        if (mode === 'alpha')  return a.dataset.alpha.localeCompare(b.dataset.alpha);
+        return 0;
+      });
+      colWraps.forEach(w => col.appendChild(w));
     });
-    sorted.forEach(w => grid.appendChild(w));
   }
 
   function applySort(mode) {
@@ -351,6 +382,54 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
       sortGrid(saved);
     }
     sortSelect.addEventListener('change', () => applySort(sortSelect.value));
+  }
+
+  // ── Mobile location pills ────────────────────────────────────────────────
+  document.querySelectorAll('.location-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.location-pill').forEach(p => p.classList.remove('location-pill--active'));
+      pill.classList.add('location-pill--active');
+      const loc = pill.dataset.location;
+      document.querySelectorAll('.kanban__col').forEach(col => {
+        col.hidden = (loc !== 'all' && col.dataset.location !== loc);
+      });
+    });
+  });
+
+  // ── Expiry banner: filter toggle + close ────────────────────────────────
+  const expiryBanner = document.getElementById('expiry-banner');
+  const filterBtn = document.getElementById('expiry-filter-btn');
+  const bannerClose = document.getElementById('expiry-banner-close');
+  let expiryFilterActive = false;
+
+  function activateFilter() {
+    expiryFilterActive = !expiryFilterActive;
+    filterBtn.setAttribute('aria-pressed', String(expiryFilterActive));
+    filterBtn.textContent = expiryFilterActive ? 'Show all' : 'Show expired only';
+    wraps.forEach(w => {
+      const urgency = w.dataset.urgency;
+      const isExpired = urgency === 'expired' || urgency === 'today';
+      w.hidden = expiryFilterActive ? !isExpired : false;
+    });
+    if (noResults) noResults.hidden = true;
+  }
+
+  function dismissBanner() {
+    if (expiryBanner) expiryBanner.hidden = true;
+    if (expiryFilterActive) {
+      expiryFilterActive = false;
+      wraps.forEach(w => { w.hidden = false; });
+    }
+  }
+
+  if (filterBtn) {
+    filterBtn.addEventListener('click', activateFilter);
+    filterBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateFilter(); } });
+  }
+
+  if (bannerClose) {
+    bannerClose.addEventListener('click', dismissBanner);
+    bannerClose.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dismissBanner(); } });
   }
 
   // ── Undo toast ──────────────────────────────────────────────────────────
@@ -422,9 +501,9 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
     }, { passive: true });
 
     // Prevent the click that fires after a long press
-    const card = wrap.querySelector('.item-card');
-    if (card) {
-      card.addEventListener('click', e => {
+    const row = wrap.querySelector('.item-row');
+    if (row) {
+      row.addEventListener('click', e => {
         if (longPressTriggered) { e.preventDefault(); longPressTriggered = false; }
       });
     }
