@@ -321,6 +321,7 @@ nav.container {
   border: none;
   box-shadow: none;
   margin: 0;
+  padding: 0;
 }
 .tab--add {
   color: var(--brand);
@@ -7299,13 +7300,31 @@ body.body--kanban main {
   padding: 0;
 }
 .toolbar--kanban {
+  position: static;
   max-width: 960px;
   margin: 0 auto;
   padding: 0.625rem var(--s-4);
 }
-.content--kanban .page-header {
-  padding: var(--s-3) var(--s-4);
-  margin-bottom: 0;
+.toolbar__title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-shrink: 0;
+  margin-right: var(--s-2);
+}
+.toolbar__title-text {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.toolbar__title-count {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--brand-tint);
+  border-radius: var(--r-full);
+  padding: 1px 8px;
 }
 .content--kanban .audit-banner {
   margin: 0 var(--s-4) var(--s-3);
@@ -7485,6 +7504,10 @@ body.body--kanban main {
   gap: var(--s-3);
   /* Prevent flex from compressing card-wrap items when many items exist */
   align-content: flex-start;
+  scrollbar-width: none;
+}
+.kanban__col-body::-webkit-scrollbar {
+  display: none;
 }
 .kanban__col-body .card-wrap {
   flex-shrink: 0;
@@ -7493,7 +7516,7 @@ body.body--kanban main {
 /* Compact row card */
 .item-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--s-3);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -7538,8 +7561,8 @@ body.body--kanban main {
 
 /* Thumbnail */
 .item-row__thumb {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   border-radius: var(--r-sm);
   overflow: hidden;
@@ -7547,8 +7570,7 @@ body.body--kanban main {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  margin-top: 1px;
+  font-size: 22px;
 }
 .item-row__thumb-img {
   width: 100%;

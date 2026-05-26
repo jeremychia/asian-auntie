@@ -107,6 +107,10 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 
 {% if by_location %}
 <div class="toolbar toolbar--kanban">
+  <div class="toolbar__title">
+    <span class="toolbar__title-text">Your pantry</span>
+    {% if total_count %}<span class="toolbar__title-count">{{ total_count }}</span>{% endif %}
+  </div>
   <input
     id="search-input"
     type="search"
@@ -124,12 +128,14 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 {% endif %}
 
 <div class="content{% if by_location %} content--kanban{% endif %}">
+  {% if not by_location %}
   <div class="page-header">
     <h1 class="page-title">
       Your pantry
       {% if total_count %}<small>{{ total_count }} item{{ 's' if total_count != 1 }}</small>{% endif %}
     </h1>
   </div>
+  {% endif %}
 
   {% if by_location %}
   <a href="{{ url_for('perishables.audit') }}" class="audit-banner{% if ghost_count > 0 %} audit-banner--alert{% endif %}">
