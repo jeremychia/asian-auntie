@@ -7306,14 +7306,14 @@ body.body--kanban-expanded .kanban-wrap {
   overflow: visible;
 }
 
-/* Corner resize gripper */
+/* Corner resize gripper (nwse — both height and width) */
 .kanban-resize-grip {
   position: absolute;
   bottom: 0;
   right: 0;
   width: 20px;
   height: 20px;
-  cursor: ns-resize;
+  cursor: nwse-resize;
   z-index: 30;
 }
 .kanban-resize-grip::after {
@@ -7333,20 +7333,46 @@ body.body--kanban-expanded .kanban-wrap {
   opacity: 1;
 }
 
+/* Right-edge width grip */
+.kanban-width-grip {
+  position: absolute;
+  top: 0;
+  right: -6px;
+  width: 12px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 25;
+}
+.kanban-width-grip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 32px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.kanban-width-grip:hover::after {
+  opacity: 0.7;
+}
+
 .content--kanban {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-width: 960px;
   width: 100%;
   margin: 0 auto;
   padding: 0;
 }
 .toolbar--kanban {
   position: static;
-  max-width: 960px;
+  width: 100%;
   margin: 0 auto;
   padding: 0.625rem var(--s-4);
 }
@@ -7482,7 +7508,7 @@ body.body--kanban-expanded .kanban-wrap {
 .kanban-wrap {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   margin: 0 var(--s-4);
 }

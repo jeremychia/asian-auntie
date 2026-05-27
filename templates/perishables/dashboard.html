@@ -193,7 +193,8 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 
   {# Kanban: desktop = side-by-side columns; mobile = stacked sections #}
   <div class="kanban-wrap" id="kanban-wrap">
-  <div class="kanban-resize-grip" id="kanban-resize-grip" aria-hidden="true" title="Drag to resize"></div>
+  <div class="kanban-resize-grip" id="kanban-resize-grip" aria-hidden="true" title="Drag to resize height"></div>
+  <div class="kanban-width-grip" id="kanban-width-grip" aria-hidden="true" title="Drag to resize width"></div>
   <div class="kanban" id="kanban">
     {% for loc_label, groups in by_location.items() %}
     <div class="kanban__col" data-location="{{ loc_label | lower }}">
@@ -523,10 +524,12 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
     });
   });
 
-  // ── Kanban resize grip ──────────────────────────────────────────────────
+  // ── Kanban resize grips (height + width) ───────────────────────────────
   const kanbanWrap = document.getElementById('kanban-wrap');
   const resizeGrip = document.getElementById('kanban-resize-grip');
+  const widthGrip = document.getElementById('kanban-width-grip');
   const RESIZE_KEY = 'pantry-kanban-height';
+  const WIDTH_KEY = 'pantry-kanban-width';
 
   function applyKanbanHeight(px) {
     kanbanWrap.style.height = px + 'px';
@@ -535,9 +538,21 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
     document.body.classList.toggle('body--kanban-expanded', isExpanded);
   }
 
+  function applyKanbanWidth(px) {
+    const minPx = 480;
+    const maxPx = window.innerWidth - 32;
+    const clamped = Math.max(minPx, Math.min(maxPx, px));
+    kanbanWrap.style.width = clamped + 'px';
+    kanbanWrap.style.marginLeft = '0';
+    kanbanWrap.style.marginRight = '0';
+  }
+
   if (kanbanWrap && resizeGrip) {
     const saved = (() => { try { return localStorage.getItem(RESIZE_KEY); } catch (_) { return null; } })();
     if (saved) applyKanbanHeight(Number(saved));
+
+    const savedW = (() => { try { return localStorage.getItem(WIDTH_KEY); } catch (_) { return null; } })();
+    if (savedW) applyKanbanWidth(Number(savedW));
 
     resizeGrip.addEventListener('mousedown', e => {
       e.preventDefault();
@@ -558,12 +573,38 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
       document.addEventListener('mouseup', onUp);
     });
 
-    // Double-click grip to reset to default height
     resizeGrip.addEventListener('dblclick', () => {
       kanbanWrap.style.height = '';
       kanbanWrap.style.flex = '';
       document.body.classList.remove('body--kanban-expanded');
       try { localStorage.removeItem(RESIZE_KEY); } catch (_) {}
+    });
+  }
+
+  if (kanbanWrap && widthGrip) {
+    widthGrip.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startW = kanbanWrap.getBoundingClientRect().width;
+
+      function onMove(e) {
+        applyKanbanWidth(startW + (e.clientX - startX));
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        const w = Math.round(kanbanWrap.getBoundingClientRect().width);
+        try { localStorage.setItem(WIDTH_KEY, w); } catch (_) {}
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    widthGrip.addEventListener('dblclick', () => {
+      kanbanWrap.style.width = '';
+      kanbanWrap.style.marginLeft = '';
+      kanbanWrap.style.marginRight = '';
+      try { localStorage.removeItem(WIDTH_KEY); } catch (_) {}
     });
   }
 
