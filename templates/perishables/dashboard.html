@@ -193,6 +193,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 
   {# Kanban: desktop = side-by-side columns; mobile = stacked sections #}
   <div class="kanban-wrap" id="kanban-wrap">
+  <div class="kanban-resize-grip" id="kanban-resize-grip" aria-hidden="true" title="Drag to resize"></div>
   <div class="kanban" id="kanban">
     {% for loc_label, groups in by_location.items() %}
     <div class="kanban__col" data-location="{{ loc_label | lower }}">
@@ -233,7 +234,8 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
                data-urgency="{{ urgency }}"
                data-item-id="{{ item.id }}"
                data-item-name="{{ item.name }}"
-               data-location="{{ loc_label | lower }}">
+               data-location="{{ loc_label | lower }}"
+               data-group-ids="{{ group['items'] | map(attribute='id') | join(',') }}">
             <a
               href="{% if multi %}{{ url_for('perishables.group_detail', group_key=group['key']) }}{% else %}{{ url_for('perishables.item_detail', item_id=item.id) }}{% endif %}"
               class="item-row item-row--{{ urgency }}"
@@ -332,8 +334,16 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 </div>
 {% endif %}
 
+<script src="{{ url_for('static', filename='sortable.min.js') }}"></script>
 <script>
 (function () {
+  function csrfHeaders() {
+    return {
+      "Content-Type": "application/json",
+      "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')?.content || "",
+    };
+  }
+
   // ── Search ──────────────────────────────────────────────────────────────
   const searchInput = document.getElementById('search-input');
   const kanban = document.getElementById('kanban');
@@ -506,20 +516,99 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
       if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
     }, { passive: true });
 
-    // Prevent the click that fires after a long press
-    const row = wrap.querySelector('.item-row');
-    if (row) {
-      row.addEventListener('click', e => {
-        if (longPressTriggered) { e.preventDefault(); longPressTriggered = false; }
-      });
-    }
-
     // Right-click on desktop
     wrap.addEventListener('contextmenu', e => {
       e.preventDefault();
       showActionSheet(itemId, itemName);
     });
   });
+
+  // ── Kanban resize grip ──────────────────────────────────────────────────
+  const kanbanWrap = document.getElementById('kanban-wrap');
+  const resizeGrip = document.getElementById('kanban-resize-grip');
+  const RESIZE_KEY = 'pantry-kanban-height';
+
+  function applyKanbanHeight(px) {
+    kanbanWrap.style.height = px + 'px';
+    kanbanWrap.style.flex = 'none';
+    const isExpanded = px > window.innerHeight * 0.95;
+    document.body.classList.toggle('body--kanban-expanded', isExpanded);
+  }
+
+  if (kanbanWrap && resizeGrip) {
+    const saved = (() => { try { return localStorage.getItem(RESIZE_KEY); } catch (_) { return null; } })();
+    if (saved) applyKanbanHeight(Number(saved));
+
+    resizeGrip.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const startY = e.clientY;
+      const startH = kanbanWrap.getBoundingClientRect().height;
+
+      function onMove(e) {
+        const h = Math.max(200, startH + (e.clientY - startY));
+        applyKanbanHeight(h);
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        const h = Math.round(kanbanWrap.getBoundingClientRect().height);
+        try { localStorage.setItem(RESIZE_KEY, h); } catch (_) {}
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    // Double-click grip to reset to default height
+    resizeGrip.addEventListener('dblclick', () => {
+      kanbanWrap.style.height = '';
+      kanbanWrap.style.flex = '';
+      document.body.classList.remove('body--kanban-expanded');
+      try { localStorage.removeItem(RESIZE_KEY); } catch (_) {}
+    });
+  }
+
+  // ── Drag-and-drop between columns (SortableJS) ──────────────────────────
+  if (kanban && typeof Sortable !== 'undefined') {
+    function updateColCount(col) {
+      const count = col.querySelectorAll('.card-wrap:not([hidden])').length;
+      const badge = col.querySelector('.kanban__col-count');
+      if (badge) badge.textContent = count;
+    }
+
+    kanban.querySelectorAll('.kanban__col-body').forEach(body => {
+      new Sortable(body, {
+        group: 'kanban',
+        animation: 150,
+        draggable: '.card-wrap',
+        ghostClass: 'card-wrap--dragging',
+        chosenClass: 'card-wrap--chosen',
+        onEnd(evt) {
+          if (evt.from === evt.to) return;
+          const card = evt.item;
+          const targetCol = evt.to.closest('.kanban__col');
+          const targetLoc = targetCol?.dataset.location;
+          const groupIds = (card.dataset.groupIds || '').split(',').map(Number).filter(Boolean);
+          if (!groupIds.length || !targetLoc) return;
+          card.dataset.location = targetLoc;
+          updateColCount(evt.from.closest('.kanban__col'));
+          updateColCount(targetCol);
+          fetch('/items/move-group', {
+            method: 'POST',
+            headers: csrfHeaders(),
+            body: JSON.stringify({ item_ids: groupIds, location: targetLoc }),
+          }).then(res => {
+            if (!res.ok) {
+              evt.from.insertBefore(card, evt.from.children[evt.oldIndex] || null);
+              card.dataset.location = evt.from.closest('.kanban__col')?.dataset.location || '';
+              updateColCount(evt.from.closest('.kanban__col'));
+              updateColCount(targetCol);
+            }
+          });
+        },
+      });
+    });
+  }
+
 })();
 </script>
 {% endblock %}

@@ -903,6 +903,29 @@ def update_location(item_id):
     return redirect(url_for("perishables.item_detail", item_id=item_id))
 
 
+@perishables_bp.route("/items/move-group", methods=["POST"])
+@login_required
+def move_group():
+    data = request.get_json(silent=True) or {}
+    item_ids = data.get("item_ids", [])
+    location = (data.get("location") or "").strip().lower()
+    if not isinstance(item_ids, list) or not item_ids:
+        return jsonify({"ok": False, "error": "No items specified."}), 400
+    if len(location) > 32:
+        return jsonify({"ok": False, "error": "Location name is too long."}), 400
+    items = Item.query.filter(
+        Item.id.in_(item_ids),
+        Item.user_id == current_user.id,
+        Item.removed_at.is_(None),
+    ).all()
+    if not items:
+        return jsonify({"ok": False, "error": "No matching items found."}), 404
+    for item in items:
+        item.location = location or None
+    db.session.commit()
+    return jsonify({"ok": True, "moved": len(items)})
+
+
 _VALID_QUANTITY_STATES = {"full", "three_quarters", "half", "nearly_gone"}
 
 

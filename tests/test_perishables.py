@@ -8,6 +8,37 @@ from app.models import Item
 from app.extensions import db as _db
 
 
+@pytest.fixture
+def group_items(db, user):
+    """Two items sharing the same standard_name (a group) in the pantry."""
+    items = [
+        Item(
+            user_id=user.id,
+            name="Soy Sauce",
+            standard_name="Light soy sauce",
+            item_type="condiment",
+            expiry_date=date.today() + timedelta(days=30),
+            location="pantry",
+        ),
+        Item(
+            user_id=user.id,
+            name="Soy Sauce",
+            standard_name="Light soy sauce",
+            item_type="condiment",
+            expiry_date=date.today() + timedelta(days=60),
+            location="pantry",
+        ),
+    ]
+    db.session.add_all(items)
+    db.session.commit()
+    yield items
+    for i in items:
+        fresh = _db.session.get(Item, i.id)
+        if fresh:
+            db.session.delete(fresh)
+    db.session.commit()
+
+
 def future_date(days=30):
     return (date.today() + timedelta(days=days)).isoformat()
 
@@ -483,3 +514,91 @@ def test_dashboard_kanban_columns_equal_class(auth_client, db, user):
     for item in items:
         db.session.delete(item)
     db.session.commit()
+
+
+# ── move_group ────────────────────────────────────────────────────────────────
+
+
+def test_move_group_single_item(auth_client, db, item):
+    r = auth_client.post(
+        "/items/move-group",
+        json={"item_ids": [item.id], "location": "fridge"},
+    )
+    assert r.status_code == 200
+    assert r.get_json()["ok"] is True
+    db.session.refresh(item)
+    assert item.location == "fridge"
+
+
+def test_move_group_moves_all_items(auth_client, db, group_items):
+    ids = [i.id for i in group_items]
+    r = auth_client.post(
+        "/items/move-group",
+        json={"item_ids": ids, "location": "freezer"},
+    )
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["ok"] is True
+    assert data["moved"] == 2
+    for i in group_items:
+        db.session.refresh(i)
+        assert i.location == "freezer"
+
+
+def test_move_group_rejects_other_users_items(client, db, item, user):
+    from app.models import User
+    from app.extensions import bcrypt
+
+    other = User(
+        username="other_move_user",
+        password_hash=bcrypt.generate_password_hash("pass123").decode(),
+        onboarding_done=True,
+    )
+    db.session.add(other)
+    db.session.commit()
+
+    client.post(
+        "/login",
+        data={"username": "other_move_user", "password": "pass123"},
+        follow_redirects=True,
+    )
+    r = client.post(
+        "/items/move-group",
+        json={"item_ids": [item.id], "location": "fridge"},
+    )
+    assert r.status_code == 404
+
+    db.session.delete(other)
+    db.session.commit()
+
+
+def test_move_group_rejects_empty_ids(auth_client):
+    r = auth_client.post(
+        "/items/move-group",
+        json={"item_ids": [], "location": "fridge"},
+    )
+    assert r.status_code == 400
+
+
+def test_move_group_rejects_missing_ids(auth_client):
+    r = auth_client.post(
+        "/items/move-group",
+        json={"location": "fridge"},
+    )
+    assert r.status_code == 400
+
+
+def test_move_group_rejects_long_location(auth_client, item):
+    r = auth_client.post(
+        "/items/move-group",
+        json={"item_ids": [item.id], "location": "x" * 33},
+    )
+    assert r.status_code == 400
+
+
+def test_move_group_requires_login(client, item):
+    r = client.post(
+        "/items/move-group",
+        json={"item_ids": [item.id], "location": "fridge"},
+    )
+    assert r.status_code in (302, 401)
