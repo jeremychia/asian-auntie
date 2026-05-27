@@ -200,6 +200,9 @@ uv run python pipeline/run.py --site rasa_malaysia
 # Force full re-scrape (clears cache first)
 uv run python pipeline/run.py --site rasa_malaysia --no-cache
 
+# Scrape with more concurrent workers (YouTube sites only; default is 3)
+uv run python pipeline/run.py --site spice_n_pans --workers 8
+
 # Scrape without writing staging file
 uv run python pipeline/run.py --site rasa_malaysia --no-staging
 

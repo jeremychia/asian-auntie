@@ -69,6 +69,7 @@ def _scrape_site(
     limit: int | None,
     no_cache: bool,
     write_staging: bool = True,
+    workers: int | None = None,
 ) -> int:
     """Scrape one site and append new recipes to its cache. Returns count of new recipes."""
     if no_cache:
@@ -150,7 +151,7 @@ def _scrape_site(
             f"  [{_ts()}] {len(uncached)} videos to fetch ({len(url_cuisine_pairs) - len(uncached)} already cached)",
             file=sys.stderr,
         )
-        workers = site.get("workers", 3)
+        workers = workers if workers is not None else site.get("workers", 3)
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futures = {
                 pool.submit(
@@ -252,6 +253,11 @@ def main():
         help="Discover URLs only; do not fetch recipe pages",
     )
     parser.add_argument(
+        "--workers",
+        type=int,
+        help="Number of concurrent workers for YouTube sites (default: per-site config, usually 3)",
+    )
+    parser.add_argument(
         "--no-staging",
         action="store_true",
         help="Skip writing pipeline/staging/<site>.py after scraping",
@@ -333,7 +339,12 @@ def main():
         return
 
     _scrape_site(
-        args.site, site, args.limit, args.no_cache, write_staging=not args.no_staging
+        args.site,
+        site,
+        args.limit,
+        args.no_cache,
+        write_staging=not args.no_staging,
+        workers=args.workers,
     )
 
 
