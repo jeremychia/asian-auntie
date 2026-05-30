@@ -154,6 +154,6 @@ SITES: dict[str, dict] = {
         "cuisine": "Singaporean",
         "extraction": "description",
         "delay": 0.5,
-        "max_videos": 100,
+        "max_videos": 800,
     },
 }

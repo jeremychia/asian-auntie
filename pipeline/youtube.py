@@ -275,15 +275,35 @@ def extract_recipe_llm(
 
 # ── Description-based extraction (no LLM) ──────────────────────────────────────
 
-# Lines that mark the start of an ingredient block (use as start trigger).
+# Plain "Ingredients" (no colon, no "List") — old format, no sub-sections.
+_INGR_SIMPLE_RE = re.compile(r"^(?:main\s+)?ingredients?\s*$", re.IGNORECASE)
+# "Ingredients:", "Ingredient List", "Ingredient List:" — new format with sub-sections.
+_INGR_LIST_RE = re.compile(
+    r"^(?:main\s+)?ingredients?:\s*$|"  # "Ingredients:" standalone
+    r"^(?:main\s+)?ingredients?\s+list:?\s*$|"  # "Ingredient List" / "Ingredient List:"
+    r"^ingredient\s+list:?\s*$",  # "Ingredient List:"
+    re.IGNORECASE,
+)
+# Recipe title lines that end with "Ingredients:" inline — needs search(), not match().
+_INGR_INLINE_RE = re.compile(r"\bingredients?:\s*$", re.IGNORECASE)
+# Lines that mark the start of a named ingredient sub-block (triggers collection from this line).
 _INGR_HEADING_RE = re.compile(r"^for\s+(?:the\b|\w+ing\b)", re.IGNORECASE)
 # Lines that are section headers within a block — skip when collecting.
 _SECTION_HEADER_RE = re.compile(
-    r"^(?:for\s+(?:the\b|\w+ing\b)|(?:main\s+|other\s+)?ingredients|ingredient\s+list|to\s+(?:garnish|serve|taste)\b|serves?\s+\d)",
+    r"^(?:for\s+(?:the\b|\w+ing\b)|(?:main\s+|other\s+)?ingredients?(?:\s+list)?:?|ingredient\s+list:?|to\s+(?:garnish|serve|taste)\b|serves?\s+\d|makes?\s+)",
     re.IGNORECASE,
 )
-# Block-level separators that terminate ingredient collection.
-_SEPARATOR_RE = re.compile(r"^(?:-{3,}|={3,})$")
+# Short dash separators (3–8 chars) used as sub-section dividers within
+# ingredient blocks — skip without breaking. '=' sequences always terminate.
+_SUBSECTION_SEP_RE = re.compile(r"^-{3,8}$")
+# Separators that terminate ingredient collection: long dash runs (≥9) or any
+# '=' run (Spice N Pans uses '===' as a major section boundary marker).
+_SEPARATOR_RE = re.compile(r"^(?:-{9,}|={3,})$")
+# Headings that signal the end of the ingredient block (not sub-sections).
+_END_SECTION_RE = re.compile(
+    r"^(?:important\s+notes?|method|instructions?|directions?|steps?|how\s+to|notes?:|tips?:|stalk\s+us|thanks?\s+for|subscribe|follow\s+us|what\s+else\s+do\s+you\s+need)",
+    re.IGNORECASE,
+)
 # Decorative lines made entirely of dashes, em-dashes, bullets etc. — skip.
 _DECORATIVE_LINE_RE = re.compile(r"^[\-—–━─●•*=\s]+$")
 _COOK_TIME_RE = re.compile(r"(\d+)\s*(?:to\s*\d+\s*)?(?:minutes?|mins?)", re.IGNORECASE)
@@ -308,13 +328,30 @@ def extract_recipe_description(
     # "Serves X pax" is intentionally NOT used as a start trigger — it precedes
     # ingredient sections and would swallow the real heading into the skip filter.
     ingr_start = None
+    has_subsections = False  # True when format uses sub-section separators within block
+    seen_serves = False
     for i, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.lower() in ("ingredients", "main ingredients", "ingredient list"):
+        if _INGR_LIST_RE.match(stripped) or _INGR_INLINE_RE.search(stripped):
+            ingr_start = i + 1
+            has_subsections = True
+            break
+        if _INGR_SIMPLE_RE.match(stripped):
             ingr_start = i + 1
             break
         if _INGR_HEADING_RE.match(stripped):
             ingr_start = i
+            break
+        if re.match(r"^serves?\s", stripped, re.IGNORECASE):
+            seen_serves = True
+            continue
+        # Some videos omit an "Ingredient List" heading entirely: ingredients
+        # follow directly after "Serves N pax" + a separator line.
+        if seen_serves and (
+            _SEPARATOR_RE.match(stripped) or _SUBSECTION_SEP_RE.match(stripped)
+        ):
+            ingr_start = i + 1
+            has_subsections = True
             break
 
     if ingr_start is None:
@@ -323,10 +360,16 @@ def extract_recipe_description(
     raw_ingredients = []
     for line in lines[ingr_start:]:
         stripped = line.strip()
+        if has_subsections and _SUBSECTION_SEP_RE.match(stripped):
+            continue
         if _SEPARATOR_RE.match(stripped):
+            break
+        if not has_subsections and _SUBSECTION_SEP_RE.match(stripped):
             break
         if not stripped:
             continue
+        if _END_SECTION_RE.match(stripped):
+            break
         if _SECTION_HEADER_RE.match(stripped):
             continue
         if _DECORATIVE_LINE_RE.match(stripped) and len(stripped) >= 3:
