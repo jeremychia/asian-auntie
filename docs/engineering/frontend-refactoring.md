@@ -13,19 +13,19 @@ Principles:
 
 ## Status
 
-| #   | Name                                                 | Status  | Commit |
-| --- | ---------------------------------------------------- | ------- | ------ |
-| P1  | Remove dead HTMX                                     | Pending | —      |
-| P2  | Lazy-load dashboard thumbnails                       | Pending | —      |
-| P3  | `extra_head`/`extra_js` blocks + scope `camera.js`   | Pending | —      |
-| P4a | Extract `dashboard.css` from `style.css`             | Pending | —      |
-| P4b | Extract `add-item.css` from `style.css`              | Pending | —      |
-| P4c | Extract `recipes.css` from `style.css`               | Pending | —      |
-| P4d | Extract `audit.css` from `style.css`                 | Pending | —      |
-| P4e | Extract `edit-photos.css` from `style.css`           | Pending | —      |
-| P4f | Extract `landing.css` from `style.css`               | Pending | —      |
-| P5  | Extract dashboard inline JS to `static/dashboard.js` | Pending | —      |
-| P6  | DOM-as-state → JS state object in `dashboard.js`     | Pending | —      |
+| #   | Name                                                 | Status  | Commit                                                              |
+| --- | ---------------------------------------------------- | ------- | ------------------------------------------------------------------- |
+| P1  | Remove dead HTMX                                     | Done    | `3f32fdf`                                                           |
+| P2  | Lazy-load dashboard thumbnails                       | Done    | `9d1d50e`                                                           |
+| P3  | `extra_head`/`extra_js` blocks + scope `camera.js`   | Done    | `c5bc078`                                                           |
+| P4a | Extract `dashboard.css` from `style.css`             | Done    | `6ee15bd`                                                           |
+| P4b | Extract `add-item.css` from `style.css`              | Done    | `ca1202d`                                                           |
+| P4c | Extract `edit-photos.css` from `style.css`           | Done    | `eef3340`                                                           |
+| P4d | Extract `recipes.css` from `style.css`               | Skipped | shared with `landing.html` — `recipe-card` class used on both pages |
+| P4e | Extract `audit.css` from `style.css`                 | Skipped | `audit-banner` used on `dashboard.html` too                         |
+| P4f | Extract `landing.css` from `style.css`               | Pending | —                                                                   |
+| P5  | Extract dashboard inline JS to `static/dashboard.js` | Done    | `0d943b3`                                                           |
+| P6  | DOM-as-state → JS state object in `dashboard.js`     | Pending | —                                                                   |
 
 ## Target file layout (after P5)
 
