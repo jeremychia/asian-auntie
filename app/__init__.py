@@ -258,11 +258,20 @@ def create_app():
     def inject_vapid_public_key():
         return {"vapid_public_key": app.config.get("VAPID_PUBLIC_KEY", "")}
 
-    _css_path = os.path.join(root, "static", "style.css")
+    _static_path = os.path.join(root, "static")
 
     @app.context_processor
     def inject_css_version():
-        return {"css_version": int(os.path.getmtime(_css_path))}
+        def _mtime(name):
+            try:
+                return int(os.path.getmtime(os.path.join(_static_path, name)))
+            except OSError:
+                return 0
+
+        return {
+            "css_version": _mtime("style.css"),
+            "dashboard_css_version": _mtime("dashboard.css"),
+        }
 
     # Detect and repair the case where alembic_version is stamped but tables are missing.
     # This can happen if a fresh DB file is created and the version is set without running

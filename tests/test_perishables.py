@@ -86,6 +86,11 @@ def test_dashboard_thumbnails_are_lazy(auth_client, db, user, item):
     assert b'loading="lazy"' in r.data
 
 
+def test_dashboard_css_scoping(auth_client):
+    assert b"dashboard.css" not in auth_client.get("/items/add").data
+    assert b"dashboard.css" in auth_client.get("/dashboard").data
+
+
 def test_camera_js_not_on_dashboard(auth_client):
     r = auth_client.get("/dashboard")
     assert b"camera.js" not in r.data
