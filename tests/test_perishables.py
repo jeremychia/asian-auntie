@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from app.models import Item
+from app.models import Item, ItemPhoto
 from app.extensions import db as _db
 
 
@@ -71,6 +71,19 @@ def test_dashboard_shows_item(auth_client, item):
     r = auth_client.get("/dashboard")
     assert r.status_code == 200
     assert b"Soy Sauce" in r.data
+
+
+def test_dashboard_thumbnails_are_lazy(auth_client, db, user, item):
+    photo = ItemPhoto(
+        item_id=item.id,
+        photo_path=f"users/{user.id}/fakephoto.jpg",
+        photo_type="appearance",
+        display_order=0,
+    )
+    db.session.add(photo)
+    db.session.commit()
+    r = auth_client.get("/dashboard")
+    assert b'loading="lazy"' in r.data
 
 
 def test_add_item_page_loads(auth_client):

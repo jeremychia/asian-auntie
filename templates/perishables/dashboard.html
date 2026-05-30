@@ -244,7 +244,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
             >
               <div class="item-row__thumb">
                 {% if photo %}
-                <img src="{{ photo.photo_url }}" alt="" class="item-row__thumb-img" aria-hidden="true"/>
+                <img src="{{ photo.photo_url }}" alt="" class="item-row__thumb-img" aria-hidden="true" loading="lazy"/>
                 {% else %}
                 <span class="item-row__thumb-placeholder item-row__thumb-placeholder--{{ item.item_type }}" aria-hidden="true"></span>
                 {% endif %}
