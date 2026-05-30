@@ -96,6 +96,11 @@ def test_add_item_css_scoping(auth_client):
     assert b"add-item.css" in auth_client.get("/items/add").data
 
 
+def test_edit_photos_css_scoping(auth_client, item):
+    assert b"edit-photos.css" not in auth_client.get("/dashboard").data
+    assert b"edit-photos.css" in auth_client.get(f"/items/{item.id}/photos").data
+
+
 def test_camera_js_not_on_dashboard(auth_client):
     r = auth_client.get("/dashboard")
     assert b"camera.js" not in r.data
