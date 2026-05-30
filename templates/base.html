@@ -29,7 +29,7 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='style.css', v=css_version) }}"
     />
-    <script src="{{ url_for('static', filename='camera.js') }}"></script>
+    {% block extra_head %}{% endblock %}
     <title>{% block title %}Asian Auntie{% endblock %}</title>
   </head>
   <body class="{% block body_class %}{% endblock %}">
@@ -192,5 +192,6 @@
       });
     });
     </script>
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

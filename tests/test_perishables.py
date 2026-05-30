@@ -86,6 +86,16 @@ def test_dashboard_thumbnails_are_lazy(auth_client, db, user, item):
     assert b'loading="lazy"' in r.data
 
 
+def test_camera_js_not_on_dashboard(auth_client):
+    r = auth_client.get("/dashboard")
+    assert b"camera.js" not in r.data
+
+
+def test_camera_js_on_add_item(auth_client):
+    r = auth_client.get("/items/add")
+    assert b"camera.js" in r.data
+
+
 def test_add_item_page_loads(auth_client):
     r = auth_client.get("/items/add")
     assert r.status_code == 200
