@@ -439,6 +439,11 @@ These appear when the scraper picks up non-ingredient content from the page:
 - Empty strings `""`
 - Amazon affiliate or any other URLs: `"cooking oil https://amzn.to/..."`
 - Timing tables or any multi-column text that ended up as a list item
+- Category labels from YouTube video descriptions: `"egg tofu ingredients"`, `"sauce ingredients"`, `"marinade ingredients"` — these are section headings read aloud, not real ingredients; remove them
+
+#### "Makes X" recipes
+
+Some recipes produce an ingredient (e.g. "Homemade silken tofu" makes tofu from eggs and soy milk). The scraper won't include the output as an ingredient, but the app matches on `normalized_ingredients` — if tofu isn't listed, users with tofu in their pantry won't see it and users without tofu will get a false 100% match. Add the produced ingredient to `normalized_ingredients` manually so the match % reflects pantry reality.
 
 #### Fix wrong PANTRY_ITEMS mappings
 
@@ -481,6 +486,25 @@ Ingredients should be the ingredient, not a preparation note:
 #### Check for duplicates
 
 Duplicates within a single recipe's `normalized_ingredients` add no value and slightly inflate the match %. Remove them.
+
+#### Check for protein-only recipes
+
+If `normalized_ingredients` contains only a single raw protein (`"Chicken"`, `"Beef"`, `"Prawns"`, `"Pork"`, etc.) and nothing else, the ingredient list is almost certainly incomplete — the scraper captured a sub-heading like `"Marinated chicken"` or `"Poached chicken"` but missed the actual marinade and sauce ingredients.
+
+**Cause:** the `extract_recipe_description` parser in `youtube.py` terminates ingredient collection at any line matching `^-{9,}` or `^={3,}`. Spice N Pans descriptions use a long dash separator (`------------------`) in the social-links preamble _before_ the `Ingredients:` heading, so the parser stops before reaching the recipe. Older videos (pre-2020) omitted the ingredient list from the description entirely and just wrote "See the ingredient list below for your easy reference."
+
+**Fix:** fetch the description directly with `yt-dlp`, find the `Ingredients:` heading manually, and copy the ingredient lines into `data.py` by hand. Example:
+
+```bash
+uv run --project pipeline python3 -c "
+import yt_dlp
+with yt_dlp.YoutubeDL({'skip_download': True, 'quiet': True}) as ydl:
+    info = ydl.extract_info('https://www.youtube.com/watch?v=VIDEO_ID', download=False)
+print(info.get('description', ''))
+"
+```
+
+If the description genuinely has no ingredient list (the video is too old), either enrich the entry manually from the video or remove the recipe from `data.py`.
 
 ### 4. Validation
 
