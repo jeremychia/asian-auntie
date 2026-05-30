@@ -271,6 +271,7 @@ def create_app():
         return {
             "css_version": _mtime("style.css"),
             "dashboard_css_version": _mtime("dashboard.css"),
+            "add_item_css_version": _mtime("add-item.css"),
         }
 
     # Detect and repair the case where alembic_version is stamped but tables are missing.
