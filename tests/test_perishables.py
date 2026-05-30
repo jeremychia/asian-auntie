@@ -101,6 +101,12 @@ def test_edit_photos_css_scoping(auth_client, item):
     assert b"edit-photos.css" in auth_client.get(f"/items/{item.id}/photos").data
 
 
+def test_dashboard_js_extracted(auth_client):
+    html = auth_client.get("/dashboard").data.decode()
+    assert "applyKanbanHeight" not in html
+    assert "dashboard.js" in html
+
+
 def test_camera_js_not_on_dashboard(auth_client):
     r = auth_client.get("/dashboard")
     assert b"camera.js" not in r.data
