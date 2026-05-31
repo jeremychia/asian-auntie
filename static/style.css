@@ -1514,10 +1514,21 @@ select.sort-select:focus {
 ═══════════════════════════════════════════════════ */
 .action-sheet {
   border: none;
+  padding: 0;
+  background: transparent;
+  max-width: 100%;
+  width: 100%;
+}
+.action-sheet::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.action-sheet__card {
   border-radius: var(--r-xl);
   padding: 1.5rem 1.25rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  max-width: 300px;
+  max-width: 380px;
   width: calc(100% - 2rem);
   background: var(--surface);
   text-align: center;
@@ -1525,11 +1536,6 @@ select.sort-select:focus {
   flex-direction: column;
   align-items: center;
   gap: 0;
-}
-.action-sheet::backdrop {
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
 }
 .action-sheet__handle {
   display: none;
@@ -1545,9 +1551,10 @@ select.sort-select:focus {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  width: 100%;
 }
 .action-sheet__options .btn {
-  min-width: 200px;
+  width: 100%;
 }
 
 /* ═══════════════════════════════════════════════════

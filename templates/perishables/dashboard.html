@@ -304,23 +304,25 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 
 <!-- Action sheet (long-press / right-click) -->
 <dialog id="action-sheet" class="action-sheet">
-  <div class="action-sheet__handle"></div>
-  <p class="action-sheet__title" id="action-sheet-title"></p>
-  <div class="action-sheet__options">
-    <form id="action-use-form" method="post" action="" style="display:contents">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <button type="submit" name="reason" value="used" class="btn btn-primary">Used it up</button>
-    </form>
-    <form id="action-discard-form" method="post" action="" style="display:contents">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <button type="submit" name="reason" value="discarded" class="btn btn-secondary">Threw it away</button>
-    </form>
-    <form id="action-unwanted-form" method="post" action="" style="display:contents">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <button type="submit" name="reason" value="unwanted" class="btn btn-secondary">Don't want it</button>
-    </form>
-    <a id="action-edit-link" href="#" class="btn btn-secondary" style="text-decoration:none">View / Edit</a>
-    <button type="button" class="btn btn-ghost" onclick="document.getElementById('action-sheet').close()">Cancel</button>
+  <div class="action-sheet__card">
+    <div class="action-sheet__handle"></div>
+    <p class="action-sheet__title" id="action-sheet-title"></p>
+    <div class="action-sheet__options">
+      <form id="action-use-form" method="post" action="" style="display:contents">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" name="reason" value="used" class="btn btn-primary">Used it up</button>
+      </form>
+      <form id="action-discard-form" method="post" action="" style="display:contents">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" name="reason" value="discarded" class="btn btn-secondary">Threw it away</button>
+      </form>
+      <form id="action-unwanted-form" method="post" action="" style="display:contents">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" name="reason" value="unwanted" class="btn btn-secondary">Don't want it</button>
+      </form>
+      <a id="action-edit-link" href="#" class="btn btn-secondary" style="text-decoration:none">View / Edit</a>
+      <button type="button" class="btn btn-ghost" onclick="document.getElementById('action-sheet').close()">Cancel</button>
+    </div>
   </div>
 </dialog>
 

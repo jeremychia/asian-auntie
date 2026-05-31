@@ -270,7 +270,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ── Drag-and-drop between columns (SortableJS) ──────────────────────────
-  if (kanban && typeof Sortable !== 'undefined') {
+  // Disabled on mobile: single-column view means there's nowhere to drag to,
+  // and the touch handler conflicts with native scroll.
+  const isMobile = window.matchMedia('(max-width: 767px)').matches;
+  if (kanban && typeof Sortable !== 'undefined' && !isMobile) {
     function updateColCount(col) {
       const count = col.querySelectorAll('.card-wrap:not([hidden])').length;
       const badge = col.querySelector('.kanban__col-count');
