@@ -271,6 +271,7 @@ def create_app():
         return {
             "css_version": _mtime("style.css"),
             "dashboard_css_version": _mtime("dashboard.css"),
+            "dashboard_js_version": _mtime("dashboard.js"),
             "add_item_css_version": _mtime("add-item.css"),
             "edit_photos_css_version": _mtime("edit-photos.css"),
         }

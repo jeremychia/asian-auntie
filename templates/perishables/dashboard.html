@@ -125,6 +125,7 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
     <option value="recent">Recently added</option>
     <option value="alpha">A–Z</option>
   </select>
+
 </div>
 {% endif %}
 
@@ -194,8 +195,6 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 
   {# Kanban: desktop = side-by-side columns; mobile = stacked sections #}
   <div class="kanban-wrap" id="kanban-wrap">
-  <div class="kanban-resize-grip" id="kanban-resize-grip" aria-hidden="true" title="Drag to resize height"></div>
-  <div class="kanban-width-grip" id="kanban-width-grip" aria-hidden="true" title="Drag to resize width"></div>
   <div class="kanban" id="kanban">
     {% for loc_label, groups in by_location.items() %}
     <div class="kanban__col" data-location="{{ loc_label | lower }}">
@@ -340,6 +339,6 @@ document.getElementById('onboarding-skip').addEventListener('click', async () =>
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='sortable.min.js') }}"></script>
-<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='dashboard.js', v=dashboard_js_version) }}"></script>
 {% endblock %}
 {% endblock %}
